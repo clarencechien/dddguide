@@ -59,7 +59,7 @@
 
 ### 貼給 Claude Code 的提示
 ```
-/context-map
+/context-map 挑戰
 
 Day 3 Block 1。我從 workshop/day2/storm-board.md 推導出這組 context（含四種線索的證據、不變條件、獨立存活、Core/Supporting/Generic）：
 <貼上 context-map.md 目前內容>
@@ -160,13 +160,13 @@ Day 3 Block 3。這是我的 context map（workshop/day3/context-map.md，請直
 不要把 Parking 與 Dispatch 畫成實體容器，用虛線 stub。最後給「下一個最小步驟」。
 ```
 ```
-/adr
+/adr new bounded-contexts
 
 Day 3 Block 3。請用 docs/references/adr.md 的格式建立兩份 ADR 的空骨架到 workshop/day3/adr/0001-bounded-contexts.md 與 0002-mvp1-scope.md，
 只放標題與小節，不要填內容。我填完之後會再叫你審查。
 ```
 ```
-/adr
+/adr review 0001
 
 我填完了 workshop/day3/adr/0001-bounded-contexts.md 與 0002-mvp1-scope.md，請審查（直接讀檔）。
 對每份：替代方案各問我「它在什麼情況下反而會贏？」；後果各問我「哪一條你其實不確定、打算怎麼驗證？」。
@@ -216,7 +216,7 @@ Day 3 Block 3。請用 docs/references/adr.md 的格式建立兩份 ADR 的空�
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day3
 
 今天是 Day 3。請對照 docs/rubric.md 的 Day 3 DoD 檢查 workshop/day3/ 的四個檔案（含 adr/ 子目錄）。
 每項回「過 / 不過 + 一句理由」；不過的給一個問題。

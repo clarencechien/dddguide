@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/parking.vehicle_entered.v1.schema.json",
+  "title": "parking.vehicle_entered.v1",
+  "description": "Published by Parking when LPR recognised a vehicle at the gate (T0). Subscribers: bay-occupancy policy. Dedup key: plate + occurredAt.",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "parking.vehicle_entered.v1" },
+        "version": { "const": 1 },
+        "producer": { "const": "parking" },
+        "payload": {
+          "type": "object",
+          "required": ["plate", "siteId", "lane", "occurredAt"],
+          "properties": {
+            "plate": { "type": "string", "minLength": 1 },
+            "siteId": { "type": "string", "minLength": 1 },
+            "lane": { "type": "string", "minLength": 1 },
+            "occurredAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  ]
+}

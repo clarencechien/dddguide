@@ -74,7 +74,7 @@
 
 ### 貼給 Claude Code 的提示
 ```
-/aggregate-review
+/aggregate-review ChargingSession
 
 Day 4 Block 1。我還沒寫程式碼，這是我的 workshop/day4/model.md（請直接讀檔）：ChargingSession 狀態機、命令方法與事件、三個 VO 的驗證、目錄對照。
 請審查模型而不是替我寫：
@@ -210,7 +210,7 @@ Day 4 Block 3。第二個聚合 WorkOrder，守 R5「同樁同故障碼在工單
 <貼上>
 ```
 ```
-/aggregate-review
+/aggregate-review ChargingSession WorkOrder
 
 Day 4 Block 3 尾聲。請直接讀 starter/<lang>/src/charging/domain/ 與 src/assetops/domain/ 的所有檔案，審查：
 1. 每個檔案的 import：有沒有任何 I/O、時鐘、bus、HTTP、資料庫、OCPP 字眼？有的話只指出檔名與行號。
@@ -266,7 +266,7 @@ Day 4 Block 3 尾聲。請直接讀 starter/<lang>/src/charging/domain/ 與 src/
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day4
 
 今天是 Day 4。請對照 docs/rubric.md 的 Day 4 DoD：
 1. 跑 starter/<lang> 的測試（指令見 CLAUDE.md），貼摘要。

@@ -96,7 +96,7 @@
 
 ### 貼給 Claude Code 的提示
 ```
-/storm
+/storm process
 
 Day 2 Block 2，process-level。這是我補了命令 / 執行者 / 政策 / 拒絕事件的時間線，以及我圈出的聚合候選與樞紐事件：
 <貼上 storm-board.md 目前內容>
@@ -209,7 +209,7 @@ Day 2 Block 3。這是我的 workshop/day2/rules.md（請直接讀檔）。
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day2
 
 今天是 Day 2。請對照 docs/rubric.md 的 Day 2 DoD 檢查 workshop/day2/ 的三個檔案。
 每項回「過 / 不過 + 一句理由」。不過的給我一個問題，不要補內容。

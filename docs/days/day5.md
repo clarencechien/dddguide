@@ -246,7 +246,7 @@ Day 5 Block 3 尾聲。請直接讀 starter/<lang>/src/assetops/、src/charging/
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day5
 
 今天是 Day 5。請對照 docs/rubric.md 的 Day 5 DoD：
 1. 跑 starter/<lang> 測試，貼摘要；列出測試名並標出對應的規則 / 事件。

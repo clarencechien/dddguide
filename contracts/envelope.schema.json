@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/envelope.schema.json",
+  "title": "IntegrationEventEnvelope",
+  "description": "Envelope shared by every cross-context integration event (curriculum §1.8). Published through the Outbox, delivered at least once; consumers dedup on the key documented in each event schema.",
+  "type": "object",
+  "required": ["eventId", "type", "version", "occurredAt", "producer", "correlationId", "causationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid", "description": "Unique per event; also the Outbox row id." },
+    "type": { "type": "string", "pattern": "^[a-z]+\\.[a-z_]+(\\.[a-z_]+)?\\.v[0-9]+$", "description": "<context>.<subject>.<fact>.v<version>, e.g. charging.session.started.v1" },
+    "version": { "type": "integer", "minimum": 1, "description": "Same number as the .vN suffix in type." },
+    "occurredAt": { "type": "string", "format": "date-time", "description": "When the fact happened in the domain (not when it was published)." },
+    "producer": { "type": "string", "enum": ["parking", "charging", "billing", "assetops", "dispatch"] },
+    "correlationId": { "type": "string", "minLength": 1, "description": "Same for the whole business flow (one afternoon at CP-A12-2)." },
+    "causationId": { "type": "string", "minLength": 1, "description": "eventId (or command id) of the message that directly caused this one." },
+    "payload": { "type": "object" }
+  }
+}

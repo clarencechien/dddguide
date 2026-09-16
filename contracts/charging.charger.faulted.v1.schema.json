@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/charging.charger.faulted.v1.schema.json",
+  "title": "charging.charger.faulted.v1",
+  "description": "Published by Charging when the charger declared it cannot deliver energy per contract (F). Subscribers: AssetOps. Dedup key: chargerId + faultCode while a work order is open (R5).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "charging.charger.faulted.v1" },
+        "version": { "const": 1 },
+        "producer": { "const": "charging" },
+        "payload": {
+          "type": "object",
+          "required": ["chargerId", "faultCode", "stillEnergized", "occurredAt"],
+          "properties": {
+            "chargerId": { "type": "string", "minLength": 1 },
+            "connectorId": { "type": "string", "pattern": "^.+-[0-9]+$", "description": "Optional: absent when the whole charger faulted" },
+            "faultCode": { "type": "string", "minLength": 1, "description": "Ubiquitous language fault code, e.g. GroundFailure (mapped from OCPP errorCode by the ACL)" },
+            "stillEnergized": { "type": "boolean" },
+            "occurredAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -228,7 +228,7 @@ repo 跑得起來、Claude Code 認得你、你對這個領域有一張粗略的
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day1
 
 今天是 Day 1。請對照 docs/rubric.md 的 Day 1 DoD 檢查 workshop/day1/ 裡的三個檔案。
 對每一項只回「過 / 不過 + 一句理由」，不要幫我補內容。

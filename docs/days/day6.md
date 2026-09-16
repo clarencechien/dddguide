@@ -263,7 +263,7 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 
 ### 用 /checkout 讓助教檢查
 ```
-/checkout
+/checkout day6
 
 今天是 Day 6。請對照 docs/rubric.md 的 Day 6 DoD：
 1. 跑 starter/<lang> 全部測試，貼摘要。
