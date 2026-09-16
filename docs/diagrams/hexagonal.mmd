@@ -1,0 +1,77 @@
+%% Hexagonal / Ports & Adapters — starter/<lang>/src 的結構
+%% 依賴規則：所有箭頭指向核心。domain 與 app 不 import adapters / infrastructure。
+%% 左側 = 驅動（inbound）adapter；右側 = 被驅動（outbound）adapter；測試是合法的 inbound adapter。
+flowchart LR
+  classDef domain fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+  classDef app fill:#fff9c4,stroke:#f9a825
+  classDef port fill:#ffffff,stroke:#333,stroke-dasharray: 4 4
+  classDef adapter fill:#e1f5fe,stroke:#0277bd
+  classDef infra fill:#eeeeee,stroke:#616161
+  classDef ext fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
+
+  subgraph IN["驅動端 adapters/inbound"]
+    HTTP["http/<br/>Fastify / FastAPI routes"]:::adapter
+    OCPPWS["ocpp/<br/>WebSocket server<br/>[2,id,action,payload]"]:::adapter
+    TESTS["test/<br/>vitest / pytest<br/>（也是 inbound adapter）"]:::adapter
+  end
+
+  subgraph CORE["核心（無 I/O）"]
+    direction TB
+    subgraph APP["app/ 應用層"]
+      SC["StartCharging"]:::app
+      STC["StopCharging"]:::app
+      RMV["ReportMeterValue"]:::app
+      RF["ReportFault"]:::app
+      PM["FaultToWorkOrder<br/>Process Manager"]:::app
+      APORTS["app/ports.ts<br/>UnitOfWork · Outbox · Clock · IdGenerator · EventBus"]:::port
+    end
+    subgraph CHD["charging/domain"]
+      CS["ChargingSession 聚合<br/>R1–R4 · record() · pullEvents()"]:::domain
+      VO["Connector · Energy · IdTag"]:::domain
+      EV["ChargingStarted · ChargingStartRejected<br/>EnergyMetered · MeterValueRejected<br/>ChargingCompleted · ChargerFaulted"]:::domain
+      CPORTS["charging/domain/ports.ts<br/>ChargingSessionRepository · AuthorizationPolicy"]:::port
+    end
+    subgraph AOD["assetops/domain"]
+      WO["WorkOrder 聚合<br/>R5 · attachDuplicateReport()"]:::domain
+      WPORTS["WorkOrderRepository<br/>findOpenByChargerAndFault"]:::port
+    end
+    ACLT["charging/acl/<br/>translate · mapping<br/>(OCPP → 命令；transactionId ↔ sessionId)"]:::app
+  end
+
+  subgraph OUT["被驅動端 adapters/outbound"]
+    MEM["memory/<br/>InMemory*Repository · InMemoryOutbox · InMemoryEventBus<br/>（Day 4–5 + 測試）"]:::adapter
+    SQL["sqlite/<br/>Sqlite*Repository · SqliteOutbox<br/>（Day 6）"]:::adapter
+    RELAY["relay/<br/>OutboxRelay → EventBus"]:::adapter
+  end
+
+  subgraph INFRA["infrastructure/"]
+    MAIN["main.ts / main.py<br/>composition root：組裝 adapter → port"]:::infra
+    DB[("SQLite / Postgres")]:::infra
+  end
+
+  BILL["billing/<br/>DraftInvoiceConsumer<br/>（另一個 context；只認 contracts/ JSON）"]:::app
+  SIM["scripts/ocpp-sim"]:::ext
+  CONTRACTS["contracts/*.json<br/>整合事件 v1 schema"]:::ext
+
+  SIM -- ws --> OCPPWS
+  OCPPWS --> ACLT
+  ACLT --> SC & STC & RMV & RF
+  HTTP --> SC & STC & RF
+  TESTS --> SC & STC & RMV & RF & PM & CS & WO
+
+  SC & STC & RMV --> CS
+  RF --> EV
+  PM --> WO
+  CS --> VO & EV
+  SC & STC & RMV -.uses.-> CPORTS
+  PM -.uses.-> WPORTS
+  SC & STC & RMV & RF & PM -.uses.-> APORTS
+
+  MEM -. implements .-> CPORTS & WPORTS & APORTS
+  SQL -. implements .-> CPORTS & WPORTS & APORTS
+  RELAY -. implements .-> APORTS
+  SQL --> DB
+  RELAY --> BILL
+  RELAY --> PM
+  BILL -. reads .-> CONTRACTS
+  MAIN --> HTTP & OCPPWS & SQL & RELAY

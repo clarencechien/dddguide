@@ -1,0 +1,88 @@
+%% Event Flow — 14:02 → 18:18 那個午後（scripts/e2e 劇本的原型）
+%% 識別碼一律來自 docs/curriculum.md §1.6；事件名來自 §1.7 / §1.8 / §1.9。
+%% 實線 = 命令 / 呼叫；虛線 = 事件（經 Outbox，至少一次）。
+sequenceDiagram
+  autonumber
+  actor Driver as 車主 ABC-1234
+  participant LPR as 既有停車場系統（stub）
+  participant CP as CP-A12 (ocpp-sim)
+  participant ACL as OCPP 端點 + ACL
+  participant CH as Charging 應用層 + ChargingSession
+  participant OB as Outbox relay
+  participant BUS as 事件匯流排
+  participant BI as Billing 草稿消費者
+  participant AO as AssetOps + FaultToWorkOrder PM
+  participant DP as Dispatch stub
+  actor Vicky as Vicky
+
+  rect rgb(232, 245, 233)
+    note over Driver,BI: 正常午後：停車 + 充電
+    Driver->>LPR: 14:02 開到閘門
+    LPR-->>BUS: parking.vehicle_entered.v1 (plate=ABC-1234, siteId=SITE-TPE-01)
+    note right of LPR: VehicleEntered → P-441 開始
+    note over LPR: 14:03 ChargingBayOccupied（≠ 充電已開始）
+
+    Driver->>CP: 14:04 插槍 CP-A12-2
+    CP->>ACL: StatusNotification(connectorId=2, status=Preparing)
+    note right of ACL: ConnectorPluggedIn（不建會話）
+    Driver->>CP: 刷卡 TAG-MONTHLY-77
+    CP->>ACL: Authorize(idTag=TAG-MONTHLY-77)
+    ACL->>CH: 授權查詢（本機白名單，不呼叫總部）
+    CH-->>ACL: Accepted
+    ACL-->>CP: idTagInfo.status=Accepted
+    CP->>ACL: StartTransaction(connectorId=2, idTag, meterStart=105200)
+    ACL->>CH: StartCharging(connectorId=CP-A12-2, idTag=TAG-MONTHLY-77, meterStartWh=105200, at=14:04)
+    note over CH: R1 findActiveByConnector → 無；R2 已授權<br/>ChargingSession.start → 記錄 ChargingStarted<br/>同一交易：save + outbox.append（R8）
+    CH-->>ACL: started, sessionId=S-991
+    ACL-->>CP: transactionId=5567（ACL 對應表 5567 ↔ S-991）
+    OB-->>BUS: charging.session.started.v1 (sessionId=S-991, connectorId=CP-A12-2, idTag, startedAt=14:04)
+    BUS-->>BI: started.v1
+    note right of BI: 建立草稿（upsert by sessionId）
+
+    CP->>ACL: 14:10 MeterValues(106700 Wh)
+    ACL->>CH: ReportMeterValue(S-991, 106700)
+    note over CH: R3 106700 ≥ 105200 → EnergyMetered（不對外發整合事件）
+    CP->>ACL: 14:20 MeterValues(110300 Wh)
+    ACL->>CH: ReportMeterValue(S-991, 110300)
+    note over CH: EnergyMetered
+
+    Driver->>CP: 14:31 App 停止
+    CP->>ACL: StopTransaction(transactionId=5567, meterStop=117600, reason=Local)
+    ACL->>CH: StopCharging(S-991, meterStopWh=117600, at=14:31, stopReason=Local)
+    note over CH: R4 狀態 Charging → Completed<br/>energyWh = 117600 − 105200 = 12400
+    OB-->>BUS: charging.session.completed.v1 (sessionId=S-991, energyWh=12400, startedAt, endedAt, stopReason=Local)
+    BUS-->>BI: completed.v1
+    note right of BI: sessionId 去重；12.4 kWh × 尖峰 8 元 = 99.2 元（草稿）
+
+    Driver->>LPR: 14:33 出閘門
+    LPR-->>BUS: parking.session.closed.v1 (parkingSessionId=P-441, plate, durationMin=31, releaseMode=Auto)
+    BUS-->>BI: closed.v1
+    note right of BI: 月票停車 0 元 + 電費 99.2 → 草稿 INV-778（MVP1：合併為 Sprint 2）
+  end
+
+  rect rgb(255, 235, 238)
+    note over CP,Vicky: 故障支線：申告 → 開單 → 重複申告 → 派工
+    CP->>ACL: 18:10 StatusNotification(connectorId=0, status=Faulted, errorCode=GroundFailure)
+    ACL->>CH: ReportFault(chargerId=CP-A12, connectorId=null, faultCode=GroundFailure, stillEnergized=false, at=18:10)
+    note over CH: ChargerFaulted；CP-A12-1 / CP-A12-2 停售
+    OB-->>BUS: charging.charger.faulted.v1 (chargerId=CP-A12, faultCode=GroundFailure, stillEnergized=false, occurredAt=18:10)
+    BUS-->>AO: faulted.v1 (eventId=evt-001)
+    note over AO: processed? 否<br/>findOpenByChargerAndFault(CP-A12, GroundFailure) → 無<br/>WorkOrder.open → WO-2208（openedAt=18:11；SLA 從 occurredAt=18:10 起算）
+    AO-->>BUS: ops.work_order.opened.v1 (workOrderId=WO-2208, chargerId=CP-A12, faultCode=GroundFailure, openedAt=18:11)
+    BUS-->>DP: opened.v1
+    BUS-->>CH: opened.v1（場站看板副本）
+
+    CP->>ACL: 18:15 StatusNotification(Faulted, GroundFailure) 再送一次
+    ACL->>CH: ReportFault(...)
+    OB-->>BUS: charging.charger.faulted.v1 (eventId=evt-002, occurredAt=18:15)
+    BUS-->>AO: faulted.v1 (evt-002)
+    note over AO: R5：WO-2208 開放中 → attachDuplicateReport(18:15)<br/>不發第二個 WorkOrderOpened
+    BUS-->>AO: faulted.v1 (evt-002) 重送
+    note over AO: eventId 已處理 → 忽略（傳輸層冪等）
+
+    DP->>DP: 18:18 指派 TECH-HAO（stub；備品預留為 Sprint 2）
+    note over DP: E2E 劇本到此結束
+    Vicky->>AO: （隔天）CloseWorkOrder(WO-2208, outcome=Repaired)
+    AO-->>BUS: ops.work_order.closed.v1 (workOrderId=WO-2208, chargerId=CP-A12, closedAt, outcome=Repaired)
+    BUS-->>CH: closed.v1 → CP-A12 恢復可售
+  end

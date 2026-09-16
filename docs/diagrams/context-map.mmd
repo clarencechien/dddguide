@@ -1,0 +1,33 @@
+%% Context Map — EV Charge Ops（對齊 docs/curriculum.md §1.4）
+%% 箭頭方向 = 語言的方向（上游 → 下游）。標籤 = 關係模式。
+%% U = Upstream, D = Downstream
+flowchart LR
+  classDef core fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+  classDef supporting fill:#e1f5fe,stroke:#0277bd
+  classDef generic fill:#f3e5f5,stroke:#6a1b9a
+  classDef external fill:#eeeeee,stroke:#616161,stroke-dasharray: 5 5
+  classDef stub fill:#ffffff,stroke:#9e9e9e,stroke-dasharray: 3 3
+
+  OCPP["OCPP 樁 CP-A12<br/>(外部：StatusNotification / StartTransaction …)<br/>工作坊：scripts/ocpp-sim"]:::external
+  LPR["既有停車場系統<br/>(外部：LPR、閘門)"]:::external
+
+  subgraph SITE["場站節點 SITE-TPE-01（總部斷線可獨立運作）"]
+    Parking["Parking 場站停車<br/>語言：進場、車位、停車會話、放行<br/>不變條件：一輛車一個進行中停車會話<br/>MVP1：stub"]:::stub
+    Charging["Charging 充電會話 ★核心<br/>語言：連接器、授權、計量、中止原因<br/>不變條件：一個連接器一個進行中會話<br/>MVP1：完整"]:::core
+  end
+
+  subgraph HQ["總部節點 HQ"]
+    Billing["Billing 計費帳務<br/>語言：費率、帳單、發票、爭議<br/>不變條件：帳單開立後金額不可默默改<br/>MVP1：草稿帳單"]:::generic
+    AssetOps["AssetOps 資產維運<br/>語言：樁、槍、韌體、健康、工單<br/>不變條件：一座樁一個進行中根因工單<br/>MVP1：工單開立 / 關閉"]:::supporting
+    Dispatch["Dispatch 調度派工<br/>語言：技術員、路線、SLA、備品<br/>不變條件：一張工單一個主責技術員<br/>MVP1：stub"]:::stub
+  end
+
+  OCPP -- "ACL 防腐層<br/>StatusNotification 不是通用語言" --> Charging
+  LPR -- "事件 stub<br/>parking.vehicle_entered.v1" --> Parking
+  Parking <-- "Partnership 伙伴 + 事件下游<br/>ChargingBayOccupied ↔ ChargingStarted" --> Charging
+  Charging -- "Customer–Supplier 顧客—供應者 (U→D)<br/>charging.session.started / completed.v1<br/>帳務不得回呼凍結會話" --> Billing
+  Parking -- "Customer–Supplier (U→D)<br/>parking.session.closed.v1" --> Billing
+  Charging -- "Conformist 遵奉者 (U→D)<br/>charging.charger.faulted.v1<br/>AssetOps 接受 ChargerFaulted 語意" --> AssetOps
+  AssetOps -- "內部<br/>ops.work_order.opened.v1<br/>不對帳務發「技術員已出發」" --> Dispatch
+  AssetOps -. "Published Language<br/>ops.work_order.closed.v1 → 恢復可售" .-> Charging
+  Dispatch x-- "Separate Ways 各走各的" --x Billing

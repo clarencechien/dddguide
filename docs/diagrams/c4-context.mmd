@@ -1,0 +1,30 @@
+%% C4 Level 1 — System Context — EV Charge Ops（MVP1）
+%% 讀者：Vicky、主管、新進同事。只回答：系統是什麼、誰用、跟誰講話。
+C4Context
+  title System Context — EV Charge Ops（MVP1）
+
+  Person(driver, "車主", "臨停 / 月票 / 車隊。插槍、刷卡（TAG-MONTHLY-77）、離場")
+  Person(azhong, "阿忠 值班長", "看場站看板、人工放行（R6）")
+  Person(xiaomei, "小美 充電營運", "費率、憑證、遠端停止、異常中止統計")
+  Person(laochen, "老陳 帳務", "看草稿帳單、對帳")
+  Person(vicky, "Vicky 總部調度", "看去重後的工單、關單、SLA")
+  Person(ahao, "阿豪 技術員", "收工單 WO-2208、回報")
+
+  System(evops, "EV Charge Ops", "場站充電會話（Charging）、工單（AssetOps）、草稿帳單（Billing）；場站在總部斷線時獨立運作")
+
+  System_Ext(charger, "充電樁 CP-A12", "OCPP 1.6J / 2.0.1；工作坊用 scripts/ocpp-sim，不接真硬體")
+  System_Ext(parking, "既有停車場系統", "LPR、閘門、停車會話 P-441；MVP1 只接事件 stub")
+  System_Ext(hqsys, "總部既有系統", "客服工單、ERP；Sprint 2 才整合")
+
+  Rel(driver, charger, "插槍、刷卡", "")
+  Rel(charger, evops, "Boot / Status / Authorize / Start / Meter / Stop", "OCPP over WebSocket")
+  Rel(evops, charger, "遠端停止（請求，非事實）", "OCPP RemoteStopTransaction")
+  Rel(parking, evops, "進場 / 離場 / 人工放行事件", "整合事件 v1（stub）")
+  Rel(azhong, evops, "看板、人工放行", "HTTP")
+  Rel(xiaomei, evops, "遠端停止、看會話與中止原因", "HTTP")
+  Rel(laochen, evops, "看草稿帳單 INV-778", "HTTP")
+  Rel(vicky, evops, "看工單、關單", "HTTP")
+  Rel(ahao, evops, "看工單", "HTTP（Sprint 2：離線 App）")
+  Rel(evops, hqsys, "Sprint 2：同步工單 / 出帳", "")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
