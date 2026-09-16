@@ -18,7 +18,7 @@ description: Day 3 B3 產出 C4 System Context 與 Container 圖（Mermaid C4Con
 2. `workshop/day3/context-map.md` — **container 要對齊學員自己的 context 切法**，不是課綱的。
 3. `docs/curriculum.md` §1.1（外部系統：LPR、OCPP 樁、總部）、§1.4 MVP1 範圍、§1.8 事件契約。
 4. `docs/references/hexagonal.md` — 六角架構；container 圖裡 adapter 應能看出來。
-5. `docs/diagrams/c4.mmd`（若有）— 僅供對照，不先給。
+5. `docs/diagrams/c4-context.mmd`、`docs/diagrams/c4-container.mmd`— 僅供對照，不先給。
 6. `workshop/day3/c4.md`（若已存在）— 接續。
 
 ## 角色與態度

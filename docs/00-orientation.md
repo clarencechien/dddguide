@@ -206,7 +206,7 @@ Block 之間休息 10 分鐘。90 分鐘做不完是正常的——`/checkout` �
 | 主控台按鈕沒反應 | 剪貼簿權限；換 Chrome / Edge；或直接複製按鈕下方的文字框 |
 | 測試全綠，沒有紅燈 | 你可能在 `solutions/` 跑；回 `starter/<lang>/` |
 | 要不要先讀 OCPP | 不用。Day 1 只讀 `ev-charging-primer.md`；`ocpp-primer.md` Day 6 才需要 |
-| 可以直接看 `docs/glossary.md` 和 curriculum §1.4 嗎 | 可以看 curriculum，但 **§1.4 五個 context 請 Day 3 結束後再對**；`glossary.md` Day 2 交完自己的再看 |
+| 可以直接看 `docs/domain/glossary.md` 和 curriculum §1.4 嗎 | 可以看 curriculum，但 **§1.4 五個 context 請 Day 3 結束後再對**；`glossary.md` Day 2 交完自己的再看 |
 | 我想兩個語言都做 | 不要。七天剛好夠一個 |
 | 我可以跳過訪談直接寫程式嗎 | 可以，然後 Day 3 你會發現沒東西可以推導邊界，Day 4 的規則沒有數字例子 |
 
