@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/ops.work_order.opened.v1.schema.json",
+  "title": "ops.work_order.opened.v1",
+  "description": "Published by AssetOps when a root-cause work order was opened. Subscribers: Dispatch, site dashboard. Dedup key: workOrderId.",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "ops.work_order.opened.v1" },
+        "version": { "const": 1 },
+        "producer": { "const": "assetops" },
+        "payload": {
+          "type": "object",
+          "required": ["workOrderId", "chargerId", "faultCode", "openedAt"],
+          "properties": {
+            "workOrderId": { "type": "string", "pattern": "^WO-" },
+            "chargerId": { "type": "string", "minLength": 1 },
+            "faultCode": { "type": "string", "minLength": 1 },
+            "openedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[project]
+name = "ev-charge-ops-starter"
+version = "0.1.0"
+description = "Starter for Day 4-7 (EV Charge Ops workshop). Zero runtime dependencies."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

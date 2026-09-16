@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/charging.session.completed.v1.schema.json",
+  "title": "charging.session.completed.v1",
+  "description": "Published by Charging when a session stopped (T5). Subscribers: Billing. Dedup key: sessionId.",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "charging.session.completed.v1" },
+        "version": { "const": 1 },
+        "producer": { "const": "charging" },
+        "payload": {
+          "type": "object",
+          "required": ["sessionId", "connectorId", "energyWh", "startedAt", "endedAt", "stopReason"],
+          "properties": {
+            "sessionId": { "type": "string", "pattern": "^S-" },
+            "connectorId": { "type": "string", "pattern": "^.+-[0-9]+$" },
+            "energyWh": { "type": "integer", "minimum": 0, "description": "last meter - start meter (R4); 12.4 kWh = 12400" },
+            "startedAt": { "type": "string", "format": "date-time" },
+            "endedAt": { "type": "string", "format": "date-time" },
+            "stopReason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  ]
+}

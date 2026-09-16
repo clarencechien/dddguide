@@ -1,0 +1,27 @@
+# Optional Postgres for Day 6 (B2 持久化). SQLite is the zero-install default;
+# use this only if you want to try the Outbox relay against a real database.
+#
+#   docker compose up -d
+#   psql postgresql://ddd:ddd@localhost:5432/ddd -c '\dt'
+#   docker compose down -v      # wipe data
+services:
+  postgres:
+    image: postgres:16
+    container_name: dddguide-postgres
+    environment:
+      POSTGRES_DB: ddd
+      POSTGRES_USER: ddd
+      POSTGRES_PASSWORD: ddd
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ddd -d ddd"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

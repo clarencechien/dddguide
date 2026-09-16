@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/clarencechien/dddguide/contracts/ops.work_order.closed.v1.schema.json",
+  "title": "ops.work_order.closed.v1",
+  "description": "Published by AssetOps when repair was verified and the charger is sellable again. Subscribers: Charging health, SLA. Dedup key: workOrderId.",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "ops.work_order.closed.v1" },
+        "version": { "const": 1 },
+        "producer": { "const": "assetops" },
+        "payload": {
+          "type": "object",
+          "required": ["workOrderId", "chargerId", "closedAt", "outcome"],
+          "properties": {
+            "workOrderId": { "type": "string", "pattern": "^WO-" },
+            "chargerId": { "type": "string", "minLength": 1 },
+            "closedAt": { "type": "string", "format": "date-time" },
+            "outcome": { "type": "string", "minLength": 1, "description": "Repaired | ReplacedConnector | NoFaultFound ..." }
+          }
+        }
+      }
+    }
+  ]
+}
