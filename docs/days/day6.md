@@ -8,7 +8,7 @@
 | 交付物 | 路徑 | 最低要求 |
 |---|---|---|
 | HTTP API | `starter/<lang>/src/adapters/http/**` | Node: Fastify / Python: FastAPI；四個命令 + 兩個查詢；R1 拒絕回 409 |
-| OCPP ACL | `starter/<lang>/src/adapters/ocpp-acl/**` | `StartTransaction` / `MeterValues` / `StopTransaction` / `StatusNotification(Faulted)` → 領域命令；OCPP 字眼不出 ACL |
+| OCPP ACL | `starter/<lang>/src/adapters/ocpp/**` | `StartTransaction` / `MeterValues` / `StopTransaction` / `StatusNotification(Faulted)` → 領域命令；OCPP 字眼不出 ACL |
 | 持久化 | `starter/<lang>/src/adapters/persistence/**` | SQLite repository ×2 + SQLite Outbox + 交易；Postgres 選配 |
 | Outbox relay | `starter/<lang>/src/shared/**` | 用 SQLite outbox 的 relay（輪詢或手動觸發） |
 | Docker | `starter/<lang>/Dockerfile` | `docker build` 後可跑 API |
@@ -32,7 +32,7 @@
 |---|---|---|
 | `docs/domain/ocpp-primer.md` | 10 分 | 四個訊息：`StartTransaction`、`MeterValues`、`StopTransaction`、`StatusNotification`；欄位名；`connectorId` 是整數、`idTag` 是字串、`meterStart` / `meterStop` 單位 Wh |
 | `scripts/ocpp-sim/README.md` | 5 分 | 模擬器怎麼跑、送什麼 JSON、預設 `CP-A12` |
-| `scripts/e2e/README.md` | 5 分 | 劇本步驟、斷言、怎麼指定 base URL |
+| `scripts/e2e/e2e.md` | 5 分 | 劇本步驟、每步後的四欄狀態、斷言 |
 | `docs/references/hexagonal.md`「adapter」一節 | 5 分 | adapter 只做翻譯與 I/O，不做決策 |
 
 ---
@@ -59,7 +59,7 @@
      `POST /sessions/start returns 201 and sessionId`、`R1 POST /sessions/start returns 409 when connector CP-A12-2 is occupied`、`POST /sessions/S-991/stop returns energyWh 12400`。
    - Python：`src/adapters/http/app.py`（`create_app(deps)` 回 FastAPI）；`src/adapters/http/routes/sessions.py`、`chargers.py`、`ocpp.py`；`src/main.py`。測試 `tests/adapters/http/test_api.py` 用 `TestClient`，同名測試 snake_case。
 3. **（30 分）ACL，TDD**：
-   - Node：`src/adapters/ocpp-acl/OcppTranslator.ts`（純函式：`translate(chargerId, ocppMessage) → Command | null`）、`src/adapters/ocpp-acl/ConnectorIdMapper.ts`（`(CP-A12, 2) → CP-A12-2`）。測試 `test/adapters/ocpp-acl/OcppTranslator.test.ts`：
+   - Node：`src/adapters/ocpp/OcppAcl.ts`（純函式：`translate(chargerId, ocppMessage) → Command | null`）、`src/adapters/ocpp/ConnectorIdMapper.ts`（`(CP-A12, 2) → CP-A12-2`）。測試 `test/adapters/OcppAcl.test.ts`：
      `StartTransaction with idTag TAG-MONTHLY-77 on connector 2 becomes StartCharging on CP-A12-2`、
      `MeterValues with Energy.Active.Import.Register 7000 becomes ReportMeterValue 7000`、
      `StopTransaction with meterStop 13400 becomes StopCharging`、
@@ -72,8 +72,8 @@
    # 終端 1
    cd starter/node && npm run dev        # 或 python -m src.main（看 starter README）
    # 終端 2，repo 根目錄
-   node scripts/ocpp-sim/sim.js --charger CP-A12 --connector 2 --idTag TAG-MONTHLY-77 --base http://localhost:3000
-   # 或 python scripts/ocpp-sim/sim.py ...
+   node scripts/ocpp-sim/sim.mjs --url http://localhost:3000/ocpp/CP-A12 --delay 200
+   # 或 python scripts/ocpp-sim/sim.py --url http://localhost:8000/ocpp/CP-A12 --delay 0.2
    ```
    （實際指令與旗標以 `scripts/ocpp-sim/README.md` 為準。）看到 `S-991` 建立、`GET /sessions/S-991` 回 `Charging`。
 
@@ -82,7 +82,7 @@
 /tdd OCPP ACL
 
 Day 6 Block 1。我要 TDD OCPP 防腐層：StartTransaction / MeterValues / StopTransaction / StatusNotification(Faulted) → StartCharging / ReportMeterValue / StopCharging / ReportFault。
-規則：OCPP 的字只能出現在 src/adapters/ocpp-acl/；ACL 不做業務判斷（占用、授權都不在這裡）。
+規則：OCPP 的字只能出現在 src/adapters/ocpp/；ACL 不做業務判斷（占用、授權都不在這裡）。
 先問我三個問題：
 1. OCPP 的 connectorId 是整數 2，我的 ConnectorId 是 CP-A12-2——誰知道 chargerId？從 URL 還是訊息？
 2. StatusNotification(Faulted) 的 stillEnergized 從哪裡推？OCPP 沒有這個欄位。
@@ -125,11 +125,11 @@ Day 6 Block 1。我要 TDD OCPP 防腐層：StartTransaction / MeterValues / Sto
    - Node：`src/adapters/persistence/sqlite/db.ts`（開連線、跑 `migrations/*.sql`）、`SqliteChargingSessionRepository.ts`、`SqliteWorkOrderRepository.ts`、`SqliteOutbox.ts`、`SqliteUnitOfWork.ts`（`BEGIN` … `COMMIT` / `ROLLBACK`）、`SqliteProcessedEvents.ts`、`SqliteDraftInvoiceRepository.ts`。驅動用 starter `package.json` 已裝的那個。測試 `test/adapters/persistence/sqlite.test.ts`（用 `:memory:` 或暫存檔）：
      `SQLite repository round-trips S-991 and finds the active session on CP-A12-2`、
      `SQLite unit of work rolls back the outbox when the session save fails`、
-     `SQLite outbox returns pending rows in occurredAt order and markSent hides them`、
+     `SQLite outbox returns pending rows in occurredAt order and markPublished hides them`、
      `Outbox relay over SQLite publishes each envelope exactly once across two runs`.
    - Python：`src/adapters/persistence/sqlite/db.py`（stdlib `sqlite3`）、`charging_session_repository.py`、`work_order_repository.py`、`outbox.py`、`unit_of_work.py`、`processed_events.py`、`draft_invoice_repository.py`；測試 `tests/adapters/persistence/test_sqlite.py`。
 3. **（15 分）** 把 Day 5 的應用層測試**用 SQLite 實作再跑一次**（參數化：同一組測試跑 in-memory 與 SQLite）。這是六角架構的驗收：處理器不改、兩種 adapter 都綠。
-4. **（15 分）relay 程序**：`src/shared/outbox-relay` 加一個可以輪詢的入口（`relayForever(intervalMs)` 或 CLI `npm run relay` / `python -m src.relay`）；`main` 啟動時一併啟動（或另開一個程序，你決定，寫進 README）。
+4. **（15 分）relay 程序**：`src/shared/OutboxRelay` 加一個可以輪詢的入口（`relayForever(intervalMs)` 或 CLI `npm run relay` / `python -m src.relay`）；`main` 啟動時一併啟動（或另開一個程序，你決定，寫進 README）。
 5. **（10 分，選配）Postgres**：repo 根目錄 `docker compose up -d`（`docker-compose.yml` 只有 Postgres）；`DATABASE_URL=postgres://...` 時切換到 `src/adapters/persistence/postgres/`。同一套測試加 `describe.skipIf(!process.env.DATABASE_URL)`（Python：`pytest.mark.skipif`）。沒 Docker 就跳過，不影響今天的 DoD。
 
 ### 貼給 Claude Code 的提示
@@ -179,7 +179,7 @@ Day 6 Block 2。我要把 ChargingSessionRepository、WorkOrderRepository、Outb
    docker run --rm -p 3000:3000 -v evops-data:/data evops-mvp
    ```
    沒有 Docker：直接 `npm run start` / `python -m src.main`，E2E 一樣能跑；`README-mvp.md` 寫兩種。
-2. **（40 分）E2E**：讀 `scripts/e2e/README.md`，劇本檔在 `scripts/e2e/afternoon.*`（名稱以實際為準）。它會依序打：
+2. **（40 分）E2E**：讀 `scripts/e2e/e2e.md`，驅動程式是 `scripts/e2e/run.mjs` / `run.py`（原版直接呼叫 solutions 的 in-memory 應用服務；今天你要把它改成打自己的 HTTP API）。它會依序打：
    | 時間 | 動作（透過 API 或模擬器） | 斷言 |
    |---|---|---|
    | 14:02 | Parking stub 發 `parking.vehicle_entered.v1`（`ABC-1234`, `SITE-TPE-01`） | 200，Charging 不受影響 |
@@ -195,7 +195,7 @@ Day 6 Block 2。我要把 ChargingSessionRepository、WorkOrderRepository、Outb
    | 18:18 | `GET /work-orders?chargerId=CP-A12` | `WO-2208` 指派 `TECH-HAO`；relay 重跑 → `ops.work_order.opened.v1` 只發一次 |
    ```bash
    # API 跑著（本機或 Docker），repo 根目錄：
-   E2E_BASE_URL=http://localhost:3000 node scripts/e2e/run.js      # 或 python scripts/e2e/run.py
+   node scripts/e2e/run.mjs      # 或 python scripts/e2e/run.py（原版打 solutions 的 in-memory stack；你要改成打自己的 HTTP API）
    ```
    失敗就修 adapter；**不要為了 E2E 改領域層**（要改就記下來，那是昨天的 bug）。輸出貼進 `e2e-log.md`。
 3. **（20 分）** `/ship`：走上線清單。它會問日誌（每行有 `correlationId`？）、健康檢查（`GET /health`）、設定（環境變數）、失敗模式（relay 掛了會怎樣）。能補的補，不能補的寫進「已知限制」。
@@ -254,7 +254,7 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 
 ### 交付物自評
 - [ ] HTTP API 六條路由 + `/ocpp/{chargerId}`；R1 拒絕回應碼一致
-- [ ] ACL 測試全綠；`grep -r "StatusNotification\|StartTransaction\|MeterValues\|meterStart" src/` 只命中 `src/adapters/ocpp-acl/`
+- [ ] ACL 測試全綠；`grep -r "StatusNotification\|StartTransaction\|MeterValues\|meterStart" src/` 只命中 `src/adapters/ocpp/`
 - [ ] SQLite repository ×2、Outbox、UoW、冪等表、草稿帳單表；rollback 測試綠；Day 5 應用層測試在 SQLite 上綠
 - [ ] `Dockerfile` 可 build（或 README 明列替代）；`docker compose up -d` Postgres 為選配
 - [ ] `scripts/e2e` 全過，`e2e-log.md` 有輸出
@@ -267,7 +267,7 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 
 今天是 Day 6。請對照 docs/rubric.md 的 Day 6 DoD：
 1. 跑 starter/<lang> 全部測試，貼摘要。
-2. grep src/ 內的 OCPP 字眼（StatusNotification、StartTransaction、StopTransaction、MeterValues、meterStart、meterStop、errorCode），列出不在 src/adapters/ocpp-acl/ 的命中。
+2. grep src/ 內的 OCPP 字眼（StatusNotification、StartTransaction、StopTransaction、MeterValues、meterStart、meterStop、errorCode），列出不在 src/adapters/ocpp/ 的命中。
 3. git diff 今天對 src/*/domain/ 與 src/charging/application/ 的改動行數；非零的話問我每一處為什麼。
 4. 檢查 workshop/day6/README-mvp.md 七個小節與 e2e-log.md 是否有實際輸出。
 每項回「過 / 不過 + 一句理由」；不過的給一個問題。最後給「下一個最小步驟」，以及明天 PR 前我該先把哪三個檔案再讀一次。

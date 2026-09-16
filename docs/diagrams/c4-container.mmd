@@ -1,0 +1,49 @@
+%% C4 Level 2 — Container — EV Charge Ops（MVP1）
+%% 關鍵：site node 與 HQ node 是兩個邊界，中間只有整合事件（Outbox relay → bus）。
+%% MVP1 實際可在同一台筆電、甚至同一程序；圖畫的是設計意圖（斷線可獨立）。
+C4Container
+  title Container — EV Charge Ops（MVP1：場站節點 + 總部節點）
+
+  Person(driver, "車主", "")
+  Person(azhong, "阿忠 值班長", "")
+  Person(vicky, "Vicky 總部調度", "")
+  Person(laochen, "老陳 帳務", "")
+  System_Ext(charger, "充電樁 CP-A12 / scripts/ocpp-sim", "OCPP 1.6J over WebSocket")
+  System_Ext(parking, "既有停車場系統", "MVP1：事件 stub")
+
+  Container_Boundary(site, "場站節點 SITE-TPE-01（總部斷線可獨立運作）") {
+    Container(ocpp, "OCPP 端點 + ACL", "Node ws / Python websockets；charging/acl", "接樁；翻譯為 StartCharging / ReportMeterValue / StopCharging / ReportFault；transactionId 5567 ↔ S-991")
+    Container(siteapi, "場站 API + Charging 應用層", "Fastify / FastAPI；src/app", "命令處理器（R1–R4）、人工放行 stub（R6）、看板查詢")
+    ContainerDb(sitedb, "場站 DB", "SQLite（預設）或 Postgres", "charging_sessions、outbox、acl_mapping、work_order 副本")
+    Container(relay, "Outbox relay", "同程序定時迴圈", "讀 outbox 未送事件 → 發布；斷線時重試（至少一次）")
+  }
+
+  Container_Boundary(hq, "總部節點 HQ") {
+    Container(bus, "事件匯流排", "MVP1：程序內 in-memory；Sprint 2：broker", "整合事件 v1（信封：eventId / type / version / occurredAt / …）")
+    Container(assetops, "AssetOps + Process Manager", "同語言；src/assetops, src/app/FaultToWorkOrder", "charging.charger.faulted.v1 → WorkOrder（R5 去重 chargerId+faultCode）→ opened / closed")
+    Container(billing, "Billing 草稿消費者", "同語言；src/billing", "訂閱 started / completed；sessionId 去重；草稿 INV-778")
+    Container(dispatch, "Dispatch stub", "同語言", "訂閱 opened → 固定指派 TECH-HAO；不排路線、不預留備品")
+    ContainerDb(hqdb, "總部 DB", "SQLite 或 Postgres", "work_orders、draft_invoices、processed_events")
+    Container(hqapi, "總部 API", "Fastify / FastAPI", "工單查詢、關單（CloseWorkOrder）、草稿帳單查詢")
+  }
+
+  Rel(driver, charger, "插槍、刷卡", "")
+  Rel(charger, ocpp, "Boot / Status / Authorize / Start / Meter / Stop", "WebSocket")
+  Rel(ocpp, siteapi, "命令", "程序內呼叫")
+  Rel(siteapi, sitedb, "聚合 + outbox 同一交易（R8）", "SQL")
+  Rel(relay, sitedb, "讀未送事件、標記已送", "SQL")
+  Rel(relay, bus, "charging.session.started / completed.v1、charging.charger.faulted.v1", "HTTP 或程序內")
+  Rel(parking, bus, "parking.vehicle_entered.v1、parking.session.closed.v1（stub）", "")
+  Rel(bus, assetops, "charging.charger.faulted.v1", "訂閱")
+  Rel(bus, billing, "charging.session.*.v1、parking.session.closed.v1", "訂閱")
+  Rel(assetops, hqdb, "work_orders + outbox", "SQL")
+  Rel(billing, hqdb, "draft_invoices + processed_events", "SQL")
+  Rel(assetops, bus, "ops.work_order.opened / closed.v1", "經 outbox 發布")
+  Rel(bus, dispatch, "ops.work_order.opened.v1", "訂閱")
+  Rel(bus, siteapi, "ops.work_order.opened / closed.v1（看板副本、恢復可售）", "訂閱")
+  Rel(azhong, siteapi, "看板、人工放行", "HTTP")
+  Rel(vicky, hqapi, "工單、關單", "HTTP")
+  Rel(laochen, hqapi, "草稿帳單", "HTTP")
+  Rel(hqapi, hqdb, "查詢 / 關單", "SQL")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

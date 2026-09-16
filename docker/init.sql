@@ -48,3 +48,13 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 
 CREATE INDEX IF NOT EXISTS outbox_unpublished ON outbox (occurred_at) WHERE published_at IS NULL;
+
+-- Consumer-side idempotency on eventId (the broker delivers at least once). Business dedup (R5:
+-- chargerId + faultCode while open) is a different thing and lives in the aggregate/repository.
+-- A consumer inserts here in the SAME transaction as its own writes; a conflict means "already done".
+CREATE TABLE IF NOT EXISTS processed_events (
+  consumer      TEXT NOT NULL,                    -- 'assetops.fault_process_manager' | 'billing.draft'
+  event_id      UUID NOT NULL,
+  processed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consumer, event_id)
+);

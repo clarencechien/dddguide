@@ -81,7 +81,7 @@ grep -rnE "transactionId|meterStart|meterStop|StatusNotification|StopTransaction
 
 | 嚴重度 | 位置 | 問題 | 為什麼 | 修法方向 |
 |---|---|---|---|---|
-| 🔴 | contracts/charging.session.completed.v1.json | payload 有 `transactionId`、`meterStop` | OCPP 欄位外洩到整合事件；§1.4 ACL、§1.8 必要欄位 | 改 `sessionId`、`energyWh`；OCPP 名詞止於 ACL |
+| 🔴 | contracts/charging.session.completed.v1.schema.json | payload 有 `transactionId`、`meterStop` | OCPP 欄位外洩到整合事件；§1.4 ACL、§1.8 必要欄位 | 改 `sessionId`、`energyWh`；OCPP 名詞止於 ACL |
 | 🔴 | src/app/stop-charging.ts:30 | `bus.publish()` 在 `repo.save()` 之前 | R8：交易失敗事件已出去 | 同交易寫 outbox，relay 另外發 |
 | 🟠 | src/billing/consumer.ts | 沒有 `sessionId` 去重 | 至少一次投遞會重複建草稿帳單；§1.8 去重鍵 | 用 `processed_events(sessionId)` 或 upsert |
 | 🟡 | contracts/*.json | 缺 `causationId` | 追蹤斷鏈；eda.md 信封段 | 補欄位 |
@@ -117,4 +117,4 @@ grep -rnE "transactionId|meterStart|meterStop|StatusNotification|StopTransaction
 >
 > 助教：對。但你的 schema payload 有 `meterStop: 12500`——那是 OCPP 的話，Billing 不該懂。老陳要的是 `energyWh: 12400`。另外 `connectorId: 2` 是整數，契約要 `"CP-A12-2"`。兩個都是 🔴。
 >
-> 下一個最小步驟：改 `contracts/charging.session.completed.v1.json` 這兩個欄位，補一份 `S-991` 的範例 JSON，然後跑消費者測試。
+> 下一個最小步驟：改 `contracts/charging.session.completed.v1.schema.json` 這兩個欄位，補一份 `S-991` 的範例 JSON，然後跑消費者測試。

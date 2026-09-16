@@ -20,11 +20,18 @@ class FaultProcessManager:
         self._dispatch = dispatch
         self._outbox = outbox
         self._next_work_order_id = next_work_order_id
+        # Technical idempotency: the broker may deliver the SAME event_id twice (at-least-once).
+        # That is different from R5, where two DIFFERENT reports of the same fault arrive.
+        # Day 6: this set becomes a processed_events table written in the same transaction.
+        self._processed_event_ids: set[str] = set()
 
     def subscribe(self, bus: InMemoryEventBus) -> None:
         bus.subscribe("charging.charger.faulted.v1", self.on_charger_faulted)
 
-    def on_charger_faulted(self, event: IntegrationEvent) -> WorkOrder:
+    def on_charger_faulted(self, event: IntegrationEvent) -> WorkOrder | None:
+        if event.event_id in self._processed_event_ids:
+            return None  # redelivery: already handled
+        self._processed_event_ids.add(event.event_id)
         p = event.payload
         charger_id, fault_code, occurred_at = p["chargerId"], p["faultCode"], p["occurredAt"]
         ids = (event.correlation_id, event.event_id)

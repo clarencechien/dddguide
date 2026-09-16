@@ -44,8 +44,8 @@ Billing 草稿消費者對重送冪等，`ChargerFaulted` 會自動變成一張�
 ### 步驟
 1. **（15 分，不開 Claude）** 在 `event-flow.md` 填處理器表：每個命令載入哪個聚合、寫哪些事件、交易邊界在哪。特別想 `StartCharging`：R1 需要 `findActiveByConnector`，R2 需要授權——授權從哪來？（一個 `AuthorizationPort`，今天 in-memory：`TAG-MONTHLY-77` 有效、`TAG-VISITOR-03` 無效。）
 2. 建共用基礎（先寫型別，再 TDD）：
-   - Node：`src/shared/events.ts`（`Envelope { eventId, type, version, occurredAt, producer, correlationId, causationId, payload }`）、`src/shared/outbox.ts`（`OutboxPort { append(envelopes), pending(), markSent(ids) }` + `InMemoryOutbox`）、`src/shared/bus.ts`（`InMemoryBus { subscribe(type, handler), publish(envelope) }`）、`src/shared/unit-of-work.ts`（`InMemoryUnitOfWork.run(fn)`：fn 內所有寫入要嘛全成功要嘛全丟掉）。
-   - Python：`src/shared/events.py`、`outbox.py`、`bus.py`、`unit_of_work.py`，同構。
+   - Node：`src/shared/IntegrationEvent.ts`（信封 `{ eventId, type, version, occurredAt, producer, correlationId, causationId, payload }`）、`src/shared/Outbox.ts`（port `Outbox { add(event), pending(), markPublished(eventId) }` + `InMemoryOutbox`）、`src/shared/EventBus.ts`（`InMemoryEventBus { subscribe(type, handler), publish(event), redeliver(eventId) }`）。starter 沒有現成的 unit-of-work：由你在 `ChargingService` 裡決定「聚合存檔與 outbox 寫入要嘛一起成功、要嘛一起不發生」怎麼表達（Day 6 換成真交易）。
+   - Python：`src/shared/integration_event.py`、`outbox.py`（`add / pending / mark_published`）、`event_bus.py`（`subscribe / publish / redeliver`），同構。
 3. **（50 分）TDD 處理器**，測試檔 Node `test/charging/application/*.test.ts`、Python `tests/charging/application/test_*.py`：
    - `StartCharging writes the session and its events to the outbox in one transaction`：執行後 repository 有 `S-991`、outbox 有一筆 `type === "charging.session.started.v1"`，且 bus **收不到任何東西**（還沒 relay）。
    - `StartCharging rolls back the outbox when saving the session fails`：用一個會拋錯的 repository stub，執行後 outbox 為空。
@@ -85,7 +85,7 @@ Day 5 Block 1。我要用 TDD 做 StartCharging 命令處理器，要求：同�
 - **Python 循環 import**（domain ↔ application）→ application import domain，domain 永遠不 import application。
 
 ### 產出
-- 四個處理器 + `src/shared/{events,outbox,bus,unit-of-work}` 測試全綠；bus 在此階段收不到任何事件。
+- 四個處理器 + `src/shared/{IntegrationEvent,Outbox,EventBus}` 測試全綠；bus 在此階段收不到任何事件。
 - `event-flow.md`：處理器表、Outbox sequence 圖。
 
 ---
@@ -96,12 +96,12 @@ Day 5 Block 1。我要用 TDD 做 StartCharging 命令處理器，要求：同�
 `contracts/` 有七個事件的 JSON Schema 與範例；Outbox relay 把 pending 信封送到 bus；Billing 消費者收到 `charging.session.completed.v1` 產一張草稿帳單，重送三次只有一張。
 
 ### 步驟
-1. **（25 分）契約**。每個事件一個檔：`contracts/charging.session.started.v1.json`、`charging.session.completed.v1.json`、`charging.charger.faulted.v1.json`、`ops.work_order.opened.v1.json`、`ops.work_order.closed.v1.json`、`parking.vehicle_entered.v1.json`、`parking.session.closed.v1.json`；範例在 `contracts/examples/<type>.json`。Schema 內容：
+1. **（25 分）契約**。每個事件一個 Schema 檔：`contracts/charging.session.started.v1.schema.json`、`charging.session.completed.v1.schema.json`、`charging.charger.faulted.v1.schema.json`、`ops.work_order.opened.v1.schema.json`、`ops.work_order.closed.v1.schema.json`、`parking.vehicle_entered.v1.schema.json`、`parking.session.closed.v1.schema.json`；範例在 `contracts/examples/<type>.json`。Schema 內容：
    - 頂層是信封（八個欄位皆 `required`；`type` 用 `const`；`version` 用 `const: 1`）。
    - `payload` 依 §1.8 必要欄位；`energyWh` 是 `integer` `minimum 0`；`occurredAt` / `startedAt` / `endedAt` 是 `format: date-time`；`stopReason` 是 `enum`（你決定值，例如 `Local | Remote | EVDisconnected | PowerLoss | Other`）；`connectorId?` 在 faulted 裡是可選。
    - 如果 `contracts/` 已有骨架，補齊而非覆蓋；有差異寫進 `event-flow.md`。
-2. **（15 分）** 寫一個測試驗證範例對 Schema：Node `test/contracts/schemas.test.ts`（`ajv`）；Python `tests/contracts/test_schemas.py`（`jsonschema`）——`every example in contracts/examples validates against its schema`。再加一個：`StopCharging output validates against charging.session.completed.v1`（B1 的處理器產的信封直接丟給 Schema）。
-3. **（15 分）Outbox relay**：`src/shared/outbox-relay.ts`（Python `outbox_relay.py`）：`relayOnce()` 讀 `pending()` → 逐筆 `bus.publish` → `markSent`。測試 `Outbox relay publishes pending envelopes once and marks them sent`（跑兩次 relay，bus 只收到一次）。這條就是 R8 的完整版。
+2. **（15 分）** repo 已附 `node contracts/validate.mjs`（零依賴，驗所有 `contracts/examples/*.json`）；先跑它。然後把驗證納入你的測試套件：Node `test/contracts/schemas.test.ts`（`ajv`）；Python `tests/contracts/test_schemas.py`（`jsonschema`）——`every example in contracts/examples validates against its schema`。再加一個：`StopCharging output validates against charging.session.completed.v1`（B1 的處理器產的信封直接丟給 Schema）。
+3. **（15 分）Outbox relay**：`src/shared/OutboxRelay.ts`（Python `outbox_relay.py`）：`publishPending()` 讀 `pending()` → 逐筆 `bus.publish` → `markPublished`。測試 `Outbox relay publishes pending envelopes once and marks them sent`（跑兩次 relay，bus 只收到一次）。這條就是 R8 的完整版。
 4. **（30 分）Billing 消費者（TDD）**：
    - `src/billing/DraftInvoice.ts`（最小：`invoiceId`、`sessionId`、`energyWh`、`amount`（先用固定單價，例如 6 元/kWh → `12.4 kWh` = 74.4）、`status: Draft`）；`src/billing/DraftInvoiceConsumer.ts`（`handle(envelope)`）；`src/billing/ProcessedEvents.ts`（去重表，in-memory）。Python 同構 snake_case。
    - 測試 `test/billing/DraftInvoiceConsumer.test.ts` / `tests/billing/test_draft_invoice_consumer.py`：
@@ -109,7 +109,7 @@ Day 5 Block 1。我要用 TDD 做 StartCharging 命令處理器，要求：同�
      - `Billing consumer is idempotent on sessionId`：同一信封 `handle` 三次 → 一張。
      - `Billing consumer never calls back into Charging`：消費者的建構子只接受 `InvoiceRepository` 與 `ProcessedEvents`，沒有 `ChargingSessionRepository`（Customer-Supplier；帳務不得回呼凍結會話）。
      - `R7 issued invoice amount cannot change; correction is an InvoiceAdjusted event`（草稿 → 開立後 `amount` 不可改，`adjust()` 記錄新事件）。這條是 R7 的最小版本。
-5. **（5 分）** 把 relay + consumer 串成一條端到端的 in-memory 測試：`StopCharging` → `relayOnce()` → Billing 有草稿帳單。
+5. **（5 分）** 把 relay + consumer 串成一條端到端的 in-memory 測試：`StopCharging` → `publishPending()` → Billing 有草稿帳單。
 
 ### 貼給 Claude Code 的提示
 ```
@@ -139,13 +139,13 @@ Day 5 Block 2。我要 TDD Billing 草稿消費者：訂閱 charging.session.com
 ### 常見卡點
 - **Schema 寫成只有 payload** → 消費者收到的是信封；Schema 頂層要是信封。
 - **`ajv` / `jsonschema` 對 `format: date-time` 沒驗** → Node 要裝 `ajv-formats`；Python 要 `jsonschema[format]` 或自己用 `FormatChecker`。starter 若已裝就用。
-- **relay 跑兩次 bus 收到兩次** → `markSent` 沒生效或 `pending()` 沒過濾。
+- **relay 跑兩次 bus 收到兩次** → `markPublished` 沒生效或 `pending()` 沒過濾。
 - **Billing 想去查 Charging 的會話狀態** → 不行。它需要的全在 `payload` 裡；不在就是契約缺欄位（回去改 Schema 並升版思考）。
 - **金額計算放進聚合還是消費者** → 草稿帳單是 Billing 的聚合（`DraftInvoice`），消費者只編排；金額在聚合內算。
 
 ### 產出
 - `contracts/*.json` + `contracts/examples/*.json` 七組；Schema 驗證測試綠。
-- `src/shared/outbox-relay`、`src/billing/**` 測試全綠；端到端 in-memory 測試綠。
+- `src/shared/OutboxRelay`、`src/billing/**` 測試全綠；端到端 in-memory 測試綠。
 - `event-flow.md`：契約表（事件、Schema 檔、範例檔、去重鍵、消費者）、冪等做法。
 
 ---
@@ -250,7 +250,7 @@ Day 5 Block 3 尾聲。請直接讀 starter/<lang>/src/assetops/、src/charging/
 
 今天是 Day 5。請對照 docs/rubric.md 的 Day 5 DoD：
 1. 跑 starter/<lang> 測試，貼摘要；列出測試名並標出對應的規則 / 事件。
-2. grep src/ 內所有 publish( 的呼叫點：只允許出現在 src/shared/outbox-relay；其他地方列出檔名行號。
+2. grep src/ 內所有 publish( 的呼叫點：只允許出現在 src/shared/OutboxRelay；其他地方列出檔名行號。
 3. 檢查 contracts/ 七個 Schema 與範例是否齊全。
 4. 檢查 workshop/day5/event-flow.md 六個小節。
 每項回「過 / 不過 + 一句理由」；不過的給一個問題。最後給「下一個最小步驟」，以及明天 Day 6 前我該先確認哪些工具已安裝（依我的 LANG）。

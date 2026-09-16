@@ -1,0 +1,42 @@
+%% Fault Saga / Process Manager — 故障生命週期：申告 → 開單 → 派工 → 修復驗證 → 恢復可售
+%% 對齊 curriculum §1.2 與 R5。狀態屬於 WorkOrder 聚合（AssetOps）；派工狀態在 MVP1 由 Dispatch stub 觸發。
+%% 標 (S2) 的轉移是 Sprint 2 才實作；MVP1 走「捷徑」轉移。
+stateDiagram-v2
+  direction LR
+
+  [*] --> NoOpenWorkOrder : CP-A12 可售
+
+  state "無開放工單" as NoOpenWorkOrder
+  state "Open 已開立 — WO-2208 GroundFailure, openedAt 18:11, SLA 自 occurredAt 18:10 起算" as Open
+  state "Assigned 已派工 — 主責 TECH-HAO 18:18（MVP1 Dispatch stub 固定指派）" as Assigned
+  state "InProgress 維修中 — 阿豪到場，可離線回報" as InProgress
+  state "Verifying 修復驗證 — 樁回 Available 且 30 分鐘無再申告" as Verifying
+  state "Closed 已關閉 — outcome = Repaired / NoFault / Replaced" as Closed
+
+  NoOpenWorkOrder --> Open : charging.charger.faulted.v1 (CP-A12, GroundFailure) → WorkOrderOpened → ops.work_order.opened.v1
+
+  Open --> Open : 18:15 同樁同碼再申告 → R5 attachDuplicateReport，不開新單、不發 opened
+  Assigned --> Assigned : 同樁同碼再申告 → R5 附加
+  InProgress --> InProgress : 同樁同碼再申告 → R5 附加
+
+  Open --> Assigned : ops.work_order.opened.v1 → Dispatch AssignTechnician(TECH-HAO)
+  Assigned --> InProgress : 技術員到場 (S2)
+  InProgress --> Verifying : 樁 StatusNotification(Available) (S2)
+  Verifying --> InProgress : 30 分鐘內再 Faulted 同碼 (S2)
+  Verifying --> Closed : Vicky CloseWorkOrder(outcome) (S2)
+  Assigned --> Closed : MVP1 捷徑 — Vicky CloseWorkOrder(WO-2208, outcome=Repaired)
+  Open --> Closed : MVP1 捷徑 — outcome=NoFault（誤報）
+
+  Closed --> NoOpenWorkOrder : ops.work_order.closed.v1 → Charging 健康：CP-A12 恢復可售；SLA 結算
+  NoOpenWorkOrder --> Open : 關單後同碼再申告 = 新的根因工單 WO-2210
+
+  note right of Open
+    去重鍵（AssetOps）：chargerId + faultCode，
+    在「開放期間」= 非 Closed 的所有狀態。
+    傳輸層另有 eventId 去重（同一則事件重送）。
+  end note
+
+  note right of Closed
+    不對 Billing 發任何事件（Separate Ways）。
+    「技術員已出發」不是整合事件（curriculum §1.4）。
+  end note
