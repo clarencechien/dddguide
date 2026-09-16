@@ -40,7 +40,7 @@ def test_R5_second_report_8_seconds_later_is_attached_to_WO_2208_no_WO_2209():
     assert len(app.bus.delivered_of_type("ops.work_order.opened.v1")) == 1
 
 
-def test_redelivery_of_the_same_faulted_event_does_not_open_a_second_work_order():
+def test_redelivery_of_the_same_faulted_event_same_event_id_changes_nothing():
     app = build_app()
     report_ground_failure(app, T_1810)
     faulted = app.bus.delivered_of_type("charging.charger.faulted.v1")[0]
@@ -49,6 +49,7 @@ def test_redelivery_of_the_same_faulted_event_does_not_open_a_second_work_order(
     app.relay_all()
 
     assert len(app.work_orders.all()) == 1
+    assert app.work_orders.all()[0].duplicate_report_count == 0  # R5 counts reports, not broker retries
 
 
 def test_closing_publishes_work_order_closed_and_lets_the_same_fault_open_a_new_WO():

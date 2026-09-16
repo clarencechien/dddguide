@@ -60,10 +60,10 @@
    starter/node/src/charging/application/     ← 命令處理器（明天）
    starter/node/src/assetops/domain/          ← WorkOrder（今天 B3）
    starter/node/src/billing/                  ← 草稿帳單消費者（明天）
-   starter/node/src/shared/                   ← events（信封）、outbox、bus（明天）
+   starter/node/src/shared/                   ← DomainEvent、IntegrationEvent（信封）、Outbox、EventBus、Clock、Ids（明天用）
    starter/node/src/adapters/persistence/     ← in-memory（今天）、SQLite（Day 6）
    starter/node/src/adapters/http/            ← Fastify（Day 6）
-   starter/node/src/adapters/ocpp-acl/        ← OCPP 翻譯（Day 6）
+   starter/node/src/adapters/ocpp/        ← OCPP 翻譯（Day 6）
    starter/node/test/**                       ← 測試（Python：starter/python/tests/**，src 同構、檔名 snake_case）
    ```
 5. **（45 分）** 用 `/aggregate-review` 審你的模型草稿（還沒有程式碼，審的是 `model.md`）。它會問：不變條件在哪個方法守？聚合裡有沒有不該在的東西（樁韌體版本、費率）？事件是 push 進 `pendingEvents` 還是直接發？
@@ -112,8 +112,8 @@ Day 4 Block 1。我還沒寫程式碼，這是我的 workshop/day4/model.md（�
    - Node：`cd starter/node && npm install && npm test`
    - Python：`cd starter/python && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && pytest`
 2. **R1**（starter 已附紅燈；讀它，如果它的命名或資料不合你的 `rules.md`，先改測試）。測試檔：
-   - Node：`starter/node/test/charging/domain/ChargingSession.test.ts`
-   - Python：`starter/python/tests/charging/domain/test_charging_session.py`
+   - Node：`starter/node/test/charging/ChargingSession.test.ts`
+   - Python：`starter/python/tests/charging/test_charging_session.py`
    ```ts
    // vitest
    it("R1 occupied connector rejects a second start", () => {
@@ -191,7 +191,7 @@ Day 4 Block 2，語言見 workshop/.config。我要用紅綠重構做 R1「連�
    - `R5 open work order attaches duplicate fault instead of opening another`：`WorkOrder.open("WO-2208", "CP-A12", "E42", t("18:10"))` → `attachDuplicateReport(t("18:15"))` → `duplicateReports.length === 1`、事件 `DuplicateFaultAttached`、狀態仍 `Open`。
    - `R5 different fault code on same charger is not a duplicate`：這條其實是 port 查詢的行為——用 in-memory repository 測：存 `WO-2208(E42)` 後 `findOpenBy("CP-A12","E17")` 回 `null`。
    - `R5 closed work order does not absorb new reports`：關單後再 `attachDuplicateReport` → 你決定：拋錯或拒絕事件（與 B1 的 stop 一致）。
-   測試檔：Node `starter/node/test/assetops/domain/WorkOrder.test.ts`；Python `starter/python/tests/assetops/domain/test_work_order.py`。
+   測試檔：Node `starter/node/test/assetops/WorkOrder.test.ts`；Python `starter/python/tests/assetops/test_work_order.py`。
 4. **（25 分）Repository port + in-memory**：
    - Node：`src/charging/domain/ChargingSessionRepository.ts`（`interface { findById, findActiveByConnector, save }`）、`src/assetops/domain/WorkOrderRepository.ts`（`findById, findOpenBy, save`）；實作 `src/adapters/persistence/InMemoryChargingSessionRepository.ts`、`InMemoryWorkOrderRepository.ts`。
    - Python：`src/charging/domain/repository.py`（`Protocol`）、`src/assetops/domain/repository.py`；實作 `src/adapters/persistence/in_memory.py`。
@@ -284,7 +284,7 @@ Day 4 Block 3 尾聲。請直接讀 starter/<lang>/src/charging/domain/ 與 src/
 - B1 只寫狀態機與方法表，跳過 `/aggregate-review`。
 - B2 只做 R1、R2、R4（各一個測試），R3 明天補。
 - B3 只做 `WorkOrder.open` + `attachDuplicateReport` 一個測試；Repository port 只寫介面，in-memory 只實作 `ChargingSessionRepository`。
-- 卡住超過 20 分鐘就明說，`/tdd` 會指向 `solutions/day4/`；看完關掉自己重打。
+- 卡住超過 20 分鐘就明說，`/tdd` 會指向 `solutions/<lang>/src/charging/domain/`；看完關掉自己重打。
 
 ## 延伸
 

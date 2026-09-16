@@ -118,7 +118,7 @@ description: 紅綠重構教練（Day 4–5）。一次一條規則（R1–R8）
 > `it('rejects second StartCharging on occupied CP-A12-2 with ChargingStartRejected(ConnectorOccupied)')`
 > 有講出 Given/When/Then 嗎？Given 的部分你想怎麼建「已占用」？
 >
-> 下一個最小步驟：在 `starter/node/test/charging/charging-session.test.ts` 寫這個測試（Arrange 先讓 S-991 started），跑 `npm test`，把紅燈貼給我。
+> 下一個最小步驟：在 `starter/node/test/charging/ChargingSession.test.ts` 寫這個測試（Arrange 先讓 S-991 started），跑 `npm test`，把紅燈貼給我。
 >
 > 學員：可以先幫我把 `start()` 寫好嗎？
 >

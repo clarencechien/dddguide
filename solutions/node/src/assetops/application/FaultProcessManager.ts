@@ -24,6 +24,10 @@ export class FaultProcessManager {
   private readonly dispatch: DispatchService;
   private readonly outbox: Outbox;
   private readonly nextWorkOrderId: IdGenerator;
+  // Technical idempotency: the broker may deliver the SAME eventId twice (at-least-once).
+  // That is different from R5, where two DIFFERENT reports of the same fault arrive.
+  // Day 6: this set becomes a processed_events table written in the same transaction.
+  private readonly processedEventIds = new Set<string>();
 
   constructor(workOrders: WorkOrderRepository, dispatch: DispatchService, outbox: Outbox, nextWorkOrderId: IdGenerator) {
     this.workOrders = workOrders;
@@ -38,7 +42,9 @@ export class FaultProcessManager {
     });
   }
 
-  async onChargerFaulted(event: IntegrationEvent<FaultedPayload>): Promise<WorkOrder> {
+  async onChargerFaulted(event: IntegrationEvent<FaultedPayload>): Promise<WorkOrder | undefined> {
+    if (this.processedEventIds.has(event.eventId)) return undefined; // redelivery: already handled
+    this.processedEventIds.add(event.eventId);
     const { chargerId, connectorId, faultCode, occurredAt } = event.payload;
     const ids = { correlationId: event.correlationId, causationId: event.eventId };
 

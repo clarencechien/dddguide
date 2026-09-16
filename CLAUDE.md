@@ -21,7 +21,7 @@
 - **Day 1–2 不得先講 Bounded Context 名單**。學員要在 Day 3 自己推導出接近 `docs/curriculum.md` §1.4 的答案；你只能用「這兩個人用同一個詞是同一個意思嗎？」這類問題引導。
 - **Day 4–6 強制 TDD**：沒有紅燈測試，拒絕寫或改產品碼。順序永遠是：寫一個以規則命名的失敗測試 → 跑它確認紅 → 最小實作變綠 → 重構 → 再跑。一次只做一條規則（R1 → R2 → …）。
 - **通用語言**：用 `docs/domain/glossary.md` 的詞。學員寫「Transaction」你要問「你是指 ChargingSession 還是 OCPP 的 transaction？」。範例識別碼一律 `SITE-TPE-01`、`CP-A12`、`CP-A12-2`、`ABC-1234`、`P-441`、`S-991`、`TAG-MONTHLY-77`、`INV-778`、`WO-2208`、`TECH-HAO`、`12.4 kWh`。
-- **OCPP 不得洩入領域層**：`StatusNotification`、`StartTransaction`、`MeterValues`、`idTag` 的原始格式只能出現在 `src/adapters/ocpp-acl/`。領域層說的是 `ConnectorPluggedIn`、`ChargingStarted`、`EnergyMetered`、`ChargerFaulted`。看到 `src/charging/domain/` 出現 OCPP 字眼就指出來。
+- **OCPP 不得洩入領域層**：`StatusNotification`、`StartTransaction`、`MeterValues`、`idTag` 的原始格式只能出現在 `src/adapters/ocpp/`。領域層說的是 `ConnectorPluggedIn`、`ChargingStarted`、`EnergyMetered`、`ChargerFaulted`。看到 `src/charging/domain/` 出現 OCPP 字眼就指出來。
 - **聚合零 I/O**：`src/*/domain/` 不 import 資料庫、HTTP、時鐘、bus。時間由命令帶進來。
 - **事件先記錄、後拉取**（R8）：聚合把事件 push 進自己的 `pendingEvents`；應用服務在同一交易內把聚合狀態與事件寫入 Outbox；relay 才發布到 bus。聚合或應用服務內直接 `bus.publish()` 一律擋下。
 - **帳務不得回呼凍結會話**（Customer-Supplier）；AssetOps 對 `ChargerFaulted` 是遵奉者（Conformist）。
@@ -54,7 +54,7 @@
 ## 專案版面速查
 - `docs/curriculum.md` 憲法；`docs/days/dayN.md` 每日教材；`docs/rubric.md` DoD；`docs/domain/` 領域入門、glossary、訪談腳本、OCPP 入門；`docs/references/` 方法論參考。
 - `starter/node`（TypeScript + vitest；`npm install && npm test`）、`starter/python`（pytest；`python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && pytest`）。
-  目錄：`src/charging/{domain,application}`、`src/assetops/domain`、`src/billing`、`src/shared/{events,outbox,bus}`、`src/adapters/{http,ocpp-acl,persistence}`；測試在 `starter/node/test/**`、`starter/python/tests/**`。
+  目錄：`src/charging/{domain,application}`、`src/assetops/domain`、`src/billing`、`src/shared/{DomainEvent,IntegrationEvent,Outbox,EventBus,Clock,Ids}`、`src/adapters/{http,ocpp,persistence}`；測試在 `starter/node/test/**`、`starter/python/tests/**`。
 - `contracts/` 整合事件 JSON Schema v1；`scripts/ocpp-sim/`、`scripts/e2e/`；`docker-compose.yml`（Postgres 選配）；`solutions/`（參考解）。
 - 學員交付物：`workshop/dayN/`（範本在 `workshop/dayN/TEMPLATE.md`）。
 

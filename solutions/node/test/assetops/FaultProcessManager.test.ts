@@ -39,7 +39,7 @@ describe('FaultProcessManager (Day 5 B3)', () => {
     expect(app.bus.deliveredOfType('ops.work_order.opened.v1')).toHaveLength(1);
   });
 
-  it('redelivery of the same faulted event does not open a second work order', async () => {
+  it('redelivery of the same faulted event (same eventId) changes nothing: no second WO, no duplicate report', async () => {
     const app = buildApp();
     await reportGroundFailure(app, T_1810);
     const faulted = app.bus.deliveredOfType('charging.charger.faulted.v1')[0];
@@ -48,6 +48,7 @@ describe('FaultProcessManager (Day 5 B3)', () => {
     await app.relayAll();
 
     expect(app.workOrders.all()).toHaveLength(1);
+    expect(app.workOrders.all()[0].duplicateReportCount).toBe(0); // R5 counts reports, not broker retries
   });
 
   it('closing the work order publishes ops.work_order.closed.v1 and lets the same fault open a new WO', async () => {

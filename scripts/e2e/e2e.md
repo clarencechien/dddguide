@@ -23,7 +23,7 @@ python scripts/e2e/run.py     # 用 solutions/python（不用安裝任何套件�
 | 14:33 | 值班長人工放行（**R6**，HQ 離線） | P-441 **Released (Manual)** | S-991 Completed | INV-778 Draft | — |
 | 18:10:00 | `StatusNotification Faulted GroundFailure` → relay | P-441 Released | 槍 CP-A12-2 Faulted（無進行中會話） | INV-778 Draft | **WO-2208** Assigned → TECH-HAO；`ops.work_order.opened.v1` ×1 |
 | 18:10:08 | 同樣的故障再報一次（**R5**）→ relay | P-441 Released | — | INV-778 Draft | 仍只有 WO-2208，duplicate reports = 1；opened ×1 |
-| 18:12 | broker 重送 `charging.charger.faulted.v1`（至少一次） | P-441 Released | — | INV-778 Draft | 仍只有 WO-2208 |
+| 18:12 | broker 重送**同一個** `charging.charger.faulted.v1`（同 `eventId`，至少一次） | P-441 Released | — | INV-778 Draft | 仍只有 WO-2208，duplicate reports **仍 = 1**（重送 ≠ 再申告） |
 | 18:18 | 技術員回報修復驗證 → 關單 → relay | P-441 Released | 槍恢復可售 | INV-778 Draft | WO-2208 **Closed (Repaired)**；`ops.work_order.closed.v1` ×1 |
 
 最後一行的斷言（腳本會檢查，任何一項不符就 exit 1）：
