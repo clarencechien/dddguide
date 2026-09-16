@@ -1,0 +1,18 @@
+{
+  "name": "ev-charge-ops-solution",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference solution for Day 4-5 (EV Charge Ops workshop). Zero runtime dependencies.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dev": "node src/app.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

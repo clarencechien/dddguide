@@ -1,0 +1,18 @@
+{
+  "name": "ev-charge-ops-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Starter for the EV Charge Ops workshop (Day 4-7). Zero runtime dependencies.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dev": "node src/app.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

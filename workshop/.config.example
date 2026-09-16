@@ -1,0 +1,9 @@
+# 複製成 workshop/.config，Claude Code 助教會讀這個檔決定你用哪個語言的 starter。
+# Copy to workshop/.config. The TA reads it to pick your starter runtime.
+#
+# 二選一（uncomment exactly one）：
+LANG=node
+# LANG=python
+
+# 選填：你的分支名（curriculum §2：workshop/<你的名字>）
+# BRANCH=workshop/clarence
