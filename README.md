@@ -80,6 +80,8 @@ Day 4–6 沒有紅燈不寫產品碼、通用語言優先、OCPP 的字不進 d
 讀 [`docs/instructor.md`](docs/instructor.md)。主控台右上角切到「講師模式」會多出講師提示。
 如果只有五天，砍法在講師手冊；如果要換領域，改 `docs/curriculum.md` §1 再改 `docs/domain/`，其餘結構可沿用。
 
-## 備註
+## 授權
 
-現場費率、電業契約與 OCPP 細節以你們的實際情況為準，本 repo 的數字只是例子。授權條款由 repo 擁有者決定（尚未加入 LICENSE 檔）。
+[CC BY-NC-ND 4.0](LICENSE.md)：可自由分享（需標示作者與原始連結），非商業使用；收費開課、改作散布、併入其他產品請先取得書面授權。
+學員在自己的 fork 或本機修改 `starter/`、`workshop/` 完成課程不受此限。
+現場費率、電業契約與 OCPP 細節以你們的實際情況為準，本 repo 的數字只是例子。
