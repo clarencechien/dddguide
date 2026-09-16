@@ -207,7 +207,7 @@ MVP1 只做契約與 stub：
 | Day 4：R1 的擺法（聚合內 vs 應用層 + repo 查詢） | 測試檔案怎麼分目錄 |
 | Day 5：拒絕用事件不用例外；in-memory bus 而非 broker | 用 vitest 還是 jest（除非有人反對） |
 | Day 6：SQLite 預設、Postgres 選配；Outbox relay 同程序 | Fastify 的 plugin 順序 |
-| Day 7：重複申告是否發事件（R5 留下的問題卡） | 重構時改的類別名 |
+| Day 7：`DuplicateFaultReported` 是否要對外成為整合事件（R5 留下的問題卡） | 重構時改的類別名 |
 
 判斷法：**這個決定如果改，會不會有人要改超過一個目錄的程式碼、或要重新跟利害關係人談？** 會 → ADR。
 

@@ -20,8 +20,8 @@
 在我們的架構裡，**CSMS 端點跑在場站節點**（site node），不在總部——因為場站要在總部斷線時繼續充電（curriculum §1.1）。Charging context 的 ACL 就是這個端點後面的第一層。
 
 ```
-CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ──▶  Charging 聚合
-（scripts/ocpp-sim 扮演 CP-A12）
+CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL（adapters/ocpp/OcppAcl）──▶  ChargingService  ──▶  ChargingSession
+（scripts/ocpp-sim 扮演 CP-A12；工作坊裡它用 HTTP POST 把同樣的 frame 打到 /ocpp/CP-A12，省掉 WebSocket 生命週期）
 ```
 
 ### 1.1 版本
@@ -99,13 +99,15 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 
 ```json
 [2, "s-88", "StatusNotification", {
-  "connectorId": 0,
+  "connectorId": 2,
   "status": "Faulted",
   "errorCode": "GroundFailure",
-  "vendorErrorCode": "GF-03",
-  "timestamp": "2026-09-16T18:10:00+08:00"
+  "info": "RCD trip",
+  "timestamp": "2025-05-20T18:10:00+08:00"
 }]
 ```
+
+模擬器對 `connectorId: 2` 報故障（所以 `ChargerFaulted.connectorId = "CP-A12-2"`）；真實樁常常對 `connectorId: 0`（整台樁）報，ACL 要把 0 翻成 `undefined`。模擬器會在 8 秒後（18:10:08）把同一則再送一次——那是 R5 的測試素材。
 
 **1.6J 連接器狀態列舉（`status`）**：
 
@@ -142,15 +144,15 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 [2, "t-1", "StartTransaction", {
   "connectorId": 2,
   "idTag": "TAG-MONTHLY-77",
-  "meterStart": 105200,
-  "timestamp": "2026-09-16T06:04:10+08:00"
+  "meterStart": 0,
+  "timestamp": "2025-05-20T14:04:00+08:00"
 }]
-[3, "t-1", { "transactionId": 5567, "idTagInfo": { "status": "Accepted" } }]
+[3, "t-1", { "transactionId": 991, "idTagInfo": { "status": "Accepted" } }]
 ```
 
-- `meterStart` 單位 **Wh**。
-- `transactionId` 是 **CSMS 發給樁的**整數。它**不是** `S-991`。`S-991` 是 Charging 領域的 `ChargingSession` 識別碼，ACL 要維護 `transactionId 5567 ↔ S-991` 的對應表。這個對應表就是 ACL 存在的理由之一。
-- 這則訊息會觸發命令 `StartCharging`；成功時聚合記錄 `ChargingStarted`，被 R1 / R2 擋下時記錄 `ChargingStartRejected`。**ACL 對 `ChargingStartRejected` 的翻譯是回 `idTagInfo.status = "Invalid"`（或 `ConcurrentTx`），讓樁不要送電。**
+- `meterStart` 單位 **Wh**。模擬器為了好算從 0 起跳；真實電表會是像 105200 這種累計值，ACL 不在乎。
+- `transactionId` 是 **CSMS 發給樁的**整數。它**不是** `S-991`。`S-991` 是 Charging 領域的 `ChargingSession` 識別碼；參考解的 ACL 從 991 起發號並維護 `transactionId 991 ↔ S-991` 的對應。這個對應就是 ACL 存在的理由之一。
+- 這則訊息會觸發命令 `StartCharging`；成功時聚合記錄 `ChargingStarted`，被 R1 / R2 擋下時記錄 `ChargingStartRejected`。**ACL 對拒絕的翻譯：`ConnectorOccupied` → `idTagInfo.status = "Blocked"`；`Unauthorized` → `"Invalid"`**，讓樁不要送電。
 
 ### 2.6 MeterValues（樁 → CSMS）
 
@@ -159,11 +161,11 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 ```json
 [2, "m-9", "MeterValues", {
   "connectorId": 2,
-  "transactionId": 5567,
+  "transactionId": 991,
   "meterValue": [{
-    "timestamp": "2026-09-16T06:10:00+08:00",
+    "timestamp": "2025-05-20T14:13:00+08:00",
     "sampledValue": [
-      { "value": "106700", "measurand": "Energy.Active.Import.Register", "unit": "Wh" },
+      { "value": "4000", "measurand": "Energy.Active.Import.Register", "unit": "Wh" },
       { "value": "6.8", "measurand": "Power.Active.Import", "unit": "kW" }
     ]
   }]
@@ -178,10 +180,10 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 
 ```json
 [2, "t-2", "StopTransaction", {
-  "transactionId": 5567,
+  "transactionId": 991,
   "idTag": "TAG-MONTHLY-77",
-  "meterStop": 117600,
-  "timestamp": "2026-09-16T06:31:00+08:00",
+  "meterStop": 12400,
+  "timestamp": "2025-05-20T14:31:00+08:00",
   "reason": "Local"
 }]
 [3, "t-2", { "idTagInfo": { "status": "Accepted" } }]
@@ -189,14 +191,14 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 
 `reason` 列舉：`EmergencyStop`, `EVDisconnected`, `HardReset`, `Local`, `Other`, `PowerLoss`, `Reboot`, `Remote`, `SoftReset`, `UnlockCommand`, `DeAuthorized`。
 
-觸發命令 `StopCharging`；R4 說只有 Charging 狀態可以 Stop，成功記錄 `ChargingCompleted(energyWh = 117600 − 105200 = 12400, stopReason=Local)`。`stopReason` 這個欄位是**領域決定要保留 OCPP 的 reason 字串**，因為小美在乎「異常中止」。
+ACL 把它翻成**兩個**命令：先 `ReportMeterValue(meterStop)`（結束讀數也受 R3 約束），再 `StopCharging(stopReason=Local)`；R4 說只有 Charging 狀態可以 Stop，成功記錄 `ChargingCompleted(energyWh = 12400 − 0 = 12400, stopReason=Local)`。`stopReason` 這個欄位是**領域決定要保留 OCPP 的 reason 字串**，因為小美在乎「異常中止」。
 
 ### 2.8 RemoteStopTransaction（CSMS → 樁）
 
 唯一一則反向的。小美在營運後台按「遠端停止」時用。
 
 ```json
-[2, "r-5", "RemoteStopTransaction", { "transactionId": 5567 }]
+[2, "r-5", "RemoteStopTransaction", { "transactionId": 991 }]
 [3, "r-5", { "status": "Accepted" }]
 ```
 
@@ -209,14 +211,14 @@ CP-A12  ──WebSocket──▶  場站節點 /ocpp/CP-A12  ──▶  ACL  ─
 ```json
 [2, "te-1", "TransactionEvent", {
   "eventType": "Started",
-  "timestamp": "2026-09-16T06:04:10+08:00",
+  "timestamp": "2025-05-20T14:04:00+08:00",
   "triggerReason": "Authorized",
   "seqNo": 0,
-  "transactionInfo": { "transactionId": "tx-5567" },
+  "transactionInfo": { "transactionId": "tx-991" },
   "evse": { "id": 1, "connectorId": 2 },
   "idToken": { "idToken": "TAG-MONTHLY-77", "type": "ISO14443" },
-  "meterValue": [{ "timestamp": "2026-09-16T06:04:10+08:00",
-                   "sampledValue": [{ "value": 105200, "measurand": "Energy.Active.Import.Register" }] }]
+  "meterValue": [{ "timestamp": "2025-05-20T14:04:00+08:00",
+                   "sampledValue": [{ "value": 0, "measurand": "Energy.Active.Import.Register" }] }]
 }]
 ```
 
@@ -253,10 +255,10 @@ curriculum §1.4 明講：「OCPP → Charging：防腐層 ACL。`StatusNotifica
 | OCPP 訊息 | ACL 翻成的命令 | 成功事實（領域事件） | 拒絕事實 |
 |---|---|---|---|
 | `StatusNotification(status=Preparing)` | （查詢/記錄） | `ConnectorPluggedIn` | — |
-| `Authorize` + `StartTransaction` | `StartCharging(connectorId, idTag, meterStart)` | `ChargingStarted` | `ChargingStartRejected(reason=ConnectorOccupied \| Unauthorized)` |
-| `MeterValues` | `ReportMeterValue(sessionId, wh, at)` | `EnergyMetered` | `MeterValueRejected` |
-| `StopTransaction` | `StopCharging(sessionId, meterStop, reason)` | `ChargingCompleted(energyWh, stopReason)` | （R4：非 Charging 狀態拒絕） |
-| `StatusNotification(status=Faulted, errorCode=X)` | `ReportFault(chargerId, connectorId?, faultCode=X)` | `ChargerFaulted` | — |
+| `Authorize` + `StartTransaction` | `StartCharging(sessionId, connectorId, idTag, meterStartWh, at)` | `ChargingStarted` | `ChargingStartRejected(reason=ConnectorOccupied \| Unauthorized)` → 回樁 `Blocked` / `Invalid` |
+| `MeterValues` | `ReportMeterValue(sessionId, meterWh, at)` | `EnergyMetered` | `MeterValueRejected(reason=NotMonotonic \| NotCharging)` |
+| `StopTransaction` | `ReportMeterValue(meterStop)` 再 `StopCharging(sessionId, stopReason, at)` | `ChargingCompleted(energyWh, stopReason)` | （R4：非 Charging 狀態是呼叫端錯，throw） |
+| `StatusNotification(status=Faulted, errorCode=X)` | `ReportFault(chargerId, connectorId?, faultCode=X, at)` | `ChargerFaulted(stillEnergized)` | — |
 | `StatusNotification(status=Available)` 於工單期間 | （供 AssetOps 修復驗證參考） | — | — |
 | `Heartbeat` / `BootNotification` | （健康度、資產登記） | 不進 Charging 聚合 | — |
 | `RemoteStopTransaction` | 由應用層發給樁的**請求**；事實要等 `StopTransaction(reason=Remote)` | — | — |
@@ -278,13 +280,17 @@ Day 2 `/storm` 會糾正的錯誤，用 OCPP 舉例：
 
 ## 4. 模擬器 `scripts/ocpp-sim`
 
-工作坊不接真樁。Day 6 用的模擬器（Node 或 Python 版本）會：
+工作坊不接真樁。`scripts/ocpp-sim/sim.mjs` 與 `sim.py` 零依賴、行為相同：
 
-1. 以 WebSocket client 連到 `ws://localhost:<port>/ocpp/CP-A12`。
-2. 依劇本送訊息：`BootNotification` → `StatusNotification(Available)` → 14:04 `Preparing` → `Authorize(TAG-MONTHLY-77)` → `StartTransaction(meterStart=105200)` → 兩次 `MeterValues(106700, 110300)` → `StopTransaction(meterStop=117600, reason=Local)` → 18:10 `StatusNotification(Faulted, GroundFailure)` → 18:15 再一次同樣的 `Faulted`。
-3. 可以注入壞資料：倒退的 `MeterValues`（測 R3）、對占用中的連接器再送一次 `StartTransaction`（測 R1）、用 `TAG-UNKNOWN` 授權（測 R2）。
+```bash
+node scripts/ocpp-sim/sim.mjs                     # stdout：一行一個 CALL frame（NDJSON）
+node scripts/ocpp-sim/sim.mjs --pretty
+node scripts/ocpp-sim/sim.mjs --url http://localhost:3000/ocpp/CP-A12 --delay 200   # Day 6：逐筆 POST 到你的端點
+```
 
-在 Day 4–5 你甚至不需要模擬器：直接對聚合與應用服務下命令就能測完 R1–R5。模擬器只是 Day 6 讓 ACL 有東西可翻。
+訊息序列（10 則）：`BootNotification(serial CP-A12)` → `StatusNotification(connector 2, Available, 14:00)` → `Authorize(TAG-MONTHLY-77)` → `StartTransaction(connector 2, meterStart 0, 14:04)` → `MeterValues` × 3（4000 / 8000 / 12400 Wh @ 14:13 / 14:22 / 14:31）→ `StopTransaction(meterStop 12400, Local, 14:31)` → `StatusNotification(Faulted, GroundFailure, 18:10:00)` → 同一則 **8 秒後再報一次**（18:10:08，R5 素材）。
+
+`--url` 模式會讀 `StartTransaction` 回應裡的 `transactionId` 並自動帶入後續訊息。它**不會**送倒退的計量或第二張卡——那些（R1 的 `TAG-VISITOR-01`、R3 的 3900）在 Day 4–5 直接對聚合下命令就測完了；`scripts/e2e` 的劇本則自己補了 14:05 的第二張卡。模擬器只是 Day 6 讓 ACL 有東西可翻。
 
 ---
 
@@ -292,7 +298,7 @@ Day 2 `/storm` 會糾正的錯誤，用 OCPP 舉例：
 
 - **「OCPP 的 Transaction 就是 ChargingSession。」** 不是。前者是協定層交易（有 `transactionId`），後者是業務會話（`S-991`）。一個會話對一個交易是常態，但會話的生命週期由 Charging 決定（例如 Preparing 逾時可以取消會話，OCPP 根本沒有交易）。
 - **「把 OCPP JSON 直接丟到 broker 讓大家訂閱最省事。」** 這是 eda.md 的反模式第一名：所有下游都得懂 OCPP，版本一換全公司陪葬。
-- **「connectorId=0 是 bug。」** 不是，0 代表整台樁。`Faulted` 常常是 0。ACL 要把 `connectorId: 0` 翻成 `connectorId: null`（契約裡的 `connectorId?`）。
+- **「connectorId=0 是 bug。」** 不是，0 代表整台樁。真實樁的 `Faulted` 常常是 0。ACL 要把 `connectorId: 0` 翻成 `connectorId: undefined`（契約裡的 `connectorId?`）；模擬器報的是 2，兩種你的 ACL 測試都要有。
 - **「Authorize 回 Accepted 之後一定會有 StartTransaction。」** 不一定，車主可能刷了卡又走掉。這就是為什麼「刷卡」不等於「已授權開始」。
 
 ---
@@ -300,7 +306,7 @@ Day 2 `/storm` 會糾正的錯誤，用 OCPP 舉例：
 ## 自我檢查
 
 1. 樁與 CSMS 誰是 WebSocket 的 client？為什麼在我們的架構裡 CSMS 端點放在場站節點？
-2. `transactionId: 5567` 與 `S-991` 的關係是什麼？誰負責維護對應？
+2. `transactionId: 991` 與 `S-991` 的關係是什麼？誰負責維護對應？
 3. 收到 `RemoteStopTransaction` 的 `Accepted` 回應時，可以記錄 `ChargingCompleted` 嗎？為什麼？
 4. 寫出 `StatusNotification(status=Faulted, errorCode=GroundFailure, connectorId=0)` 被 ACL 翻譯後的命令與領域事件，包含欄位。
 5. 「`StatusNotification` 不是通用語言」的四個理由，請用自己的話各說一句。

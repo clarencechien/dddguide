@@ -108,8 +108,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - run: pip install -e ".[dev]"
+      - run: pip install -r requirements.txt
       - run: pytest -q
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node contracts/validate.mjs
 ```
 
 CI 綠是 PR 的前提，不是 review 的替代。
@@ -134,7 +141,7 @@ Day 6 的 `/ship` 清單：API 五個端點可打、SQLite 持久化、Outbox re
 
 ### 3.2 一個 PR 的 DoD
 - [ ] CI 綠。
-- [ ] PR 描述有：範圍（哪些規則）、ADR 連結、事件契約連結、怎麼驗證、已知限制。
+- [ ] PR 描述有：範圍（哪些規則）、ADR 連結、事件契約連結、怎麼驗證、已知限制；副本存 `workshop/day7/pr.md`。
 - [ ] `/review` 無 High severity finding。
 - [ ] `workshop/dayN/` 交付物齊（見 `docs/rubric.md`）。
 - [ ] 沒有 `console.log` / `print` 除錯殘留（日誌走 logger）。
@@ -155,33 +162,33 @@ Day 6 的 `/ship` 清單：API 五個端點可打、SQLite 持久化、Outbox re
 對應 ADR-0002。
 
 ## 決策
-- ADR-0001 五個 Bounded Context：workshop/day3/adr/0001-five-bounded-contexts.md
+- ADR-0001 五個 Bounded Context：workshop/day3/adr/0001-bounded-contexts.md
 - ADR-0002 MVP1 範圍：workshop/day3/adr/0002-mvp1-scope.md
-- ADR-0003 R1 在應用層 + repo 查詢保證：workshop/day3/adr/0003-r1-placement.md
+- ADR-0003 聚合身份 = 連接器，R1 / R2 在聚合內：workshop/day3/adr/0003-connector-scoped-aggregate.md
 
 ## 事件契約
-- contracts/charging.session.started.v1.json
-- contracts/charging.session.completed.v1.json
-- contracts/charging.charger.faulted.v1.json
-- contracts/ops.work_order.opened.v1.json
-去重鍵：Billing `sessionId`；AssetOps `chargerId + faultCode`。
+- contracts/charging.session.started.v1.schema.json
+- contracts/charging.session.completed.v1.schema.json
+- contracts/charging.charger.faulted.v1.schema.json
+- contracts/ops.work_order.opened.v1.schema.json / closed.v1.schema.json
+`node contracts/validate.mjs` 全過。去重鍵：Billing `sessionId`；AssetOps `chargerId + faultCode` + `eventId`。
 
 ## 怎麼驗證
 1. `cd starter/node && npm test` → 47 passed
-2. `npm run e2e` → 14:02 進場 … 18:18 派工 TECH-HAO ✓
-3. 斷線劇本：`HQ_DOWN=1 npm run e2e` → site 完成 S-991；恢復後 outbox 補送 3 則
+2. `node scripts/e2e/run.mjs` → 14:02 進場 … 18:18 WO-2208 Closed ✓（輸出在 workshop/day6/e2e-log.md）
+3. 斷線劇本：停掉 HQ 程序 → S-991 仍能 Start / Stop、P-441 人工放行；恢復後 `POST /relay` 補送 3 則
 
 ## 測試金字塔
 聚合 31 / 應用層與消費者 12 / adapter 3 / e2e 1
 
 ## 已知限制
-- 草稿帳單單一費率；跨時段計價在 Sprint 2（backlog #3）
-- Dispatch 固定指派 TECH-HAO
-- 重複申告不發事件（ADR-0004 待決）
+- 草稿帳單單一費率 8 元/kWh；跨時段計價在 Sprint 2（backlog #3）
+- DispatchService stub 固定指派 TECH-HAO
+- `DuplicateFaultReported` 不對外（ADR-0004 待決）
 
 ## Reviewer 請特別看
-- `src/app/FaultToWorkOrder.ts` 的 processed.add 是否在同一交易
-- `src/charging/acl/translate.ts` connectorId=0 的處理
+- `src/assetops/application/FaultProcessManager.ts` 的 processedEventIds 是否與工單同一交易
+- `src/adapters/ocpp/OcppAcl.ts` connectorId=0 的處理與 Blocked / Invalid 對應
 ```
 
 原則：**reviewer 應該能在 5 分鐘內從描述知道去哪裡看什麼**。「請看 diff」不是描述。
@@ -224,7 +231,7 @@ Day 6 的 `/ship` 清單：API 五個端點可打、SQLite 持久化、Outbox re
 
 ## 6. 帶回公司
 
-`/takeaway` 會從你的交付物產出「5 件事 + 30 天計畫 + 給主管的一頁」。挑選原則：
+`/takeaway` 會從你的交付物產出「5 件事 + 30 天計畫 + 給主管的一頁」，存成 `workshop/day7/takeaway.md`（產出後要自己改，不是照單全收）。挑選原則：
 
 | 帶回去的 | 條件 |
 |---|---|

@@ -60,17 +60,17 @@ SITE-TPE-01（場站 site）
 樁裡有一顆電表，OCPP 會定期回報「累計讀數」（不是「這段時間用了多少」）。
 
 ```
-14:04  插槍、授權成功 → 起始讀數 meterStart = 105,200 Wh
-14:10  MeterValues     → 106,700 Wh
-14:20  MeterValues     → 110,300 Wh
-14:31  結束            → meterStop  = 117,600 Wh
-                           energyWh  = 117,600 − 105,200 = 12,400 Wh = 12.4 kWh
+14:04  插槍、授權成功 → 起始讀數 meterStart = 0 Wh        （模擬器為了好算從 0 起跳）
+14:13  MeterValues     → 4,000 Wh
+14:22  MeterValues     → 8,000 Wh
+14:31  結束            → meterStop  = 12,400 Wh
+                           energyWh  = 12,400 − 0 = 12,400 Wh = 12.4 kWh
 ```
 
-三件事請記住：
+真實電表的讀數是累計的、不歸零：同一段會話可能是 105,200 → 117,600。**差值一樣是 12,400**，這就是為什麼領域只記「起始」與「最後」兩個讀數。三件事請記住：
 
 1. 讀數以 **Wh 整數** 傳輸（OCPP 慣例），顯示時才轉 kWh。所有事件欄位用 `energyWh`（curriculum §1.8）。
-2. 讀數應該**單調遞增**。倒退的讀數代表電表重啟、韌體 bug 或模擬器壞了——這就是規則 **R3**：拒絕並記錄 `MeterValueRejected`。
+2. 讀數應該**單調遞增**。倒退的讀數（4,000 之後來 3,900）代表電表重啟、韌體 bug 或模擬器壞了——這就是規則 **R3**：拒絕並記錄 `MeterValueRejected`。
 3. 一次會話的能量 = 最後讀數 − 起始讀數（**R4**），不是把中間所有 MeterValues 加總。
 
 ---
@@ -98,7 +98,8 @@ SITE-TPE-01（場站 site）
 | 14:03 | `ChargingBayOccupied` | Parking、Charging |
 | 14:04 | `ConnectorPluggedIn`（CP-A12-2） | Charging |
 | 14:04 | `ChargingStarted`（S-991, TAG-MONTHLY-77） | Charging、Billing 草稿 |
-| 14:10 / 14:20 | `EnergyMetered` | Charging、Billing |
+| 14:05 | `ChargingStartRejected`（TAG-VISITOR-01 想用同一把槍，reason=ConnectorOccupied） | Charging（R1） |
+| 14:13 / 14:22 | `EnergyMetered`（4000 / 8000 Wh） | Charging |
 | 14:31 | `ChargingCompleted`（energyWh=12400, stopReason=Local） | Charging、Billing |
 | 14:33 | `VehicleExited` | Parking、Billing |
 
@@ -177,13 +178,15 @@ Vicky 最常問的問題只有三個：「**哪座樁掛了？誰去修？備品
 curriculum §1.2：**申告 → 開單 → 派工 → 修復驗證 → 恢復可售**。
 
 ```
-18:10  CP-A12 自己回報 Faulted（GroundFailure）        → 申告   ChargerFaulted
-18:11  AssetOps 自動開 WO-2208                           → 開單   ops.work_order.opened.v1
-18:15  CP-A12 又回報一次同樣的 GroundFailure             → 重複申告，附加到 WO-2208（R5），不開第二張
-18:18  Dispatch 指派 TECH-HAO（MVP1 是 stub）            → 派工
-（隔天）阿豪到場更換模組、樁回報 Available、Vicky 驗證   → 修復驗證
-        WO-2208 關閉                                    → 恢復可售 ops.work_order.closed.v1
+18:10:00  CP-A12 自己回報 Faulted（GroundFailure）           → 申告   ChargerFaulted
+18:10:00  AssetOps 自動開 WO-2208                              → 開單   ops.work_order.opened.v1
+18:10:00  Dispatch 指派 TECH-HAO（MVP1 是 stub，立刻回覆）     → 派工
+18:10:08  CP-A12 又回報一次同樣的 GroundFailure                → 重複申告，附加到 WO-2208（R5），不開第二張
+18:12     broker 把 18:10:00 那則事件重送一次                   → 同一則事件，忽略（冪等），不是申告
+18:18     阿豪回報修復驗證 → WO-2208 關閉（Repaired）           → 修復驗證 → 恢復可售 ops.work_order.closed.v1
 ```
+
+（`scripts/e2e` 把「到場、換模組」壓縮成 8 分鐘；真實世界是隔天。）
 
 幾個工程上的重點：
 
@@ -225,21 +228,23 @@ curriculum §1.1 的粗體句：**場站在對總部連線中斷時，仍要能�
 
 **14:03**，車停進 3 號充電車位，車位感測器回報占用。看板上的車位變紅——但**這時候還沒有人在充電**，這是 curriculum 特別點名的耦合陷阱：「占用等同充電已開始」是錯的。
 
-**14:04**，車主把 `CP-A12-2` 的槍插上車，樁回報 Preparing。車主刷 `TAG-MONTHLY-77`，樁向場站的 OCPP 端點問「這張卡可以嗎」。場站本機白名單說可以，`S-991` 開始，起始讀數 105,200 Wh。Billing 收到 `charging.session.started.v1` 後開一張草稿。
+**14:04**，車主把 `CP-A12-2` 的槍插上車，樁回報 Preparing。車主刷 `TAG-MONTHLY-77`，樁向場站的 OCPP 端點問「這張卡可以嗎」。場站本機白名單說可以，`S-991` 開始，起始讀數 0 Wh。Billing 收到 `charging.session.started.v1` 後開一張草稿。
 
-**14:10、14:20**，兩筆 `EnergyMetered`。Billing 什麼都不做（「每次 MeterValue 都開發票」是另一個陷阱）。
+**14:05**，另一位車主拿 `TAG-VISITOR-01` 想在同一把槍上刷卡。`ChargingStartRejected(reason=ConnectorOccupied)`，樁回他 `Blocked`，`S-991` 一根毛都沒動（R1）。
 
-**14:31**，車主在 App 按停止。樁送出結束讀數 117,600 Wh。`ChargingCompleted(energyWh=12400, stopReason=Local)`。Billing 更新草稿：12.4 度 × 尖峰 8 元。
+**14:13、14:22**，兩筆 `EnergyMetered`（4,000、8,000 Wh）。Billing 什麼都不做（「每次 MeterValue 都開發票」是另一個陷阱）。
 
-**14:33**，車出閘門。`VehicleExited` → `parking.session.closed.v1(durationMin=31)`。Billing 把 `P-441`（月票 0 元）與 `S-991`（99.2 元）合併成 `INV-778`。
+**14:31**，車主在 App 按停止。樁送出結束讀數 12,400 Wh。`ChargingCompleted(energyWh=12400, stopReason=Local)`。Billing 更新草稿：12.4 度 × 尖峰 8 元 = 99.2 元。
 
-**18:10**，沒有車在充。`CP-A12` 突然回報 `Faulted / GroundFailure`。ACL 把它翻成 `ChargerFaulted(chargerId=CP-A12, faultCode=GroundFailure, stillEnergized=false)`。兩把槍在看板上變灰，停售。
+**14:33**，車出閘門——而且這時總部連不上。阿忠按人工放行（R6）：`ParkingManuallyReleased`、`VehicleExited(releaseMode=Manual)` → `parking.session.closed.v1(durationMin=31)` 先躺在場站的 Outbox 裡，連線恢復再送。Billing 之後把 `P-441`（月票 0 元）與 `S-991`（99.2 元）合併成 `INV-778`（合併本身是 Sprint 2）。
 
-**18:11**，AssetOps 收到 `charging.charger.faulted.v1`，開 `WO-2208`。阿忠**沒有打電話**——這是 To-Be；As-Is 他得打。
+**18:10:00**，沒有車在充。`CP-A12` 突然回報 `Faulted / GroundFailure`。ACL 把它翻成 `ChargerFaulted(chargerId=CP-A12, connectorId=CP-A12-2, faultCode=GroundFailure, stillEnergized=false)`。槍在看板上變灰，停售。AssetOps 收到 `charging.charger.faulted.v1`，開 `WO-2208`，Dispatch stub 立刻指派 `TECH-HAO`。阿忠**沒有打電話**——這是 To-Be；As-Is 他得打。
 
-**18:15**，`CP-A12` 又送一次一樣的故障。AssetOps 用去重鍵 `chargerId + faultCode` 比對，發現 `WO-2208` 還開著，把這次申告附加上去（R5）。
+**18:10:08**，`CP-A12` 又送一次一樣的故障。AssetOps 用去重鍵 `chargerId + faultCode` 比對，發現 `WO-2208` 還開著，把這次申告附加上去（R5）。
 
-**18:18**，Dispatch 把 `WO-2208` 指派給 `TECH-HAO`，備品「接地保護模組」標記預留。Vicky 的看板上多了一列。E2E 劇本到這裡結束。
+**18:12**，broker 把 18:10:00 那一則事件**原封不動重送**。AssetOps 認得那個 `eventId`，什麼都不做。重送不是申告。
+
+**18:18**，阿豪回報修復驗證，`WO-2208` 關閉（Repaired），`ops.work_order.closed.v1` 送出，`CP-A12` 恢復可售。E2E 劇本到這裡結束，斷言：一個會話 12,400 Wh、一張草稿、一張工單、一次重複申告。
 
 ---
 
@@ -256,5 +261,5 @@ curriculum §1.1 的粗體句：**場站在對總部連線中斷時，仍要能�
 1. 樁與槍的差別是什麼？為什麼「會話」掛在槍上、「故障」掛在樁上？
 2. `S-991` 的 `energyWh` 是怎麼算出來的？為什麼事件裡用 Wh 整數而不是 kWh 小數？
 3. 月票車 `ABC-1234` 的 `INV-778` 為什麼不是 0 元？停車費與電費分別來自哪個整合事件？
-4. 18:15 那次重複申告，系統應該做什麼、不該做什麼？哪條規則管這件事？
+4. 18:10:08 那次重複申告與 18:12 那次重送，系統各該做什麼、不該做什麼？哪條規則管前者？
 5. 「場站在總部斷線時仍要能人工放行」對 Parking 與 Billing 的關係有什麼設計上的暗示？

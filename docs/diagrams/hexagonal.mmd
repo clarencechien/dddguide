@@ -1,77 +1,79 @@
-%% Hexagonal / Ports & Adapters — starter/<lang>/src 的結構
-%% 依賴規則：所有箭頭指向核心。domain 與 app 不 import adapters / infrastructure。
+%% Hexagonal / Ports & Adapters — starter/node/src 的實際結構（Python 同構，snake_case）
+%% 依賴規則：所有箭頭指向核心。*/domain 與 */application 不 import adapters / shared/EventBus。
 %% 左側 = 驅動（inbound）adapter；右側 = 被驅動（outbound）adapter；測試是合法的 inbound adapter。
 flowchart LR
   classDef domain fill:#ffe0b2,stroke:#e65100,stroke-width:2px
   classDef app fill:#fff9c4,stroke:#f9a825
   classDef port fill:#ffffff,stroke:#333,stroke-dasharray: 4 4
   classDef adapter fill:#e1f5fe,stroke:#0277bd
-  classDef infra fill:#eeeeee,stroke:#616161
+  classDef shared fill:#eeeeee,stroke:#616161
   classDef ext fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
 
-  subgraph IN["驅動端 adapters/inbound"]
-    HTTP["http/<br/>Fastify / FastAPI routes"]:::adapter
-    OCPPWS["ocpp/<br/>WebSocket server<br/>[2,id,action,payload]"]:::adapter
-    TESTS["test/<br/>vitest / pytest<br/>（也是 inbound adapter）"]:::adapter
+  subgraph IN["驅動端（inbound）"]
+    HTTP["adapters/http/<br/>POST /ocpp/:chargerId · GET /sessions/:id<br/>GET /work-orders · POST /relay（Day 6 你寫）"]:::adapter
+    OCPPACL["adapters/ocpp/OcppAcl.ts<br/>[2,id,action,payload] → 命令<br/>transactionId 991 ↔ S-991<br/>Unauthorized→Invalid · ConnectorOccupied→Blocked"]:::adapter
+    TESTS["test/**<br/>vitest / pytest（也是 inbound adapter）"]:::adapter
   end
 
-  subgraph CORE["核心（無 I/O）"]
+  subgraph CORE["核心（零 I/O）"]
     direction TB
-    subgraph APP["app/ 應用層"]
-      SC["StartCharging"]:::app
-      STC["StopCharging"]:::app
-      RMV["ReportMeterValue"]:::app
-      RF["ReportFault"]:::app
-      PM["FaultToWorkOrder<br/>Process Manager"]:::app
-      APORTS["app/ports.ts<br/>UnitOfWork · Outbox · Clock · IdGenerator · EventBus"]:::port
+    subgraph CHAPP["charging/application"]
+      CS["ChargingService<br/>startCharging · reportMeterValue<br/>stopCharging · reportFault<br/>commit = save + outbox.add"]:::app
+      CMD["commands.ts<br/>StartCharging · ReportMeterValue<br/>StopCharging · ReportFault"]:::app
+      CPORTS["ports.ts<br/>ChargingSessionRepository<br/>AuthorizationService"]:::port
     end
     subgraph CHD["charging/domain"]
-      CS["ChargingSession 聚合<br/>R1–R4 · record() · pullEvents()"]:::domain
-      VO["Connector · Energy · IdTag"]:::domain
-      EV["ChargingStarted · ChargingStartRejected<br/>EnergyMetered · MeterValueRejected<br/>ChargingCompleted · ChargerFaulted"]:::domain
-      CPORTS["charging/domain/ports.ts<br/>ChargingSessionRepository · AuthorizationPolicy"]:::port
+      AGG["ChargingSession（一把槍一個聚合）<br/>idle · start(R1,R2) · reportMeter(R3)<br/>stop(R4) · reportFault · pullEvents"]:::domain
+      VO["Connector · Energy · IdTag<br/>parseConnectorId · wattHours · parseIdTag"]:::domain
+      EV["events.ts<br/>ChargingStarted · ChargingStartRejected<br/>EnergyMetered · MeterValueRejected<br/>ChargingCompleted · ChargerFaulted"]:::domain
     end
-    subgraph AOD["assetops/domain"]
-      WO["WorkOrder 聚合<br/>R5 · attachDuplicateReport()"]:::domain
-      WPORTS["WorkOrderRepository<br/>findOpenByChargerAndFault"]:::port
+    subgraph AO["assetops"]
+      PM["application/FaultProcessManager<br/>faulted.v1 → open / appendDuplicateReport<br/>assign(TECH-HAO) · closeWorkOrder"]:::app
+      WO["domain/WorkOrder<br/>open · appendDuplicateReport(R5)<br/>assign · close · pullEvents"]:::domain
+      APORTS["application/ports.ts<br/>WorkOrderRepository.findOpenByFault<br/>DispatchService.requestTechnician"]:::port
     end
-    ACLT["charging/acl/<br/>translate · mapping<br/>(OCPP → 命令；transactionId ↔ sessionId)"]:::app
+    BILL["billing/BillingDraftConsumer<br/>onSessionStarted · onSessionCompleted<br/>sessionId 去重；只認 contracts/ JSON"]:::app
   end
 
-  subgraph OUT["被驅動端 adapters/outbound"]
-    MEM["memory/<br/>InMemory*Repository · InMemoryOutbox · InMemoryEventBus<br/>（Day 4–5 + 測試）"]:::adapter
-    SQL["sqlite/<br/>Sqlite*Repository · SqliteOutbox<br/>（Day 6）"]:::adapter
-    RELAY["relay/<br/>OutboxRelay → EventBus"]:::adapter
+  subgraph SHARED["shared/（技術 port + in-memory 實作）"]
+    OUTBOX["Outbox port<br/>add · pending · markPublished<br/>InMemoryOutbox"]:::port
+    RELAY["OutboxRelay.publishPending()<br/>R8 唯一的搬運者"]:::shared
+    BUS["InMemoryEventBus<br/>subscribe · publish · redeliver"]:::shared
+    ENV["IntegrationEvent<br/>信封八欄位 · createIntegrationEvent"]:::shared
+    CLK["Clock · Ids<br/>FixedClock · sequence('S-', 991)"]:::port
   end
 
-  subgraph INFRA["infrastructure/"]
-    MAIN["main.ts / main.py<br/>composition root：組裝 adapter → port"]:::infra
-    DB[("SQLite / Postgres")]:::infra
+  subgraph OUT["被驅動端（outbound）"]
+    MEM["adapters/persistence/<br/>InMemoryChargingSessionRepository<br/>InMemoryWorkOrderRepository<br/>InMemoryAuthorizationService"]:::adapter
+    SQL["adapters/persistence/sqlite（Day 6）<br/>Sqlite*Repository · SqliteOutbox"]:::adapter
+    DB[("SQLite / Postgres")]:::shared
   end
 
-  BILL["billing/<br/>DraftInvoiceConsumer<br/>（另一個 context；只認 contracts/ JSON）"]:::app
-  SIM["scripts/ocpp-sim"]:::ext
-  CONTRACTS["contracts/*.json<br/>整合事件 v1 schema"]:::ext
+  APP["app.ts<br/>composition root：組裝 adapter → port"]:::shared
+  SIM["scripts/ocpp-sim<br/>HTTP POST frames"]:::ext
+  CONTRACTS["contracts/*.schema.json<br/>整合事件 v1"]:::ext
 
-  SIM -- ws --> OCPPWS
-  OCPPWS --> ACLT
-  ACLT --> SC & STC & RMV & RF
-  HTTP --> SC & STC & RF
-  TESTS --> SC & STC & RMV & RF & PM & CS & WO
+  SIM -- HTTP --> HTTP
+  HTTP --> OCPPACL
+  OCPPACL --> CS
+  HTTP --> PM
+  TESTS --> CS & PM & AGG & WO & BILL & OCPPACL
 
-  SC & STC & RMV --> CS
-  RF --> EV
+  CS --> CMD
+  CS --> AGG
+  AGG --> VO & EV
   PM --> WO
-  CS --> VO & EV
-  SC & STC & RMV -.uses.-> CPORTS
-  PM -.uses.-> WPORTS
-  SC & STC & RMV & RF & PM -.uses.-> APORTS
+  CS -.uses.-> CPORTS
+  PM -.uses.-> APORTS
+  CS & PM -.uses.-> OUTBOX & ENV & CLK
 
-  MEM -. implements .-> CPORTS & WPORTS & APORTS
-  SQL -. implements .-> CPORTS & WPORTS & APORTS
-  RELAY -. implements .-> APORTS
+  MEM -. implements .-> CPORTS & APORTS
+  SQL -. implements .-> CPORTS & APORTS & OUTBOX
   SQL --> DB
-  RELAY --> BILL
-  RELAY --> PM
+  RELAY --> OUTBOX
+  RELAY --> BUS
+  BUS --> BILL
+  BUS --> PM
   BILL -. reads .-> CONTRACTS
-  MAIN --> HTTP & OCPPWS & SQL & RELAY
+  ENV -. validated by .-> CONTRACTS
+  APP --> HTTP & OCPPACL & MEM & SQL & RELAY & BUS

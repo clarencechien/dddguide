@@ -55,7 +55,7 @@
 - 每天三個 Block，做不完用 `/checkout` 補最少的。
 - `solutions/` 存在，但看了要重寫。
 - 不准兩個語言都做。
-- Day 3 之前不准看 curriculum §1.4 與 `docs/domain/glossary.md` §2（可以看 §3 用語衝突——不，也不要）。
+- Day 3 B2 結束之前不准看 curriculum §1.4；`docs/domain/glossary.md` 等 Day 2 自己的 glossary 交完再看；`docs/domain/stakeholders.md` 只看每位角色的第一段，隱藏事實區塊等五位訪完再讀。
 
 ### 0:42–0:45 現在開始
 「Block 1：45 分鐘內看到一個紅燈、`/ta` 有回應、分支推上去。做完的人開始讀 primer。」

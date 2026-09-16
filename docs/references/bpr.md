@@ -135,20 +135,20 @@ flowchart LR
 ```
 觸發：18:10 CP-A12 回報 Faulted（GroundFailure）
 
-步驟                                          原則    事件
-1. ACL 翻譯為 ChargerFaulted                   P2      charging.charger.faulted.v1
-2. AssetOps 自動開 WO-2208（18:11）             P1,P2   ops.work_order.opened.v1
-3. 18:15 重送 → 附加「重複申告」，不開新單       P2      （R5，去重鍵 chargerId+faultCode）
-4. Dispatch 訂閱 opened → 查故障碼對應備品 →    P4      （MVP1 stub）
-   指派 TECH-HAO（18:18），預留接地保護模組
-5. 場站看板訂閱 opened → 阿忠看到 WO-2208       P4      
-6. 阿豪離線完成 → 回連同步                       P3      
-7. 樁回 Available + 30 分鐘無再故障 → 關單       P1      ops.work_order.closed.v1
-8. Charging 訂閱 closed → 恢復可售               P4      
-9. SLA 從 occurredAt=18:10 起算，不是電話時間    P2      
+步驟                                                原則    事件
+1. ACL 翻譯為 ChargerFaulted（18:10:00）              P2      charging.charger.faulted.v1
+2. AssetOps 自動開 WO-2208（18:10:00）                P1,P2   ops.work_order.opened.v1
+3. Dispatch 訂閱 opened → 指派 TECH-HAO（18:10:00）   P4      （MVP1 stub；查備品是 Sprint 2）
+4. 18:10:08 樁再申告 → 附加「重複申告」，不開新單     P2      （R5，去重鍵 chargerId+faultCode）
+5. 18:12 broker 重送同一則 → 忽略                     —       （冪等，eventId）
+6. 場站看板訂閱 opened → 阿忠看到 WO-2208             P4      
+7. 阿豪離線完成 → 回連同步                             P3      
+8. 阿豪回報修復驗證（18:18）→ 關單                     P1      ops.work_order.closed.v1
+9. Charging 訂閱 closed → 恢復可售                     P4      
+10. SLA 從 occurredAt=18:10:00 起算，不是電話時間      P2      
 
 增值時間：不變
-等待時間：18:10 → 18:18 有人負責；人當 API：0
+等待時間：18:10:00 就有人負責（As-Is 要 20 分鐘 + 一個晚上）；人當 API：0
 ```
 
 ### 5.3 To-Be 裡故意**沒有**的東西
@@ -163,9 +163,9 @@ flowchart LR
 ## 6. 怎麼寫 `as-is.md` 與 `to-be.md`
 
 ### `as-is.md` 最低要求
-1. 至少兩條流程：一條正常午後（14:02 → 14:33）、一條故障（18:10 →）。
+1. 至少兩條流程：一條正常午後（14:02 → 14:33）、一條故障（18:10 →）；含「總部斷線時」的情境。
 2. 每條用表格或 Mermaid，欄位：步驟、誰、工具、耗時、人當 API（是/否）。
-3. 圈出 ≥ 3 個人當 API，每個附一句「如果這個人請假會怎樣」。
+3. 圈出 ≥ 4 個人當 API，每個附代價（等待多久、錯誤率、誰背鍋）與「如果這個人請假會怎樣」。
 4. 標出增值時間與總時長。
 
 ### `to-be.md` 最低要求
