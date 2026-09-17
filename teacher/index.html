@@ -690,6 +690,21 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 :not(.report):not(section):not(article) > figure.wide, :not(.report):not(section):not(article) > .wide { margin-inline: 0; }
 .file .diagram, .answer .diagram, .teach .diagram, .msg .diagram { margin-inline: 0; }
 
+/* 工作物件（產出卡、對話、答案框、終端）在大螢幕破出到 66rem，和圖一樣寬；表格就有地方站 */
+.report > :is(.file, .chat, .answer, .term), .report > :is(section, article) > :is(.file, .chat, .answer, .term) { margin-inline: calc(-1 * var(--bleed)); }
+.msg { max-width: none; }
+.msg.ta { margin-left: var(--sp-6); }
+@media (max-width: 40rem) { .msg.ta { margin-left: var(--sp-3); } }
+/* 表格欄位：表格以 max-content 定寬，欄位先拿到完整內容寬（上限 26em），只有比 26em 還長的單一字串才在字內折行 */
+.table-scroll th, .table-scroll td { overflow-wrap: anywhere; min-width: 5.5em; }
+.table-scroll th:first-child, .table-scroll td:first-child { min-width: 3.5em; }
+.table-scroll td code, .table-scroll th code { overflow-wrap: anywhere; }
+/* 表格依內容決定欄寬（每欄最寬 26em 才換行），總寬超過盒子就橫向捲，不再把長欄壓成一字一行 */
+.table-scroll table { width: max-content; min-width: 100%; }
+.table-scroll th, .table-scroll td { max-width: 26em; }
+/* 標了 .nowrap 的格子不能換行，就不能限寬——讓欄位長到夠寬、由盒子橫向捲 */
+.table-scroll th.nowrap, .table-scroll td.nowrap { max-width: none; }
+
 </style>
 <body>
 <div class="progress" aria-hidden="true"></div>
