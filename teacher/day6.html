@@ -690,6 +690,19 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 :not(.report):not(section):not(article) > figure.wide, :not(.report):not(section):not(article) > .wide { margin-inline: 0; }
 .file .diagram, .answer .diagram, .teach .diagram, .msg .diagram { margin-inline: 0; }
 
+/* 工作物件（產出卡、對話、答案框、終端）在大螢幕破出到 66rem，和圖一樣寬；表格就有地方站 */
+.report > :is(.file, .chat, .answer, .term), .report > :is(section, article) > :is(.file, .chat, .answer, .term) { margin-inline: calc(-1 * var(--bleed)); }
+.msg { max-width: none; }
+.msg.ta { margin-left: var(--sp-6); }
+@media (max-width: 40rem) { .msg.ta { margin-left: var(--sp-3); } }
+/* 表格欄位：不准把一個英文識別碼拆成 reaso/n=Un/auth；每欄至少 5.5em，塞不下就讓包裝盒橫向捲，而不是每格一個字 */
+.table-scroll th, .table-scroll td { overflow-wrap: normal; min-width: 5.5em; }
+.table-scroll th:first-child, .table-scroll td:first-child { min-width: 3.5em; }
+.table-scroll td code, .table-scroll th code { overflow-wrap: normal; white-space: nowrap; }
+/* 表格依內容決定欄寬（每欄最寬 26em 才換行），總寬超過盒子就橫向捲，不再把長欄壓成一字一行 */
+.table-scroll table { width: max-content; min-width: 100%; }
+.table-scroll th, .table-scroll td { max-width: 26em; }
+
 </style>
 <body>
 <div class="progress" aria-hidden="true"></div>
