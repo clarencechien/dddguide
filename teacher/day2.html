@@ -695,13 +695,15 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 .msg { max-width: none; }
 .msg.ta { margin-left: var(--sp-6); }
 @media (max-width: 40rem) { .msg.ta { margin-left: var(--sp-3); } }
-/* 表格欄位：不准把一個英文識別碼拆成 reaso/n=Un/auth；每欄至少 5.5em，塞不下就讓包裝盒橫向捲，而不是每格一個字 */
-.table-scroll th, .table-scroll td { overflow-wrap: normal; min-width: 5.5em; }
+/* 表格欄位：表格以 max-content 定寬，欄位先拿到完整內容寬（上限 26em），只有比 26em 還長的單一字串才在字內折行 */
+.table-scroll th, .table-scroll td { overflow-wrap: anywhere; min-width: 5.5em; }
 .table-scroll th:first-child, .table-scroll td:first-child { min-width: 3.5em; }
-.table-scroll td code, .table-scroll th code { overflow-wrap: normal; }
+.table-scroll td code, .table-scroll th code { overflow-wrap: anywhere; }
 /* 表格依內容決定欄寬（每欄最寬 26em 才換行），總寬超過盒子就橫向捲，不再把長欄壓成一字一行 */
 .table-scroll table { width: max-content; min-width: 100%; }
 .table-scroll th, .table-scroll td { max-width: 26em; }
+/* 標了 .nowrap 的格子不能換行，就不能限寬——讓欄位長到夠寬、由盒子橫向捲 */
+.table-scroll th.nowrap, .table-scroll td.nowrap { max-width: none; }
 
 </style>
 <body>
