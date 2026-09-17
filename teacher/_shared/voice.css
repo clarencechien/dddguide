@@ -176,8 +176,9 @@ figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed)
 
 /* 交付物清單（靜態勾） */
 .dod { list-style: none; padding: 0; margin: var(--sp-3) 0; }
-.dod li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: .4em; padding: .4em 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
-.dod li::before { content: "✓"; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li { display: block; position: relative; padding: .4em 0 .4em 1.8em; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.dod li::before { content: "✓"; position: absolute; left: 0; top: .45em; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li > pre, .dod li > .term { margin: .5em 0 .2em; }
 .dod li.partial::before { content: "◐"; color: var(--warn); }
 .dod li.no::before { content: "✗"; color: var(--critical); }
 .dod li:last-child { border-bottom: 0; }
