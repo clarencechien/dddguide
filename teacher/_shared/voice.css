@@ -224,3 +224,8 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 .meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
 /* SVG 裡借用 sticky 色票的 rect 不要吃到 HTML 便利貼的旋轉 */
 .diagram .sticky, .diagram .sticky.hot { transform: none; }
+
+/* 表格只在頂層才破出到頁緣；在卡片、參考答案框、對話、分頁、details 裡一律貼齊容器 */
+:not(.report):not(section):not(article) > .table-scroll { margin-inline: 0; }
+:not(.report):not(section):not(article) > figure.wide, :not(.report):not(section):not(article) > .wide { margin-inline: 0; }
+.file .diagram, .answer .diagram, .teach .diagram, .msg .diagram { margin-inline: 0; }
