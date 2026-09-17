@@ -66,7 +66,7 @@
    starter/node/src/adapters/ocpp/        ← OCPP 翻譯（Day 6）
    starter/node/test/**                       ← 測試（Python：starter/python/tests/**，src 同構、檔名 snake_case）
    ```
-5. **（45 分）** 用 `/aggregate-review` 審你的模型草稿（還沒有程式碼，審的是 `model.md`）。它會問：不變條件在哪個方法守？聚合裡有沒有不該在的東西（樁韌體版本、費率）？事件是 push 進 `pendingEvents` 還是直接發？
+5. **（45 分）** 用 `/aggregate-review` 審你的模型草稿（還沒有程式碼，審的是 `model.md`）。它會問：不變條件在哪個方法守？聚合裡有沒有不該在的東西（樁韌體版本、費率）？事件是 push 進 `pullEvents()` / `pull_events()` 還是直接發？
 6. **（30 分）** 建檔案骨架（只有型別 / 簽名、沒有邏輯）：
    - Node：`src/charging/domain/ChargingSession.ts`、`ConnectorId.ts`、`Energy.ts`、`IdTag.ts`、`events.ts`、`ChargingSessionRepository.ts`
    - Python：`src/charging/domain/charging_session.py`、`connector_id.py`、`energy.py`、`id_tag.py`、`events.py`、`repository.py`
@@ -115,33 +115,41 @@ Day 4 Block 1。我還沒寫程式碼，這是我的 workshop/day4/model.md（�
    - Node：`starter/node/test/charging/ChargingSession.test.ts`
    - Python：`starter/python/tests/charging/test_charging_session.py`
    ```ts
-   // vitest
-   it("R1 occupied connector rejects a second start", () => {
-     const s = ChargingSession.open("S-991", ConnectorId.of("CP-A12-2"));
-     s.start({ idTag: IdTag.of("TAG-MONTHLY-77"), authorized: true, startMeterWh: 1000, at: t("14:04") });
-     s.start({ idTag: IdTag.of("TAG-VISITOR-03"), authorized: true, startMeterWh: 1000, at: t("14:10") });
-     const rejected = s.pendingEvents().filter(e => e.type === "ChargingStartRejected");
-     expect(rejected).toHaveLength(1);
-     expect(rejected[0].reason).toBe("ConnectorOccupied");
-     expect(s.status).toBe("Charging");           // 原會話不變
-     expect(s.startMeterWh).toBe(1000);
+   // vitest — 這就是 starter 裡那個紅燈（starter/node/test/charging/ChargingSession.test.ts）
+   it('R1 occupied connector rejects a second start', () => {
+     const session = ChargingSession.idle('CP-A12-2');
+     session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+     session.pullEvents();
+
+     session.start({ sessionId: 'S-992', idTag: 'TAG-VISITOR-01', authorized: true, meterStartWh: 4100, at: T_1413 });
+
+     expect(session.pullEvents()).toEqual([
+       { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-VISITOR-01', reason: 'ConnectorOccupied', occurredAt: T_1413 },
+     ]);
+     expect(session.sessionId).toBe('S-991');          // 原會話不變
+     expect(session.status).toBe(SessionStatus.Charging);
    });
    ```
    ```python
-   # pytest
-   def test_r1_occupied_connector_rejects_a_second_start():
-       s = ChargingSession.open("S-991", ConnectorId.of("CP-A12-2"))
-       s.start(id_tag=IdTag.of("TAG-MONTHLY-77"), authorized=True, start_meter_wh=1000, at=t("14:04"))
-       s.start(id_tag=IdTag.of("TAG-VISITOR-03"), authorized=True, start_meter_wh=1000, at=t("14:10"))
-       rejected = [e for e in s.pending_events() if e.type == "ChargingStartRejected"]
-       assert len(rejected) == 1 and rejected[0].reason == "ConnectorOccupied"
-       assert s.status == "Charging" and s.start_meter_wh == 1000
+   # pytest — starter/python/tests/charging/test_charging_session.py
+   def test_R1_occupied_connector_rejects_a_second_start():
+       session = ChargingSession.idle("CP-A12-2")
+       session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+       session.pull_events()
+
+       session.start(session_id="S-992", id_tag="TAG-VISITOR-01", authorized=True, meter_start_wh=4100, at=T_1413)
+
+       assert session.pull_events() == [
+           ChargingStartRejected(occurred_at=T_1413, connector_id="CP-A12-2", id_tag="TAG-VISITOR-01", reason="ConnectorOccupied")
+       ]
+       assert session.session_id == "S-991"   # 原會話不變
+       assert session.status is SessionStatus.CHARGING
    ```
    最少的碼讓它綠 → commit `R1 green` → 重構（抽 `assertIdle()` 之類）→ 測試仍綠 → commit。
 3. **R2** `R2 unauthorized id tag cannot start charging`：`authorized=false` → `ChargingStartRejected(reason=Unauthorized)`、狀態仍 `Idle`。紅 → 綠 → 重構。
 4. **R3** 兩個測試：`R3 meter value must not go backwards`（1000 → 7000 → 6500：第三筆記錄 `MeterValueRejected`，`lastMeterWh` 仍 7000）與 `R3 equal meter value is <accepted|rejected>`（照你 `rules.md` 的決定）。
 5. **R4** 兩個測試：`R4 only a charging session can be stopped`（`Idle` 下 `stop` → 你在 B1 決定的失敗方式）與 `R4 stop yields energyWh equal to last minus start meter`（1000 → 13400，`ChargingCompleted.energyWh === 12400`、`stopReason` 有值）。
-6. **R8 前哨**：`R8 aggregate records events and does not publish`——聚合建構子與方法都不接受 bus / repository 參數；`pendingEvents()` 回傳後 `clearEvents()` 清空。這條明天會延伸到 Outbox。
+6. **R8 前哨**：`R8 aggregate records events and does not publish`——聚合建構子與方法都不接受 bus / repository 參數；`pullEvents()` 回傳後 `clearEvents()` 清空。這條明天會延伸到 Outbox。
 7. 每條規則綠了就在 `workshop/day4/test-report.md` 的表格加一行（測試名、規則、commit hash）。
 
 ### 貼給 Claude Code 的提示
@@ -170,7 +178,7 @@ Day 4 Block 2，語言見 workshop/.config。我要用紅綠重構做 R1「連�
 - **R3 的「相等」** → 你 Day 2 決定的。沒決定就現在決定，寫進 `rules.md` 與測試名。
 - **R4 想在 `stop` 裡順便算錢** → 錢是 Billing 的事。`ChargingCompleted` 只帶 `energyWh`，帳單明天由消費者算。
 - **想在聚合裡 `new Date()`** → 時間由命令參數 `at` 帶進來。測試才能寫 14:04。
-- **`pendingEvents` 回傳後測試改了它** → 回傳複本（Node：`[...this.events]`；Python：`list(self._events)`）。
+- **`pullEvents()` / `pull_events()` 回傳後測試改了它** → 回傳複本（Node：`[...this.events]`；Python：`list(self._events)`）。
 - **Python import 路徑錯** → starter 用 `src/` layout；看 `starter/python/README` 或 `pyproject.toml` 的 `pythonpath`。
 
 ### 產出
@@ -240,11 +248,11 @@ Day 4 Block 3 尾聲。請直接讀 starter/<lang>/src/charging/domain/ 與 src/
 ## Check-out（30 分鐘）
 
 ### Quiz（5 題）
-1. `ConnectorId` 為什麼是值物件不是實體？兩個 `ConnectorId.of("CP-A12-2")` 相等嗎？
+1. 連接器識別碼為什麼是值物件不是實體？兩個 `parseConnectorId("CP-A12-2")` 的結果相等嗎？
 2. `ChargingSession.start()` 在連接器占用時，是拋例外還是記錄 `ChargingStartRejected`？你的選擇對明天的 HTTP API 回應碼有什麼影響？
 3. R3：1000 → 7000 → 6500，第三筆之後 `lastMeterWh` 是多少？如果接著 `stop(13400)`，`energyWh` 是多少？
 4. 為什麼 R5 的「有沒有開放中工單」不能在 `WorkOrder` 聚合內判斷？那它在哪裡判斷？
-5. 聚合的 `pendingEvents()` 被誰拉走？拉走之後聚合要做什麼？
+5. 聚合的 `pullEvents()` 被誰拉走？拉走之後聚合要做什麼？
 
 <details>
 <summary>參考答案</summary>

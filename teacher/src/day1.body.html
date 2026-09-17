@@ -16,6 +16,26 @@
   <li><b><code>workshop/day1/site-sketch.jpg</code></b> — 手畫的「一個場站」。畫錯是重點；本頁的 SVG 是講師對照用，不是給學員抄的。</li>
 </ul>
 <p>講師視角：這一天最容易失真的地方不是檔案有沒有，而是<b>原話有沒有逐字</b>與<b>隱藏事實是不是問出來的</b>。學員最常做的三件偷懶：(1) 訪談時問「你希望系統有什麼功能」，拿到一堆「大按鈕」；(2) 訪完直接讀 <code>stakeholders.md</code> 把五條隱藏事實抄進去，卻沒標「我沒問到的」；(3) To-Be 把阿忠的人工放行也「自動化」掉，違反 curriculum §1.1 那句「連線中斷時仍要能人工放行」。驗收時各看一行就能抓到：原話小節有沒有引號與土話、隱藏事實旁有沒有「← 我用哪個問題問到的」、to-be.md 的「保留的人工步驟」有沒有放行。</p>
+<h3>這一頁怎麼用</h3>
+<ul>
+<li><b>驗收前</b>：只讀三個講師註的「驗收看哪一行」，各 30 秒。</li>
+<li><b>驗收中</b>：把學員的 interviews.md 跟本頁的五位「隱藏事實」小節並排，數 ✅；把 as-is.md 的交接點表跟本頁的 #1–#7 並排，看有沒有 #4、#5。</li>
+<li><b>明天 kickoff 前</b>：讀講師手記「不夠的地方」，決定要補講哪一段（通常是正常午後的交接點與 P4）。</li>
+<li><b>學員問「我這樣算挖到了嗎」</b>：對照 Block 2 那張「隱藏事實對到後面幾天的什麼」表，不要把表給他。</li>
+</ul>
+<h3>一天的時間表（實際跑起來的樣子）</h3>
+<div class="table-scroll"><table>
+<tr><th class="nowrap">時間</th><th>誰在做什麼</th><th>講師在做什麼</th><th>桌上多了什麼</th></tr>
+<tr><td class="nowrap">09:00–09:45</td><td>聽開場；白板上那條 14:02 → 18:10 的線</td><td>講 docs/instructor.md §2 腳本；示範 <code>/ta</code> 與一好一壞的 <code>/interview</code> 問題</td><td>—</td></tr>
+<tr><td class="nowrap">09:45–11:15</td><td>B1：clone、選語言、跑測試、讀 primer、畫場站、列 10 題、<code>/ta</code></td><td>走動修環境；攔「先看 §1.4」</td><td><code>.config</code>、site-sketch、10 題</td></tr>
+<tr><td class="nowrap">11:15–11:30</td><td>休息</td><td>看兩三張手繪圖，挑一張下午投影</td><td>—</td></tr>
+<tr><td class="nowrap">11:30–13:00</td><td>B2：五位訪談各 10 分 + 整理各 5 分</td><td>聽引導式問題；提醒「說繼續它會再給 4 回合」</td><td><code>interviews.md</code> 五位四小節</td></tr>
+<tr><td class="nowrap">13:00–14:00</td><td>午餐（矛盾與「我引導了他嗎」常在這裡補）</td><td>—</td><td>—</td></tr>
+<tr><td class="nowrap">14:00–15:30</td><td>B3：As-Is 40 分、To-Be 30 分、<code>/bpr-review</code> 兩輪 20 分</td><td>攔「系統會自動……」沒主詞；攔把放行自動化</td><td><code>as-is.md</code>、<code>to-be.md</code></td></tr>
+<tr><td class="nowrap">15:30–15:45</td><td>commit 到 <code>workshop/&lt;名字&gt;</code></td><td>—</td><td>4 個 commit</td></tr>
+<tr><td class="nowrap">15:45–16:15</td><td>Check-out：quiz、<code>/checkout day1</code>、自評</td><td>抽三位問「這一行為什麼在那」</td><td>自評勾完</td></tr>
+<tr><td class="nowrap">16:15–16:45</td><td>（講師）驗收 30 分</td><td>用 rubric Day 1「講師看這裡」三處；記兩亮點兩問題給明天 kickoff</td><td>—</td></tr>
+</table></div>
 </section>
 
 <section>
@@ -95,6 +115,22 @@ LANG=node
 # LANG=python
 BRANCH=workshop/xiaolin</pre>
 </div></div>
+
+<h3>site-sketch 的口頭驗收（不計分）</h3>
+<ul class="dod">
+  <li><b>槍與樁分開了嗎</b>——CP-A12 底下有兩把槍，而且能指出「14:04 是哪一把在充」。畫成一個「充電站」方塊的，B2 叫他問阿豪「一根樁有幾把槍」。</li>
+  <li class="partial"><b>值班室有人嗎</b>——圖上有阿忠、有他的兩個螢幕。沒有人的圖到 B3 圈不出人當 API；先問「客人按對講機誰接」。</li>
+  <li class="no"><b>場站與總部之間那條線畫了嗎</b>——而且旁邊寫了「會斷」。沒畫的，B2 問阿忠「上次總部連不上是什麼時候」之後自己會補。</li>
+</ul>
+<p>三個勾的狀態是講師看完一張典型手繪圖後的標記方式：第一項通常有、第二項常常缺一半（有房間沒有人）、第三項幾乎都沒有。</p>
+
+<h3>助教對話重播：環境卡住不用等 20 分鐘</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /ta 我卡住了</p><p>npm test 全部紅，不是一個紅燈。錯誤是 <code>SyntaxError: Unexpected token '?'</code> 之類的，六個測試都 fail。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問一個：<code>node -v</code> 印什麼？這不是交付物、不用等 20 分鐘——環境問題直接處理。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>v18.19.0。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>就是它。starter 需要 Node 20+（vitest 2 與 TypeScript 的 import 語法）。裝 20 或 22 的 LTS（nvm：<code>nvm install 22 &amp;&amp; nvm use 22</code>），重跑 <code>npm install &amp;&amp; npm test</code>。預期會變成「1 failed | 1 passed | 4 skipped」，那個 failed 是 R1，是對的。Day 6 才需要 22 的原生 TypeScript；今天 20 就夠。</p><p><b>下一個最小步驟：</b>升到 Node 22、重跑、把最後 10 行貼回來給我看是不是只剩 R1 紅。</p></div>
+</div>
 
 <h3>助教對話重播：<code>/ta</code> 把 10 個問題分給五個人</h3>
 <div class="chat">
@@ -517,6 +553,65 @@ BRANCH=workshop/xiaolin</pre>
 </ul>
 </div></div>
 
+<h3>訪談重播（縮短版）：Vicky 的 6 句——一題問到 20 張單</h3>
+<p>對照阿忠那段：Vicky 的隱藏事實幾乎都能用「昨天早上你看到的第一張單」這一題帶出來，因為她的痛全部集中在早上打開系統那一刻。</p>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /interview Vicky</p><p>（同一段開場提示）第一個問題：你現在怎麼知道哪座樁掛了？從知道到有人出發要多久？</p></div>
+  <div class="msg ta"><p class="who">Vicky（Claude 扮演）</p><p><b>Vicky</b>：我每天早上第一件事就是開客服系統看昨晚哪些樁掛了。昨天早上打開，第一張是 SITE-TPE-01 的 A12，GroundFailure，18:35 客服開的。第二張……也是 A12，GroundFailure，18:40。第三張 18:45。我往下捲，20 張，全部同一根樁。技術員一早看到 20 張一樣的單，他問我要修幾次。我挑一張整理進 Sheet，LINE 給阿豪，大概 08:30。所以你問「多久」——樁 18:10 就壞了，我 08:30 才派人，中間十四個小時沒有人在做任何事。</p><p><i>下一個最小步驟：追問「20 張是誰開的？為什麼會 20 張？」——這裡有一條規則。</i></p></div>
+  <div class="msg stu"><p class="who">學員</p><p>為什麼會 20 張？誰開的？</p></div>
+  <div class="msg ta"><p class="who">Vicky（Claude 扮演）</p><p><b>Vicky</b>：樁每五分鐘會再講一次「我壞了」，廠商後台就再送一次給客服系統，客服系統就再開一張。沒有人去看「這根樁已經有單了」。我要的很簡單：同一根樁、同一個故障，在我還沒關單之前，就一張。第二次、第三次講，附在那張上面就好，我還想知道它講了幾次。</p><p><i>下一個最小步驟：「同樁同碼、關單前只有一張、第二次附加」逐字抄，Day 2 會變成一條規則。</i></p></div>
+  <div class="msg stu"><p class="who">學員</p><p>SLA 的時鐘從什麼時候開始跑？你希望從什麼時候開始？</p></div>
+  <div class="msg ta"><p class="who">Vicky（Claude 扮演）</p><p><b>Vicky</b>：現在從客服接到電話那一刻。阿忠 18:25 打的，所以我的 SLA 是 18:25 起算——可是它 18:10 就壞了，客人 18:12 就在按對講機了。我希望從機器自己說「我壞了」那一秒開始算，工單上要有兩個時間：它壞掉的時間、我開單的時間。不要只有一個。還有，帳務那邊一直問我技術員到了沒——上次我把派工狀態同步給他們，他們被通知淹死，回頭罵我。他們要的不是「技術員出發了」，他們要的是「這根樁停售了幾天」。你去問老陳。</p><p><i>下一個最小步驟：記下「兩個時間」與「帳務不要派工狀態」。你已經問到 3 條，還有備品那條——「派出去才發現沒備品，是哪一種故障？」</i></p></div>
+</div>
+
+<h3>訪談重播（縮短版）：老陳的 4 句——一個是非題差點漏掉「不可遺漏」</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /interview 老陳</p><p>（同一段開場提示）第一個問題：你要即時出帳嗎？</p></div>
+  <div class="msg ta"><p class="who">老陳（Claude 扮演）</p><p><b>老陳</b>：不用。我月底結。你們工程師都喜歡問「要不要即時」，我不要即時。</p><p><i>下一個最小步驟：是非題拿到一個「不用」就結束了。改問「上個月有幾筆帳是客人來爭議的？最常爭什麼？」</i></p></div>
+  <div class="msg stu"><p class="who">學員</p><p>那換個問法：上個月有幾筆帳是客人來爭議的？最常爭什麼？</p></div>
+  <div class="msg ta"><p class="who">老陳（Claude 扮演）</p><p><b>老陳</b>：三筆。一筆是同一個會話出了兩張——廠商後台重送了一整天的資料，我這邊看到兩筆一模一樣的度數、一樣的時間，可是我怎麼知道它是同一個？只能用車牌加時間猜。一筆是車隊的車，電費要算公司、停車費要算司機，我用車牌對，對到司機頭上。第三筆是去年稽核那個——有人在後台直接把金額改掉，ERP 沒留誰改的，我現在規定一律用更正單。所以你剛才問「要不要即時」——我跟你講清楚：<b>可以晚，不能少，不能改了沒人知道</b>。</p><p><i>下一個最小步驟：三個原話逐字抄：「同一個會話出兩張」「按顧客不是按車牌」「可以晚，不能少」。你剛才那題是非題，記進「我引導了他嗎」。</i></p></div>
+</div>
+
+<h4>講師專用：隱藏事實對到後面幾天的什麼（不給學員）</h4>
+<p>驗收 interviews.md 時看這張表：學員挖到的每一條事實，是 Day 2 哪條規則、Day 3 哪條邊界證據的種子。挖到「阿忠 1、小美 2、老陳 4、Vicky 1」四條的學員，Day 2 的 R2、R5、R6 與冪等都有原料；沒挖到的，Day 2 kickoff 要補講那一段訪談。</p>
+<div class="table-scroll"><table>
+<tr><th>隱藏事實</th><th>本頁參考版</th><th>對應規則（Day 2）</th><th>對應邊界證據（Day 3）</th><th>沒挖到的補救</th></tr>
+<tr><td>阿忠 1 斷線放行紙本</td><td>✅</td><td>R6 人工放行、事後對齊</td><td>停車在總部斷線時獨立存活</td><td>Day 2 前再問「上次斷線一步一步做了什麼」</td></tr>
+<tr><td>阿忠 2 申告靠電話</td><td>✅</td><td>F 耦合：現場先打電話才有工單</td><td>維運訂閱事件，不靠電話</td><td>bpr.md §5 有範例，但要他自己說一次</td></tr>
+<tr><td>阿忠 3 一半不是樁壞</td><td>✅</td><td>「故障」的「不是」</td><td>客訴 ≠ 設備申告</td><td>問「你怎麼分辨」</td></tr>
+<tr><td>阿忠 4 占用 ≠ 充電</td><td>✅</td><td>T1 耦合</td><td>停車與充電分家</td><td>問「充電位上沒在充的車你怎麼知道」</td></tr>
+<tr><td>阿忠 5 不懂 OCPP、只要看板</td><td>❌</td><td>—</td><td>看板是場站的讀模型</td><td>不補也無妨</td></tr>
+<tr><td>小美 1 跨時段全程尖峰</td><td>✅</td><td>計量帶時間戳</td><td>費率是帳務的事</td><td>問「21:50 開始的怎麼算」</td></tr>
+<tr><td>小美 2 三種憑證 + 斷線白名單</td><td>✅</td><td>R2 未授權多種來源</td><td>授權在場站本機可判</td><td>問「斷線時哪些卡能刷」</td></tr>
+<tr><td>小美 3 計量倒退</td><td>❌</td><td>R3 MeterValueRejected 留痕</td><td>—</td><td>Day 2 前補問「對不起來時數字長什麼樣」</td></tr>
+<tr><td>小美 4 遠端停止誤判</td><td>✅</td><td>R4 結束來自真的停止，不是 Accepted</td><td>—</td><td>問「按下去之後你怎麼知道它停了」</td></tr>
+<tr><td>小美 5 異常分類</td><td>❌</td><td>stopReason 欄位</td><td>—</td><td>問「異常你想分幾種」</td></tr>
+<tr><td>老陳 1 按顧客合併</td><td>✅</td><td>—</td><td>帳務有「顧客」，上游沒有</td><td>問「用什麼把兩張單湊在一起」</td></tr>
+<tr><td>老陳 2 帳單被直接改</td><td>✅</td><td>R7 更正走新事件</td><td>帳務不變性</td><td>問「上次金額對不起來怎麼發現的」</td></tr>
+<tr><td>老陳 3 放行補費靠 email</td><td>✅</td><td>R6 的帳務端</td><td>—</td><td>與阿忠 1 對照</td></tr>
+<tr><td>老陳 4 重複出帳</td><td>✅</td><td>消費者冪等、去重鍵 sessionId</td><td>—</td><td>問「兩張帳你怎麼知道是同一個」</td></tr>
+<tr><td>老陳 5 精度一位小數</td><td>❌</td><td>energyWh 整數</td><td>—</td><td>問「差幾百元是怎麼算出來的」</td></tr>
+<tr><td>Vicky 1 20 張工單</td><td>✅</td><td>R5 去重鍵 chargerId + faultCode</td><td>—</td><td>問「第一張長什麼樣、第二張呢」</td></tr>
+<tr><td>Vicky 2 SLA 起算點</td><td>✅</td><td>occurredAt 與 openedAt 分開</td><td>—</td><td>問「時鐘從什麼時候開始跑」</td></tr>
+<tr><td>Vicky 3 備品是前提</td><td>✅</td><td>—</td><td>維運 → 派工內部</td><td>問「派出去才發現沒備品是哪種故障」</td></tr>
+<tr><td>Vicky 4 帳務不要派工狀態</td><td>✅</td><td>—</td><td>不對帳務發「技術員已出發」</td><td>問「誰會問你進度、各想知道什麼」</td></tr>
+<tr><td>Vicky 5 看板最後已知狀態</td><td>❌</td><td>—</td><td>場站保存副本</td><td>問「總部維護時場站看到什麼」</td></tr>
+<tr><td>阿豪 1 三套編號</td><td>✅</td><td>—</td><td>連接器是業務身份；防腐層對應</td><td>問「怎麼確認面前這根是工單那根」</td></tr>
+<tr><td>阿豪 2 遠端重啟 30%</td><td>❌</td><td>—</td><td>維運政策（非 MVP1）</td><td>問「哪些不用出門、比例」</td></tr>
+<tr><td>阿豪 3 離線回報</td><td>✅</td><td>—</td><td>派工可離線</td><td>問「工單怎麼關掉的」</td></tr>
+<tr><td>阿豪 4 修復驗證責任不清</td><td>✅</td><td>「恢復可售」的定義</td><td>—</td><td>問「誰決定算修好」</td></tr>
+<tr><td>阿豪 5 故障前 10 分鐘資料</td><td>❌</td><td>—</td><td>Sprint 2 候選</td><td>問「打給小美問什麼數據」</td></tr>
+</table></div>
+
+<h3>延伸：第六位——被閘門擋住 10 分鐘的月票車主</h3>
+<p>做完五位還有時間的學員，day1.md 建議訪談顧客。這段 4 句的重播給講師看它會帶出什麼：顧客眼裡沒有「系統」，只有「桿子」與「有沒有人」。</p>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /interview 顧客</p><p>請扮演昨天 14:33 在 SITE-TPE-01 出口被閘門擋住 10 分鐘的月票車主（ABC-1234）。第一個問題：昨天下午你從進場到離開，發生了什麼？</p></div>
+  <div class="msg ta"><p class="who">月票車主（Claude 扮演）</p><p><b>車主</b>：兩點多進去，桿子自己開，我有月票。停到充電位、插槍、刷卡，螢幕寫充電中，我去買咖啡。兩點半回來按 App 停止，寫 12.4 度。開到出口——桿子不開。我按對講機，一個大哥說「等一下我出來」，等了快十分鐘他拿鑰匙來抬。我問他為什麼，他說「總部斷線」。我不知道什麼總部，我只知道我有月票，為什麼還要等。然後我到現在還不知道那 12.4 度要付多少錢，帳單要等月底。</p><p><i>下一個最小步驟：對照阿忠的版本——他說「拿鑰匙去抬」花 1 分鐘，車主說等了 10 分鐘。差的 9 分鐘去哪了？</i></p></div>
+  <div class="msg stu"><p class="who">學員</p><p>那 10 分鐘裡你在做什麼？你想知道什麼？</p></div>
+  <div class="msg ta"><p class="who">月票車主（Claude 扮演）</p><p><b>車主</b>：按對講機、等、再按、後面的車按喇叭。我想知道的只有兩件事：多久會有人來、我要不要付錢。這兩件事沒有人告訴我。</p><p><i>下一個最小步驟：把「多久會有人來、要不要付錢」加進 as-is.md 14:33 那行的「顧客在做什麼」——As-Is 只寫了阿忠在做什麼。</i></p></div>
+</div>
+
 <div class="teach"><p class="head">講師註 · Block 2</p>
 <p><b>驗收看哪一行：</b>(1) 每位角色的「隱藏事實」小節，每條後面有沒有「← 我用哪個問題問到的」——沒有的多半是抄 <code>stakeholders.md</code>；(2) 「原話」小節有沒有引號與土話（「桿子」「那把槍」「跳」），出現 <code>ChargingSession</code>、<code>Bounded Context</code> 就是 Claude 出戲替他翻譯了，或他先讀了 glossary；(3) 每位的「Claude 出戲時說：我沒問到 N 個」與 ✅/❌ 數量對不對得起來。及格線每人 ≥ 1、合計 ≥ 5；本頁參考版 18/25。學員實際多落在 8–12。</p>
 <p><b>常見失真：</b>矛盾寫成「阿忠想要按鈕、小美想要報表」——那是需求差異不是矛盾。矛盾的形式必須是「同一個詞 / 同一件事，兩個人說法不同」。攔法：問「這兩個人在講同一個東西嗎？如果是，誰對？」。另一個失真是 10 分鐘只問到一條事實就換人；<code>/interview</code> 的角色在 5–8 回合會問「要不要換人」，學員常順勢就換——講師 kickoff 要先講「說『繼續』它會再給你 4 回合」。</p>
@@ -573,7 +668,7 @@ BRANCH=workshop/xiaolin</pre>
 </section>
 
 <figure class="wide">
-  <p class="title">As-Is 泳道圖：那個下午、那個晚上、隔天、月底</p><p class="subtitle">六條泳道、九個時間點（不等距）。紅箭頭與紅膠囊是人當 API，共 7 處。</p>
+  <p class="title">As-Is 泳道圖：那個下午、那個晚上、隔天、月底</p><p class="subtitle">六條泳道、十個時間點（不等距）。紅箭頭與紅膠囊是人當 API，共 7 處。</p>
   <div class="diagram"><svg viewBox="0 0 960 620" role="img" aria-label="As-Is 泳道圖：顧客、閘門與 LPR、樁 CP-A12、阿忠、總部人員、老陳六條泳道；14:02 進場、14:04 插槍、14:31 結束、14:33 斷線放行、18:10 故障、18:25 打電話、隔天 08:30 派工、隔天 09:00 email、隔天下午維修、月底對帳；紅色標出七個人當 API 交接">
     <!-- lane backgrounds -->
     <rect class="zone plain" x="0" y="40" width="948" height="90"/>
@@ -654,9 +749,10 @@ BRANCH=workshop/xiaolin</pre>
 <tr><td>14:04</td><td>插槍、刷月票卡</td><td></td><td>線上授權、充電中 S-991</td><td>打給小美「在充嗎」（#1 市話）</td><td>小美查後台回電</td><td></td></tr>
 <tr><td>14:31</td><td>App 按停止 12.4 kWh</td><td></td><td>結束 12,400 Wh</td><td></td><td></td><td></td></tr>
 <tr><td>14:33</td><td>到出口、桿子不開</td><td>總部斷線、不開桿</td><td></td><td>鑰匙抬桿、寫日誌本（對講機）</td><td></td><td></td></tr>
-<tr><td>18:10</td><td></td><td></td><td>螢幕閃紅 GroundFailure</td><td>（在巡場，沒人看 15 分）</td><td></td><td></td></tr>
+<tr><td>18:10</td><td></td><td></td><td>螢幕閃紅（接地故障 GroundFailure）</td><td>（在巡場，沒人看 15 分）</td><td></td><td></td></tr>
 <tr><td>18:25</td><td></td><td></td><td>每 5 分重送 Faulted</td><td>看到、打客服專線（#4 市話）</td><td>客服手 key 工單 ×20（#5）</td><td></td></tr>
-<tr><td>隔天早上</td><td></td><td></td><td></td><td>拍日誌本 email 老陳（#2）</td><td>Vicky 挑單、LINE 派阿豪（#6）</td><td>收 email 補停車費</td></tr>
+<tr><td>隔天 08:30</td><td></td><td></td><td></td><td></td><td>Vicky 挑單、LINE 派阿豪（#6）</td><td></td></tr>
+<tr><td>隔天 09:00</td><td></td><td></td><td></td><td>拍日誌本 email 老陳（#2）</td><td></td><td>收 email 補停車費</td></tr>
 <tr><td>隔天下午</td><td></td><td></td><td></td><td></td><td>阿豪到場、對編號、電話問小美（#7）、修、LINE 回報、Vicky 關單</td><td></td></tr>
 <tr><td>月底</td><td></td><td></td><td></td><td></td><td></td><td>車牌對帳 Excel / ERP（#3）</td></tr>
 </table></div></details>
@@ -730,6 +826,48 @@ BRANCH=workshop/xiaolin</pre>
 <tr><td>故障到恢復可售（18:10 → 隔天 15:00）</td><td>~21 小時</td><td>~40 分（對編號 10 + 換模組 30）</td><td>沒人看 15 分 + 電話 20 分 + 一晚 + 挑單 30 分 + 路程 + 地下室 30 分</td><td>增值 ~3%</td></tr>
 <tr><td>出帳（14:31 → 月底）</td><td>最多 30 天</td><td>—</td><td>全部是等待</td><td>—</td></tr>
 </table></div>
+</div></div>
+
+<div class="file"><p class="path">workshop/day1/as-is.md · 延伸段落「Mermaid 序列圖」 <span class="chip">延伸（選做）</span></p><div class="body">
+<p>day1.md 延伸題：把 As-Is 畫成 <code>sequenceDiagram</code> 存進 as-is.md。參與者六個、人當 API 用 <code>Note over</code> 標紅。這份不算 DoD，但明天 storm 的 Mermaid timeline 會從它改。</p>
+<pre>```mermaid
+sequenceDiagram
+  autonumber
+  participant C as 顧客 ABC-1234
+  participant G as 閘門+LPR
+  participant P as 樁 CP-A12
+  participant Z as 阿忠
+  participant H as 總部人員(小美/客服/Vicky/阿豪)
+  participant B as 老陳
+
+  C-&gt;&gt;G: 14:02 到閘門
+  G--&gt;&gt;C: LPR 辨識月票，開桿，P-441
+  C-&gt;&gt;P: 14:04 插 CP-A12-2、刷 TAG-MONTHLY-77
+  P--&gt;&gt;C: 線上授權，充電中 S-991
+  C-&gt;&gt;Z: 14:05 另一位車主按對講機「刷不過」
+  Z-&gt;&gt;H: 市話：這把槍在充嗎？
+  Note over Z,H: 人當 API #1
+  H--&gt;&gt;Z: 小美查後台：2 號槍 14:04 有人在充
+  P--&gt;&gt;C: 14:31 本次 12.4 kWh
+  C-&gt;&gt;G: 14:33 到出口
+  G--&gt;&gt;C: 總部斷線，桿子不開
+  Z-&gt;&gt;G: 鑰匙抬桿；日誌本寫 ABC-1234 14:33
+  Z-&gt;&gt;B: 隔天 09:00 拍照 email
+  Note over Z,B: 人當 API #2（漏過 2 次）
+  P-&gt;&gt;P: 18:10 螢幕閃紅 GroundFailure，每 5 分重送
+  Z-&gt;&gt;H: 18:25 市話：A12 壞了
+  Note over Z,H: 人當 API #4
+  H-&gt;&gt;H: 18:35 客服手 key 工單 ×20
+  Note over H: 人當 API #5
+  H-&gt;&gt;H: 隔天 08:30 Vicky 挑單，LINE 派阿豪
+  Note over H: 人當 API #6
+  H-&gt;&gt;H: 隔天 13:00 阿豪電話問小美故障前數據
+  Note over H: 人當 API #7
+  H-&gt;&gt;P: 換模組，樁回 Available
+  H-&gt;&gt;H: 15:00 Vicky 看到 LINE，手動關單
+  B-&gt;&gt;B: 月底 Excel 用車牌對停車單+充電單 → INV-778
+  Note over B: 人當 API #3
+```</pre>
 </div></div>
 
 <figure class="wide">
@@ -814,54 +952,54 @@ BRANCH=workshop/xiaolin</pre>
 
 <div class="file"><p class="path">workshop/day1/to-be.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
 <h4>To-Be 流程與 BPR 四原則</h4>
-<p>原則編號照 <code>workshop/day1/TEMPLATE.md</code>：P1 以結果為導向組織、P2 讓使用資訊的人自己產生資訊、P3 一次在源頭擷取、P4 決策點放在工作發生的地方。（<code>docs/references/bpr.md</code> 的四條編號不同——它的 P4 是「以事件連接平行活動」；我在每處改動同時標上兩邊。）只改流程與責任，不寫「上 Kafka」。</p>
+<p>原則編號照 <code>docs/references/bpr.md</code>：P1 圍繞結果組織，而非任務；P2 資訊在源頭一次捕獲；P3 決策點放在工作發生處；P4 以事件連接平行活動，而非事後整合結果。只改流程與責任，不寫「上 Kafka」。</p>
 <h4>To-Be 旅程表（改動處標 P#）</h4>
 <div class="table-scroll"><table>
 <tr><th class="nowrap">時間</th><th>To-Be：顧客 / 現場</th><th>誰決定</th><th>產生的事實</th><th>改動 / 原則</th></tr>
-<tr><td class="nowrap">14:02</td><td>ABC-1234 到閘門，LPR 辨識，桿子開；停車會話 P-441</td><td>閘門（場站本機）</td><td>車輛已辨識進場</td><td>不改（As-Is 已在本機決定）；斷線時臨停車也要能開 → P4 決策在現場</td></tr>
-<tr><td class="nowrap">14:03</td><td>停進 3 號充電車位</td><td>車位感測器</td><td>充電車位已占用</td><td>改：占用是一個事實，不等於充電；看板同時顯示「占用 + 沒在充」→ 阿忠不用走出去看（#1b）· P2</td></tr>
-<tr><td class="nowrap">14:04</td><td>插槍、刷 TAG-MONTHLY-77；場站本機白名單授權；開始計量</td><td>樁 / 場站本機</td><td>連接器已插上、充電已授權開始</td><td>改：授權在場站本機決定（As-Is 走廠商後台線上）· P4；帳務同時收到事實開草稿 · P2</td></tr>
-<tr><td class="nowrap">14:05</td><td>另一位車主刷卡，被拒（連接器占用中）；阿忠看板直接看到「2 號槍充電中」，用對講機叫客人去 4 號位</td><td>樁（拒絕）、阿忠（引導客人）</td><td>充電開始被拒</td><td>改：#1 電話拿掉，資訊由用它的人自己看 · P2；阿忠留下來做的是「引導客人」，不是「查資料」</td></tr>
-<tr><td class="nowrap">14:13 / 14:22</td><td>計量 4,000 / 8,000 Wh（帶時間戳）</td><td>樁</td><td>電量已計量</td><td>改：每筆帶時間，讓小美的跨時段計價可行 · P3（源頭一次擷取）；帳務此時什麼都不做</td></tr>
-<tr><td class="nowrap">14:31</td><td>App 按停止；12,400 Wh 整數、結束原因「車主自己停」</td><td>樁</td><td>充電已結束</td><td>改：度數用 Wh 整數、結束原因分類保存 · P3；帳務更新草稿 99.2 元</td></tr>
-<tr><td class="nowrap">14:33</td><td>總部斷線；阿忠按「人工放行」，桿子開；按下那一刻就是被記錄的事實</td><td><b>阿忠（保留）</b></td><td>停車已人工放行（含放行方式 = 人工）</td><td>改的是記錄方式，不是決定：#2 的日誌本 / email 拿掉 · P3；決策仍在現場 · P4</td></tr>
-<tr><td class="nowrap">連線恢復後</td><td>場站把斷線期間的事實補送總部；帳務對齊 P-441（月票 0 元）</td><td>—</td><td>（同上事實，延後送達）</td><td>改：「可以晚，不能漏」變成設計，不是靠阿忠記得拍照 · P3</td></tr>
-<tr><td class="nowrap">18:10:00</td><td>CP-A12 申告 GroundFailure；總部<b>自動</b>開 WO-2208、指派 TECH-HAO；場站看板顯示「WO-2208 / 阿豪 / 處理中」；SLA 從 18:10:00 起算</td><td>總部（自動）</td><td>充電器已申告故障、工單已開立、技術員已指派</td><td>改：#4 電話、#5 手 key 拿掉，樁自己申告 · P3；「故障 → 恢復可售」由一個結果擁有 · P1；阿忠從打電話的人變成看看板的人 · P2</td></tr>
-<tr><td class="nowrap">18:10:08</td><td>樁再申告同一故障；工單開放中 → 附加「重複申告」，不開第二張</td><td>總部（自動）</td><td>重複申告已附加</td><td>改：20 張變 1 張 · P3；Vicky 不用挑</td></tr>
-<tr><td class="nowrap">18:12</td><td>同一則申告被重送；認得是同一則，什麼都不做</td><td>總部（自動）</td><td>（無）</td><td>改：重送不是申告；老陳的「同一會話兩張帳」也是同一種病 · P3</td></tr>
-<tr><td class="nowrap">18:18（實際是隔天）</td><td>阿豪到場：工單帶三套編號對照 + 建議備品；他在地下室離線完成、回到地面同步；回報「修復驗證」</td><td><b>阿豪（保留）</b></td><td>修復已驗證</td><td>改：#6 LINE 變成工單本身帶齊資訊 · P3；#7 電話變成工單附故障前 10 分鐘的計量與狀態 · P2；離線回報是設計 · P4</td></tr>
+<tr><td class="nowrap">14:02</td><td>ABC-1234 到閘門，LPR 辨識，桿子開；停車會話 P-441</td><td>閘門（場站本機）</td><td>車輛已辨識進場</td><td>不改（As-Is 已在本機決定）；斷線時臨停車也要能開 → P3 決策在現場</td></tr>
+<tr><td class="nowrap">14:03</td><td>停進 3 號充電車位</td><td>車位感測器</td><td>充電車位已占用</td><td>改：占用是一個事實，不等於充電；看板同時顯示「占用 + 沒在充」→ 阿忠不用走出去看（#1b）· P4（看板訂閱占用與充電兩個事實）</td></tr>
+<tr><td class="nowrap">14:04</td><td>插槍、刷 TAG-MONTHLY-77；場站本機白名單授權；開始計量</td><td>樁 / 場站本機</td><td>連接器已插上、充電已授權開始</td><td>改：授權在場站本機決定（As-Is 走廠商後台線上）· P3；帳務同時收到事實開草稿 · P4</td></tr>
+<tr><td class="nowrap">14:05</td><td>另一位車主刷卡，被拒（連接器占用中）；阿忠看板直接看到「2 號槍充電中」，用對講機叫客人去 4 號位</td><td>樁（拒絕）、阿忠（引導客人）</td><td>充電開始被拒</td><td>改：#1 電話拿掉，看板訂閱樁的事實、阿忠自己看 · P4；阿忠留下來做的是「引導客人」，不是「查資料」</td></tr>
+<tr><td class="nowrap">14:13 / 14:22</td><td>計量 4,000 / 8,000 Wh（帶時間戳）</td><td>樁</td><td>電量已計量</td><td>改：每筆帶時間，讓小美的跨時段計價可行 · P2（源頭一次捕獲）；帳務此時什麼都不做</td></tr>
+<tr><td class="nowrap">14:31</td><td>App 按停止；12,400 Wh 整數、結束原因「車主自己停」</td><td>樁</td><td>充電已結束</td><td>改：度數用 Wh 整數、結束原因分類保存 · P2；帳務更新草稿 99.2 元</td></tr>
+<tr><td class="nowrap">14:33</td><td>總部斷線；阿忠按「人工放行」，桿子開；按下那一刻就是被記錄的事實</td><td><b>阿忠（保留）</b></td><td>停車已人工放行（含放行方式 = 人工）</td><td>改的是記錄方式，不是決定：#2 的日誌本 / email 拿掉 · P2；決策仍在現場 · P3</td></tr>
+<tr><td class="nowrap">連線恢復後</td><td>場站把斷線期間的事實補送總部；帳務對齊 P-441（月票 0 元）</td><td>—</td><td>（同上事實，延後送達）</td><td>改：「可以晚，不能漏」變成設計，不是靠阿忠記得拍照 · P2</td></tr>
+<tr><td class="nowrap">18:10:00</td><td>CP-A12 申告 GroundFailure；總部<b>自動</b>開 WO-2208、指派 TECH-HAO；場站看板顯示「WO-2208 / 阿豪 / 處理中」；SLA 從 18:10:00 起算</td><td>總部（自動）</td><td>充電器已申告故障、工單已開立、技術員已指派</td><td>改：#4 電話、#5 手 key 拿掉，樁自己申告 · P2；「故障 → 恢復可售」由一個結果擁有 · P1；阿忠從打電話的人變成看看板的人 · P4</td></tr>
+<tr><td class="nowrap">18:10:08</td><td>樁再申告同一故障；工單開放中 → 附加「重複申告」，不開第二張</td><td>總部（自動）</td><td>重複申告已附加</td><td>改：20 張變 1 張 · P2；Vicky 不用挑</td></tr>
+<tr><td class="nowrap">18:12</td><td>同一則申告被重送；認得是同一則，什麼都不做</td><td>總部（自動）</td><td>（無）</td><td>改：重送不是申告；老陳的「同一會話兩張帳」也是同一種病 · P2</td></tr>
+<tr><td class="nowrap">18:18（實際是隔天）</td><td>阿豪到場：工單帶三套編號對照 + 建議備品；他在地下室離線完成、回到地面同步；回報「修復驗證」</td><td><b>阿豪（保留）</b></td><td>修復已驗證</td><td>改：#6 LINE 變成工單本身帶齊資訊 · P2；#7 電話變成工單附故障前 10 分鐘的計量與狀態 · P2；離線回報是設計 · P3</td></tr>
 <tr><td class="nowrap">18:18</td><td>關單（結果：已修復）；樁恢復可售；場站看板更新</td><td>總部，依阿豪的驗證</td><td>工單已關閉、充電器已恢復可售</td><td>改：關單不再等 Vicky 看到 LINE · P1；「30 分鐘沒再跳才算」變成關單政策而不是 Vicky 的記憶</td></tr>
-<tr><td class="nowrap">之後</td><td>帳務按顧客合併 P-441 + S-991 → INV-778；開立後不可改，更正走更正單</td><td>老陳（保留：爭議與更正）</td><td>帳單已開立（、帳單已更正）</td><td>改：#3 車牌 VLOOKUP 拿掉，邊收事實邊合併 · bpr.md P4（以事件連接平行活動）；「改要留痕」變成規則</td></tr>
+<tr><td class="nowrap">之後</td><td>帳務按顧客合併 P-441 + S-991 → INV-778；開立後不可改，更正走更正單</td><td>老陳（保留：爭議與更正）</td><td>帳單已開立（、帳單已更正）</td><td>改：#3 車牌 VLOOKUP 拿掉，邊收事實邊合併 · P4（以事件連接平行活動）；「改要留痕」變成規則</td></tr>
 </table></div>
 
 <h4>BPR 四原則檢核（每個交接點：改 / 不改 + 理由）</h4>
-<h5>P1 以結果為導向組織（不是以任務）</h5>
+<h5>P1 圍繞結果組織，而非任務</h5>
 <ul>
 <li><b>#4 + #5 + #6（故障申告 → 開單 → 派工 → 關單）</b>：改。As-Is 是四個部門各管一段（阿忠申告、客服開單、Vicky 派工、阿豪修、Vicky 關），沒有人擁有「樁恢復可售」這個結果。To-Be 由一個結果「故障 → 恢復可售」擁有整條線，SLA 從設備申告時間起算、到恢復可售為止。</li>
 <li><b>#3（月底合併出帳）</b>：改。「顧客拿到一張對的帳單」是結果；老陳擁有它，但不再靠他月底用車牌對。</li>
+<li><b>Vicky 關單</b>：改。「30 分鐘沒再故障」變成關單的政策，屬於「恢復可售」這個結果，不是 Vicky 看到 LINE 的時間。但<b>修復驗證仍由阿豪做</b>（保留）。</li>
 </ul>
-<h5>P2 讓使用資訊的人自己產生資訊</h5>
-<ul>
-<li><b>#1（阿忠問小美這把槍在不在充）</b>：改。用這個資訊的人是阿忠（他要引導客人），所以看板直接顯示「這把槍現在能不能賣」；小美不再是人肉查詢介面。斷線時仍成立——看板資料來自場站本機的樁，不經總部。</li>
-<li><b>#1b（阿忠走出去看有沒有插槍）</b>：改。占用與充電兩個事實在同一個看板並排，「占著沒在充」自己跳出來。</li>
-<li><b>#7（阿豪打電話問小美故障前的數據）</b>：改。用資料的人是阿豪，工單開立時就附上故障前 10 分鐘的計量與狀態序列。<b>不在 MVP1</b>，列進待驗證假設。</li>
-<li><b>老陳要知道樁停售了幾天</b>：改。他訂閱「工單已關閉」（帶結果與時長）就夠了，不需要「技術員已出發」（Vicky 說那讓帳務被淹沒）。</li>
-</ul>
-<h5>P3 一次擷取資訊、在源頭擷取</h5>
+<h5>P2 資訊在源頭一次捕獲</h5>
 <ul>
 <li><b>#4（阿忠唸故障碼給客服）+ #5（客服手 key）</b>：改。故障碼在樁說出來的那一刻就是事實，不由人抄兩次。「A12」對不到 CP-A12 的問題也在這裡消失——源頭就是資產編號。</li>
-<li><b>#2（日誌本 → 拍照 → email）</b>：改。放行在按下去的那一刻就被記錄，帶「人工」這個放行方式；連線恢復後補送。阿忠不再是資料搬運工，但<b>放行的決定仍然是他的</b>（見 P4）。</li>
-<li><b>14:13 / 14:22 計量帶時間戳、14:31 度數用 Wh 整數、結束原因分類</b>：改。小美的跨時段計價、老陳的精度、小美的異常統計，三個痛都是「源頭沒擷取夠」。</li>
+<li><b>#2（日誌本 → 拍照 → email）</b>：改。放行在按下去的那一刻就被記錄，帶「人工」這個放行方式；連線恢復後補送。阿忠不再是資料搬運工，但<b>放行的決定仍然是他的</b>（見 P3）。</li>
+<li><b>#7（阿豪打電話問小美故障前的數據）</b>：改。故障前 10 分鐘的計量與狀態在樁回報時就已經是事實，工單開立時附上即可，不必再由小美唸一次。<b>不在 MVP1</b>，列進待驗證假設。</li>
+<li><b>14:13 / 14:22 計量帶時間戳、14:31 度數用 Wh 整數、結束原因分類</b>：改。小美的跨時段計價、老陳的精度、小美的異常統計，三個痛都是「源頭沒捕獲夠」。</li>
 <li><b>18:10:08 重複申告、18:12 重送</b>：改。同一件事只記一次；第二次申告附加、重送忽略。</li>
 </ul>
-<h5>P4 把決策點放到工作發生的地方</h5>
+<h5>P3 決策點放在工作發生處</h5>
 <ul>
 <li><b>14:33 人工放行</b>：<b>不改決策，只改記錄</b>。斷線時誰有權放車出去？阿忠。他不需要總部同意——As-Is 就是這樣，而且它是唯一斷線時一定走得通的步驟。To-Be 保留它，理由見下一節。</li>
 <li><b>14:04 授權</b>：改。授權由場站本機白名單決定（月票卡 24 小時快取），總部只訂閱結果。斷線時月票車照充；車隊卡與 App 被拒是<b>正確的</b>（停權名單不在本機），不是 bug。</li>
 <li><b>18:18 阿豪離線回報</b>：改。他在地下室完成就算完成，回到地面同步；不再因為沒訊號被判逾時。</li>
-<li><b>Vicky 關單</b>：改。「30 分鐘沒再故障」變成關單的政策，不是 Vicky 看到 LINE 的時間。但<b>修復驗證仍由阿豪做</b>（保留）。</li>
 </ul>
-
+<h5>P4 以事件連接平行活動，而非事後整合結果</h5>
+<ul>
+<li><b>#1（阿忠問小美這把槍在不在充）</b>：改。停車與充電是平行發生的兩件事；看板訂閱樁的事實，直接顯示「這把槍現在能不能賣」，小美不再是人肉查詢介面。斷線時仍成立——看板訂閱的是場站本機的樁，不經總部。</li>
+<li><b>#1b（阿忠走出去看有沒有插槍）</b>：改。占用與充電兩個事實在同一個看板並排，「占著沒在充」自己跳出來，不用人去整合。</li>
+<li><b>#3（月底用車牌對兩份報表）</b>：改。帳務邊收「充電已結束」「停車已人工放行」邊合併草稿，而不是月底拿兩份 Excel 事後對。</li>
+<li><b>老陳要知道樁停售了幾天</b>：改。他訂閱「工單已關閉」（帶結果與時長）就夠了，不需要「技術員已出發」（Vicky 說那讓帳務被淹沒）。</li>
+</ul>
 <h4>保留的人工步驟（以及為什麼保留）</h4>
 <div class="table-scroll"><table>
 <tr><th>步驟</th><th>誰</th><th>為什麼保留</th><th>To-Be 改了什麼</th></tr>
@@ -896,10 +1034,10 @@ BRANCH=workshop/xiaolin</pre>
 
 <h4>To-Be 裡故意沒有的東西</h4>
 <ul>
-<li>沒有「客服確認故障」——樁的申告就是事實（P3）。客服變成處理「App 連不上」這類非故障客訴的人。</li>
-<li>沒有「總部核准放行」——放行是場站的事（P4）。</li>
+<li>沒有「客服確認故障」——樁的申告就是事實（P2）。客服變成處理「App 連不上」這類非故障客訴的人。</li>
+<li>沒有「總部核准放行」——放行是場站的事（P3）。</li>
 <li>沒有「帳務收到技術員已出發」——Vicky 說過那讓他們被淹沒；老陳要的是停售時長，訂閱「工單已關閉」就夠。</li>
-<li>沒有「帳務回頭叫充電暫停」——帳務只收事實，不回呼。</li>
+<li>沒有「帳務回頭叫充電暫停」——帳務只收事實，不回呼（P4）。</li>
 <li>沒有「一個看板系統」「一支 API」「上 Kafka」——那是解法，Day 3 以後的事；這裡只寫誰決定、誰產生、產生了什麼事實。</li>
 <li>沒有「把阿忠拿掉」——他從搬運工變成例外處理者：放行、引導客人、看看板。</li>
 </ul>
@@ -922,8 +1060,8 @@ BRANCH=workshop/xiaolin</pre>
   <div class="msg stu"><p class="who">學員 → /bpr-review</p><p>這是我的 workshop/day1/as-is.md 與 to-be.md（請直接讀檔）。請不要重寫它們。1. 逐一檢查我圈的「人當 API」交接點，每個問我一個問題確認它真的是「人在兩個系統之間搬資訊」。2. 你認為我漏掉的交接點，只告訴我在時間線的哪一段。3. To-Be 四原則挑一條你覺得站不住的，問我「如果連線中斷這條還成立嗎」。4. 給我下一個最小步驟。</p></div>
   <div class="msg ta"><p class="who">助教</p><p>讀了兩份。先問你：你覺得 As-Is 裡最痛的一次交接是哪個？不是最多次的，是最痛的。</p></div>
   <div class="msg stu"><p class="who">學員</p><p>#2。金額最小，但漏了沒有人知道，老陳說他在乎的是「查不到」。而且它是唯一在斷線時一定會發生的交接。</p></div>
-  <div class="msg ta"><p class="who">助教</p><p>同意，而且你把「放行的決定」和「放行的記錄」分開圈了——這是今天最重要的區分，很多人會把整段 14:33 圈成一個交接然後在 To-Be 把阿忠自動化掉。</p><p>逐一確認（每個一題）：<br>#1 阿忠問小美——如果小美的後台畫面直接在阿忠螢幕上，阿忠還需要做什麼？（答不出來就是純搬運，圈對了）<br>#3 老陳車牌對帳——他對的是「車牌」，但他跟你說合併是按「顧客」。那 VLOOKUP 之後他還做了什麼人的判斷？那一部分不是交接。<br>#4 阿忠打客服——樁 18:10 就說了，阿忠 18:25 才看到。你圈的是「打電話」那 5 分鐘，還是「沒人看」那 15 分鐘？後者不是交接，是沒有 sensor。<br>#5 客服手 key——20 張單是交接的代價，還是另一個問題？（提示：第 2 張到第 20 張，客服在搬誰的資訊？）<br>#6、#7 沒問題。</p><p>漏掉的交接點：<b>時間線 14:03 到 14:05 之間</b>，看你 interviews.md 阿忠那段「每天約 5 台」。</p><p>四原則裡站不住的一條：to-be.md 的 P2「阿忠看看板就知道這把槍能不能賣」——<b>如果連線中斷，看板的資料從哪裡來？</b>如果答案是「總部」，這條在斷線時就死了，你等於用一個會下班的人換了一個會斷線的系統。</p><p><b>下一個最小步驟：</b>回 interviews.md 阿忠那段找「貼紙條」，補成 #1b，寫 sensor / transport / deserializer 與每天 5 台的代價，10 分鐘。</p></div>
-  <div class="msg stu"><p class="who">學員</p><p>補了 #1b：阿忠走出去看有沒有插槍、貼紙條——sensor 是他的眼睛、transport 是走路、deserializer 是紙條（沒人看）。看板那題：資料來自場站本機的樁，樁在場站、看板在場站，不經總部；斷線時看板還活著，只是總部看不到。我把這句補進 P2 那條。#4 我改成只圈「打電話」，「沒人看 15 分」寫成代價。#5 我改成：第 1 張是交接（搬阿忠的話），第 2–20 張是同一根樁在重複講話、沒人去重——那是另一個問題，先記在待驗證假設。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>同意，而且你把「放行的決定」和「放行的記錄」分開圈了——這是今天最重要的區分，很多人會把整段 14:33 圈成一個交接然後在 To-Be 把阿忠自動化掉。</p><p>逐一確認（每個一題）：<br>#1 阿忠問小美——如果小美的後台畫面直接在阿忠螢幕上，阿忠還需要做什麼？（答不出來就是純搬運，圈對了）<br>#3 老陳車牌對帳——他對的是「車牌」，但他跟你說合併是按「顧客」。那 VLOOKUP 之後他還做了什麼人的判斷？那一部分不是交接。<br>#4 阿忠打客服——樁 18:10 就說了，阿忠 18:25 才看到。你圈的是「打電話」那 5 分鐘，還是「沒人看」那 15 分鐘？後者不是交接，是沒有 sensor。<br>#5 客服手 key——20 張單是交接的代價，還是另一個問題？（提示：第 2 張到第 20 張，客服在搬誰的資訊？）<br>#6、#7 沒問題。</p><p>漏掉的交接點：<b>時間線 14:03 到 14:05 之間</b>，看你 interviews.md 阿忠那段「每天約 5 台」。</p><p>四原則裡站不住的一條：to-be.md 的 P4「阿忠看看板就知道這把槍能不能賣」——<b>如果連線中斷，看板的資料從哪裡來？</b>如果答案是「總部」，這條在斷線時就死了，你等於用一個會下班的人換了一個會斷線的系統。</p><p><b>下一個最小步驟：</b>回 interviews.md 阿忠那段找「貼紙條」，補成 #1b，寫 sensor / transport / deserializer 與每天 5 台的代價，10 分鐘。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>補了 #1b：阿忠走出去看有沒有插槍、貼紙條——sensor 是他的眼睛、transport 是走路、deserializer 是紙條（沒人看）。看板那題：資料來自場站本機的樁，樁在場站、看板在場站，不經總部；斷線時看板還活著，只是總部看不到。我把這句補進 P4 那條。#4 我改成只圈「打電話」，「沒人看 15 分」寫成代價。#5 我改成：第 1 張是交接（搬阿忠的話），第 2–20 張是同一根樁在重複講話、沒人去重——那是另一個問題，先記在待驗證假設。</p></div>
   <div class="msg ta"><p class="who">助教</p><p>第二次審：</p>
 <div class="table-scroll"><table>
 <tr><th>檢查項</th><th>狀態</th><th>備註</th></tr>
@@ -932,7 +1070,7 @@ BRANCH=workshop/xiaolin</pre>
 <tr><td>交接標等待時間 / 失敗模式 / 請假</td><td>✅</td><td>#4 的「沒人看 15 分」改列代價，對</td></tr>
 <tr><td>可追溯到訪談原話</td><td>✅</td><td>每處有引號</td></tr>
 <tr><td>斷線情境</td><td>✅</td><td>「全靠阿忠」那句是這份檔案最好的一句</td></tr>
-<tr><td>To-Be 每個交接有改法 + 原則</td><td>✅</td><td>P1–P4 各至少一次；有標 bpr.md 的編號差異</td></tr>
+<tr><td>To-Be 每個交接有改法 + 原則</td><td>✅</td><td>P1–P4 各至少一次；編號照 bpr.md</td></tr>
 <tr><td>流程解而非技術解</td><td>✅</td><td>「故意沒有的東西」擋住了「上 Kafka」</td></tr>
 <tr><td>斷線仍可進場 / 充電 / 人工放行</td><td>✅</td><td>放行保留，理由引 §1.1；車隊卡被拒寫成正確設計</td></tr>
 <tr><td>三種錢沒混成一筆</td><td>✅</td><td>P-441 0 元 + S-991 99.2 元分開再合併</td></tr>
@@ -941,9 +1079,23 @@ BRANCH=workshop/xiaolin</pre>
 <p>判定：<b>通過</b>。沒有新的漏掉的交接點。最需要再想的一件事（不用今天）：待驗證假設第 3 條「開放期間」的邊界，明天會變成一條規則。</p><p><b>下一個最小步驟：</b>commit 三個檔案到 <code>workshop/xiaolin</code>，然後 <code>/checkout day1</code>。</p></div>
 </div>
 
+<h3>Commit：三個檔案、三個 commit</h3>
+<p>rubric 沒規定 commit 粒度，但 <code>/checkout</code> 會跑 <code>git log --oneline -- workshop/day1</code>。一個 Block 一個 commit 最好驗收；一天一個大 commit 也過，但明天 Day 2 起 TDD 的紅綠重構粒度就是從這裡開始養的。</p>
+<pre class="term">$ git log --oneline -- workshop/day1
+<span class="yel">c41e9a2</span> day1: to-be with four principles, kept manual release, 8 assumptions
+<span class="yel">7b02d1f</span> day1: as-is timeline 14:02 to month end, 7 human-as-api handoffs, offline scenario
+<span class="yel">a9f3c60</span> day1: interviews with five stakeholders, 18/25 hidden facts, 6 contradictions
+<span class="yel">5d17e8b</span> day1: pick node, pre-interview questions, site sketch
+
+$ git branch --show-current
+workshop/xiaolin
+
+$ ls workshop/day1
+TEMPLATE.md  as-is.md  interviews.md  site-sketch.jpg  to-be.md</pre>
+
 <div class="teach"><p class="head">講師註 · Block 3</p>
 <p><b>驗收看哪一行：</b>(1) as-is.md 旅程表 14:33 那一行的「人當 API？」欄——寫「否（決策）」而把記錄拆到隔天那行的，是真的懂了；整行圈「是」的要問「他在搬什麼資訊」；(2) 交接點表有沒有 #4「阿忠打電話」與 #5「客服開單」兩處（rubric 明說看這裡）；(3) to-be.md「保留的人工步驟」第一列是不是人工放行，理由有沒有引 §1.1；(4) 「故意沒有的東西」有沒有出現「看板系統」「API」這種功能需求（rubric：偷渡）。</p>
-<p><b>常見失真：</b>To-Be 表寫成「系統會自動……」而沒有主詞——問「那句話背後是誰負責？」。第二個是四原則四條全部套在每個交接點上，寫成 28 格的矩陣——沒必要，一個交接套一條就夠，講師 kickoff 要先說。第三個：學員把 bpr.md 的 P1–P4 和 TEMPLATE 的四條混用而不自知——兩份文件的第 2 與第 4 條不同（見講師手記），驗收時不要扣分，但要他標清楚用哪一份。</p>
+<p><b>常見失真：</b>To-Be 表寫成「系統會自動……」而沒有主詞——問「那句話背後是誰負責？」。第二個是四原則四條全部套在每個交接點上，寫成 28 格的矩陣——沒必要，一個交接套一條就夠，講師 kickoff 要先說。第三個：P4「以事件連接平行活動」最常被漏掉——學員把 #3 月底對帳寫成「匯出快一點」；問「停車和充電是平行發生的，為什麼要等到月底才對？」。</p>
 <p><b>時間：</b>As-Is 40 分鐘只夠寫正常午後 + 故障到開單；故障支線寫到月底的人通常要 55 分鐘。To-Be 30 分鐘一定不夠寫完整份，可接受的最小版本是：每個交接一行「改 / 不改 + 原則」+ 保留人工放行 + 5 條假設。「產生的事實清單」與「故意沒有的東西」可以在 check-out 後補，不影響明天。</p>
 </div>
 </section>
@@ -969,7 +1121,7 @@ BRANCH=workshop/xiaolin</pre>
 <tr><td>≥ 4 交接點 + 代價 + 請假</td><td>✅ 過</td><td>8 處（#1–#7 + #1b），代價表含「請假」欄</td></tr>
 <tr><td>斷線情境</td><td>✅ 過</td><td>進場 / 充電 / 放行 / 故障 / 對帳五行</td></tr>
 <tr><td>增值時間與總時長</td><td>⚠️ 部分</td><td>故障流程的增值時間 40 分是估的，訪談裡阿豪沒說換模組要多久（L「增值時間與總時長」表第 3 列）</td></tr>
-<tr><td rowspan="4">to-be.md</td><td>每處改動標 P1–P4</td><td>✅ 過</td><td>每列有原則；有註明 TEMPLATE 與 bpr.md 編號差異</td></tr>
+<tr><td rowspan="4">to-be.md</td><td>每處改動標 P1–P4</td><td>✅ 過</td><td>每列有原則；編號照 bpr.md，P1–P4 各至少一次</td></tr>
 <tr><td>事實清單 ≥ 8（過去式）</td><td>✅ 過</td><td>17 個，全部過去式</td></tr>
 <tr><td>「故意沒有的東西」</td><td>✅ 過</td><td>6 條，含「沒有把阿忠拿掉」</td></tr>
 <tr><td>/bpr-review 通過</td><td>✅ 過</td><td>第二次無新漏</td></tr>
@@ -980,6 +1132,16 @@ BRANCH=workshop/xiaolin</pre>
 <p><b>下一個最小步驟：</b>明天開工前先重讀 <code>interviews.md</code> 每一位的「原話」小節（不是隱藏事實），把裡面每一個名詞圈起來——「桿子」「槍」「會話」「單」「跳」——那是明天 <code>/storm</code> 要你翻成事實的字。</p></div>
 </div>
 
+<h3>講師抽問：2 分與 3 分的分水嶺</h3>
+<p>rubric §1：「能口頭解釋」是 2 與 3 的差別。驗收 30 分鐘裡每人抽一題，聽的是理由不是答案。</p>
+<div class="table-scroll"><table>
+<tr><th>抽問</th><th>2 分的回答（對但講不出為什麼）</th><th>3 分的回答</th></tr>
+<tr><td>「as-is.md 14:33 那行，你為什麼寫『否』？」</td><td>「因為教材說放行要保留。」</td><td>「因為阿忠在那一刻做的是決定——放不放——不是搬資訊。搬資訊是隔天 email 那行，所以我拆成兩行，一行否、一行 #2。」</td></tr>
+<tr><td>「矛盾第 2 條，阿忠的會話和小美的會話差在哪？」</td><td>「一個是停車一個是充電。」</td><td>「兩個生命週期：阿忠的從 14:02 到 14:33，小美的從 14:04 到 14:31；14:05 那位插了槍沒授權的人，在阿忠那邊有會話、在小美那邊沒有。阿忠自己說做成同一個東西他們兩個都會罵。」</td></tr>
+<tr><td>「to-be.md 為什麼車隊卡在斷線時被拒是『正確的』？」</td><td>「因為小美說會被拒。」</td><td>「因為停權名單每小時才同步、在總部那邊；場站本機只有月票的 24 小時快取。斷線時放行車隊卡等於替車隊公司做它沒授權的決定。這是 P3 決策在工作發生處的反面：本機沒有的資訊就不該本機決定。」</td></tr>
+<tr><td>「#5 你為什麼把 20 張單的第 2–20 張從交接裡拿掉？」</td><td>「因為 /bpr-review 說那是另一個問題。」</td><td>「第 1 張是客服在搬阿忠的話，是交接；第 2–20 張沒有人在搬，是同一根樁重複講話沒人去重——那是明天的規則，不是今天的人當 API。」</td></tr>
+</table></div>
+
 <h3>Quiz 參考答案</h3>
 <p><b>1. 「連接器（Connector）」和「一根樁」是同一個東西嗎？<code>CP-A12-2</code> 的 <code>-2</code> 是什麼？</b></p>
 <div class="answer"><p class="head">參考答案</p><p>不是。樁（Charger，<code>CP-A12</code>）是一台有韌體、有連線、會壞掉的設備，可以有 1–2 把槍；連接器（<code>CP-A12-2</code>）是第 2 把槍的<b>業務身份</b>，能獨立插車、獨立計量。<code>-2</code> 就是「這根樁上的第 2 把槍」。阿豪說的三套編號（總部 <code>CP-A12</code>、廠商序號、現場「B 槍」）都指同一把，之後只准用一個名字。今天只要分得清「會話掛在槍上、故障掛在樁上」——14:04 是 <code>CP-A12-2</code> 在充，18:10 是 <code>CP-A12</code> 壞。</p></div>
@@ -989,8 +1151,8 @@ BRANCH=workshop/xiaolin</pre>
 <div class="answer"><p class="head">參考答案</p><p>例：#4——18:10 樁螢幕閃紅 → 阿忠 18:25 看到（sensor）→ 打市話（transport）→ 客服聽完手 key 工單（deserializer）。代價：從看到到工單存在 20 分鐘、唸錯樁號、22:00 後沒人接、SLA 從電話起算晚了 25 分鐘。判準：如果阿忠今天請假，資料傳不過去——樁說了也沒人開單。任何一個 #1–#7 都可以，重點是三個角色分得出來、代價有數字。</p></div>
 <p><b>4. 連線中斷時，阿忠現在（As-Is）怎麼放車出場？你的 To-Be 保留了這條嗎？為什麼？</b></p>
 <div class="answer"><p class="head">參考答案</p><p>As-Is：拿鑰匙手動抬桿，在日誌本寫車牌與時間，隔天拍照 email 給老陳補停車費；每月 3–4 次、漏過 ≥ 2 次。To-Be <b>保留</b>人工放行——curriculum §1.1 明說斷線時仍要能人工放行，全自動的閘門會把顧客關在場內，而且斷線時阿忠是唯一有權決定的人。改的只有記錄方式：按下去的那一刻就是一個被記錄的事實（帶「人工」這個放行方式），連線恢復後補送，帳務事後對齊——不靠他記得拍照。</p></div>
-<p><b>5. BPR 四原則裡的「讓使用資訊的人自己產生資訊」套在故障申告上，會把哪個人從流程裡拿掉？拿掉後誰知道樁壞了？</b></p>
-<div class="answer"><p class="head">參考答案</p><p>拿掉「打電話的阿忠」（#4）與「手 key 的客服」（#5）：樁自己申告，總部系統自己開單 <code>WO-2208</code>，SLA 從 18:10:00 起算。阿忠仍然會知道——他看場站看板（WO-2208 / 阿豪 / 處理中），而且看板資料來自場站本機，斷線時也在；他不再是傳輸層，是訂閱者。Vicky 也還在：她從「挑 20 張單、LINE 派工」變成處理例外（備品不在車上、SLA 快到）。沒有人被裁掉，被拿掉的是「人當 API」那一段。</p></div>
+<p><b>5. BPR 四原則裡的 P2「資訊在源頭一次捕獲」套在故障申告上，會把哪個人從流程裡拿掉？拿掉後誰知道樁壞了？</b></p>
+<div class="answer"><p class="head">參考答案</p><p>拿掉「打電話的阿忠」（#4）與「手 key 的客服」（#5）：樁自己申告，總部系統自己開單 <code>WO-2208</code>，SLA 從 18:10:00 起算。阿忠仍然會知道——他看場站看板（WO-2208 / 阿豪 / 處理中），而且看板資料來自場站本機，斷線時也在；他不再是傳輸層，是訂閱者。Vicky 也還在：她從「挑 20 張單、LINE 派工」變成處理例外（備品不在車上、SLA 快到）。沒有人被裁掉，被拿掉的是「人當 API」那一段——故障碼只在源頭（樁）捕獲一次，這就是 P2。</p></div>
 </section>
 
 <section>
@@ -1005,7 +1167,7 @@ BRANCH=workshop/xiaolin</pre>
 </ul>
 <h3>不夠的地方（講師要自己補）</h3>
 <ul>
-<li><b>四原則有兩個版本，編號不一致。</b><code>workshop/day1/TEMPLATE.md</code> 與 <code>docs/days/day1.md</code> 用的是「結果導向 / 使用資訊的人自己產生 / 一次在源頭擷取 / 決策點放在工作處」；<code>docs/references/bpr.md</code>（<code>/bpr-review</code> 說「以此為準」）用的是「結果導向 / 源頭一次捕獲 / 決策點在工作處 / 以事件連接平行活動」。第 2 條與第 4 條不同，rubric 又寫「每處改動標 P1–P4」。學員會混用而不自知。<b>kickoff 時講一句：「用 TEMPLATE 那四條，標 P1–P4；bpr.md 的第四條『以事件連接平行活動』當加分項。」</b>並回報維護者對齊。</li>
+<li><b>四原則以 <code>docs/references/bpr.md</code> 為準</b>（P1 圍繞結果組織 / P2 資訊在源頭一次捕獲 / P3 決策點放在工作發生處 / P4 以事件連接平行活動）；day1.md、TEMPLATE 與 <code>/bpr-review</code> 都已對齊，kickoff 只需唸一次這四條。</li>
 <li><b>rubric 的 as-is / to-be DoD 比 day1.md 多了幾項。</b>rubric 要「增值時間與總時長」「如果他請假」「產生的事實清單 ≥ 8」「故意沒有的東西」；day1.md 的步驟與 TEMPLATE 沒提這四樣。<code>/checkout</code> 讀 rubric，所以學員會在最後 30 分鐘才發現要補。kickoff 時把 rubric Day 1 段落投影一次，或請學員 B3 開始前先讀。</li>
 <li><b>正常午後的交接點教材給得少。</b>bpr.md §5 只示範故障流程，學員在 14:02–14:33 那段常圈不到東西；本頁的 #1（問小美）、#1b（貼紙條）、#2（放行記錄）要講師口頭點。最重要的區分——「14:33 放行是決策、隔天 email 是交接」——教材沒有明寫，是 <code>/bpr-review</code> 的提問庫裡有一題（「誰有權決定人工放行？」）間接帶到。建議 kickoff 用這個例子講「決策 vs 搬運」。</li>
 <li><b>「跨角色矛盾」的形式沒有教。</b>rubric 只給一個例子（插槍 vs 授權）。學員常寫成「阿忠要按鈕、Vicky 要去重」——那是需求差異。要在 B2 開始前講清楚：矛盾 = 同一個詞或同一件事、兩個人說法不同。本頁 6 條可以投影。</li>
@@ -1020,4 +1182,19 @@ BRANCH=workshop/xiaolin</pre>
 <li><b>Check-out 30 分鐘夠</b>，前提是學員在 B3 結束前已經 commit。沒 commit 的人 <code>/checkout</code> 會先卡在 <code>git log</code> 那項，講師走動時提醒一次。</li>
 <li>整天算下來，紀律好的學員 17:30 交齊；一般學員 to-be.md 的後兩節與矛盾當晚補。「如果你落後了」那段（訪談 3 位、As-Is 只做故障段）是真的可行的 2.5 小時版本，但代價是 Day 2 正常午後那段黃貼會少一半——講師 Day 2 kickoff 要補講 14:02–14:33。</li>
 </ul>
+<h3>回報維護者的兩件事</h3>
+<ol>
+<li>rubric Day 1 的 as-is / to-be 多出四項（增值時間、請假、事實清單 ≥ 8、故意沒有的東西），day1.md 步驟與 TEMPLATE 沒提。補進 day1.md B3 的步驟 2、4 與 TEMPLATE 的小節標題。</li>
+<li><code>docs/00-orientation.md</code> 寫 Node 20+，<code>starter/node</code> 的 Day 6 要 22；day1.md 常見卡點只寫「Node &lt; 20」。建議 Day 1 就統一要求 22，省掉 Day 6 再升一次。</li>
+</ol>
+<h3>「如果你落後了」的 2.5 小時版本，講師怎麼驗收</h3>
+<p>day1.md 給了最小可行版本。它交出來的東西長這樣，驗收標準跟著縮：</p>
+<div class="table-scroll"><table>
+<tr><th>交付物</th><th>完整版（本頁）</th><th>2.5 小時版</th><th>驗收時退讓到哪裡</th><th>明天會缺什麼</th></tr>
+<tr><td>interviews.md</td><td>五位、18/25、6 條矛盾</td><td>阿忠、小美、Vicky 各 8 分鐘；矛盾 2 條</td><td>三位各 ≥ 1 隱藏事實；原話仍要逐字</td><td>老陳的「按顧客合併」「改要留痕」——Day 2 R7 沒原料，kickoff 補講 3 分鐘</td></tr>
+<tr><td>as-is.md</td><td>17 行、7+1 交接、斷線五行</td><td>只寫 18:10 之後；2 個交接（#4 電話、#5 開單）</td><td>兩個交接要有 sensor / transport / deserializer；斷線情境至少寫放行那一行</td><td>正常午後的 T1、T3 耦合沒被看見——Day 2 storm 時 14:02–14:33 那段黃貼要講師帶</td></tr>
+<tr><td>to-be.md</td><td>四原則逐交接、六項保留、17 事實、8 假設</td><td>只套 P2「資訊在源頭一次捕獲」；保留人工放行 + 理由</td><td>人工放行的理由必須引 §1.1；假設 ≥ 3</td><td>事實清單沒有——Day 2 從 storm 反推，等於多花 20 分鐘</td></tr>
+<tr><td>/checkout</td><td>通過（一項 ⚠️）</td><td>誠實勾：三項 ⚠️</td><td>不強求通過；要有「明天先補什麼」</td><td>—</td></tr>
+</table></div>
+<p>只要「原話」與「時間線」在，Day 2 走得下去；其他可以晚補。</p>
 </section>

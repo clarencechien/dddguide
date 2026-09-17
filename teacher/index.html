@@ -594,17 +594,25 @@ figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed)
 .sticky .fix { display: block; margin-top: .3em; font-size: .7rem; color: var(--accent); text-decoration: none; }
 .wall-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: var(--sp-2); }
 .wall-scroll .wall { min-width: 56rem; }
-/* 逐步揭露：容器 data-step=N；便利貼 data-from / data-until */
-[data-step] [data-from] { transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
-[data-step="1"] [data-from]:not([data-from="1"]), [data-step="2"] [data-from="3"], [data-step="2"] [data-from="4"], [data-step="2"] [data-from="5"], [data-step="2"] [data-from="6"], [data-step="2"] [data-from="7"],
-[data-step="3"] [data-from="4"], [data-step="3"] [data-from="5"], [data-step="3"] [data-from="6"], [data-step="3"] [data-from="7"],
-[data-step="4"] [data-from="5"], [data-step="4"] [data-from="6"], [data-step="4"] [data-from="7"],
-[data-step="5"] [data-from="6"], [data-step="5"] [data-from="7"],
-[data-step="6"] [data-from="7"] { opacity: 0; transform: scale(.96); pointer-events: none; }
-[data-step="2"] [data-until="1"], [data-step="3"] [data-until="1"], [data-step="3"] [data-until="2"], [data-step="4"] [data-until="1"], [data-step="4"] [data-until="2"], [data-step="4"] [data-until="3"],
-[data-step="5"] [data-until="1"], [data-step="5"] [data-until="2"], [data-step="5"] [data-until="3"], [data-step="5"] [data-until="4"],
-[data-step="6"] [data-until="1"], [data-step="6"] [data-until="2"], [data-step="6"] [data-until="3"], [data-step="6"] [data-until="4"], [data-step="6"] [data-until="5"],
-[data-step="7"] [data-until="1"], [data-step="7"] [data-until="2"], [data-step="7"] [data-until="3"], [data-step="7"] [data-until="4"], [data-step="7"] [data-until="5"], [data-step="7"] [data-until="6"] { display: none; }
+/* 逐步揭露：容器 data-step=N；便利貼 data-from=N（第 N 步出現）/ data-until=N（第 N 步後消失）。
+   未到的貼紙不佔位（display:none），出現時播一次進場動畫。 */
+@keyframes sticky-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+[data-step-target] [data-from] { animation: sticky-in var(--dur) var(--ease-out) both; }
+[data-step-target] .sticky.hot[data-from] { animation-name: sticky-in-hot; }
+@keyframes sticky-in-hot { from { opacity: 0; transform: rotate(-2deg) translateY(6px) scale(.96); } to { opacity: 1; transform: rotate(-2deg); } }
+[data-step="1"] [data-from]:not([data-from="1"]),
+[data-step="2"] :is([data-from="3"],[data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="3"] :is([data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="4"] :is([data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="5"] :is([data-from="6"],[data-from="7"]),
+[data-step="6"] [data-from="7"],
+[data-step="2"] [data-until="1"],
+[data-step="3"] :is([data-until="1"],[data-until="2"]),
+[data-step="4"] :is([data-until="1"],[data-until="2"],[data-until="3"]),
+[data-step="5"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"]),
+[data-step="6"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"]),
+[data-step="7"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"],[data-until="6"]) { display: none; }
+@media (prefers-reduced-motion: reduce) { [data-step-target] [data-from] { animation: none; } }
 
 /* 步驟控制列 */
 .stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-3) 0; }
@@ -673,6 +681,8 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 
 /* 長路徑與識別碼沒有斷點：給有可能塞進 mono 字串的容器一個斷字機會，免得 375px 被撐寬 */
 .meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
+/* SVG 裡借用 sticky 色票的 rect 不要吃到 HTML 便利貼的旋轉 */
+.diagram .sticky, .diagram .sticky.hot { transform: none; }
 
 </style>
 <body>

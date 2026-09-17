@@ -22,7 +22,7 @@
 - **[3 分] 今天全部是 adapter**：領域層與應用層昨天就完成了，今天一行都不該改（改了就是昨天漏了）。六角架構的回報日：HTTP、OCPP、SQLite、Docker 都是可插拔的外圈。
 - **[4 分] ACL 是今天最重要的一段**：OCPP 的 `StartTransaction.req { connectorId: 2, idTag: "TAG-MONTHLY-77", meterStart: 1000, timestamp }` 進來，ACL 翻成 `StartCharging { connectorId: "CP-A12-2", idTag, startMeterWh: 1000, at }`。翻譯表要寫在 `README-mvp.md`。OCPP 的 `connectorId` 是整數 2，我們的 `ConnectorId` 是 `CP-A12-2`——這種差異就是 ACL 存在的理由。
 - **[3 分] 持久化預設 SQLite、零安裝**；想玩 Postgres 的在 repo 根目錄 `docker compose up -d`。Repository 介面昨天就定了，今天只是換實作；交易 = SQLite 的 `BEGIN/COMMIT`，Outbox 是同一個 DB 的一張表。
-- **[2 分] E2E 劇本是那個下午**：14:02 進場（Parking stub）→ 14:04 插槍授權 → 14:10 第二次被拒 → 計量 → 14:31 結束 12.4 kWh → 草稿帳單 → 14:33 離場（stub）→ 18:10 故障 → 18:15 重複申告 → 18:18 看板上 `WO-2208` 指派 `TECH-HAO`。
+- **[2 分] E2E 劇本是那個下午**：14:02 進場（Parking stub）→ 14:04 插槍授權 → 14:05 第二張卡被拒（R1） → 計量 → 14:31 結束 12.4 kWh → 草稿帳單 → 14:33 離場（stub）→ 18:10 故障 → 18:15 重複申告 → 18:18 看板上 `WO-2208` 指派 `TECH-HAO`。
 - **[2 分] `/ship` 是上線清單**：API、持久化、Docker、E2E、日誌。它會問你「沒有 Docker 能跑嗎」「日誌裡看得到 correlationId 嗎」。
 - **[1 分] 交付物**：E2E 跑通 + `README-mvp.md` + `e2e-log.md`。
 
@@ -184,14 +184,14 @@ Day 6 Block 2。我要把 ChargingSessionRepository、WorkOrderRepository、Outb
    |---|---|---|
    | 14:02 | Parking stub 發 `parking.vehicle_entered.v1`（`ABC-1234`, `SITE-TPE-01`） | 200，Charging 不受影響 |
    | 14:04 | OCPP `StartTransaction`（CP-A12, connector 2, `TAG-MONTHLY-77`, meterStart 1000） | `S-991` 為 `Charging` |
-   | 14:10 | OCPP `StartTransaction`（同連接器, `TAG-VISITOR-03`） | 409 / `ChargingStartRejected(ConnectorOccupied)`；`S-991` 不變 |
+   | 14:05 | OCPP `StartTransaction`（同連接器, `TAG-VISITOR-01`） | 409 / `ChargingStartRejected(ConnectorOccupied)`；`S-991` 不變 |
    | 14:20 | OCPP `MeterValues` 7000 | 202 |
-   | 14:25 | OCPP `MeterValues` 6500 | 422 / `MeterValueRejected`；`lastMeterWh` 7000 |
+   | （選配）| OCPP `MeterValues` 倒退（例如 8000 之後送 6500）| 422 / `MeterValueRejected`；`lastMeterWh` 不變。`scripts/e2e` 的劇本沒有這步，想驗 R3 自己加 |
    | 14:31 | OCPP `StopTransaction` meterStop 13400 | `Completed`, `energyWh 12400` |
    | 14:31+ | relay 跑 | `GET /invoices?sessionId=S-991` 有一張 Draft，`energyWh 12400` |
    | 14:33 | Parking stub 發 `parking.session.closed.v1`（`P-441`） | 200（MVP1 只驗收下、不合併） |
    | 18:10 | OCPP `StatusNotification(Faulted, E42)` | `WO-2208` Open |
-   | 18:15 | OCPP `StatusNotification(Faulted, E42)` | 仍一張；`duplicateReports` 1 |
+   | 18:10:08 | OCPP `StatusNotification(Faulted, GroundFailure)` 再申告 | 仍一張 `WO-2208`；`duplicateReports` 1（18:12 broker 重送同一 eventId → 忽略）|
    | 18:18 | `GET /work-orders?chargerId=CP-A12` | `WO-2208` 指派 `TECH-HAO`；relay 重跑 → `ops.work_order.opened.v1` 只發一次 |
    ```bash
    # API 跑著（本機或 Docker），repo 根目錄：
@@ -220,9 +220,9 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 - `README-mvp.md` 要讓**沒上過課的人**照著跑通。明天 PR 的 reviewer 就是那個人。
 
 ### 常見卡點
-- **E2E 的 14:10 那步過不了** → 看 HTTP 回應碼是不是照 Day 4 的決定；E2E 劇本斷言的是「拒絕」語意，回應碼可在 `scripts/e2e` 的設定調整（看 README）。
+- **E2E 的 14:05 那步過不了** → 看 HTTP 回應碼是不是照 Day 4 的決定；E2E 劇本斷言的是「拒絕」語意，回應碼可在 `scripts/e2e` 的設定調整（看 README）。
 - **草稿帳單沒出現** → relay 沒跑。E2E 劇本裡有「relay 跑」那步，本機要有 relay 程序或提供 `POST /admin/relay` 手動觸發（MVP 可接受，寫進限制）。
-- **18:15 開了第二張單** → `findOpenBy` 的 SQL 沒過濾 `status='Open'`，或冪等表沒生效。
+- **18:10:08 開了第二張單** → `findOpenBy` 的 SQL 沒過濾 `status='Open'`，或冪等表沒生效。
 - **Docker 內 SQLite 檔案沒有持久化** → `VOLUME /data` + `DB_PATH`。
 - **時間**：E2E 劇本用固定時間（14:02…）；API 要接受請求帶的 `at`，不要用伺服器時鐘覆蓋——這是 Day 4「時間從命令進來」的回報。
 
@@ -239,7 +239,7 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 1. OCPP 的 `connectorId: 2` 與領域的 `ConnectorId("CP-A12-2")` 誰負責對應？這個對應如果寫進 `ChargingSession` 會有什麼問題？
 2. 今天你改了幾行 `src/charging/domain/` 或 `src/charging/application/`？如果不是零，那些改動代表什麼？
 3. 為什麼 outbox 表要和 `charging_sessions` 在同一個資料庫、同一個交易？分開放會發生什麼？
-4. E2E 的 18:15 那步：模擬器送了第二次 `StatusNotification(Faulted, E42)`。走過哪幾層、各做了什麼判斷，最後為什麼只有一張工單？
+4. E2E 的 18:10:08 那步：模擬器送了第二次 `StatusNotification(Faulted, GroundFailure)`。走過哪幾層、各做了什麼判斷，最後為什麼只有一張工單？
 5. relay 掛掉 10 分鐘再起來，Billing 會多收還是少收 `charging.session.completed.v1`？哪一層保證結果正確？
 
 <details>
@@ -248,7 +248,7 @@ Day 6 Block 3。MVP1 在本機跑起來了，scripts/e2e 的結果如下（貼 e
 1. ACL（`ConnectorIdMapper`）。寫進聚合會讓領域層知道 OCPP 的編號方式，之後換 OCPP 2.0.1（`evseId` + `connectorId`）領域層要改；而且違反「OCPP 不得洩入領域層」。
 2. 理想是零。非零代表 Day 4–5 有漏：例如聚合沒暴露足夠的快照給持久化、處理器把時間寫死用伺服器時鐘。記進 `retro.md`。
 3. 同一交易才有原子性：聚合寫入成功 ⇔ 事件寫入成功。分開放（例如事件寫到另一個 DB 或直接發 bus）就回到「存成功發失敗 / 發成功存失敗」兩種不一致（Day 5 Quiz 1）。
-4. ACL 翻成 `ReportFault(CP-A12, E42, 18:15)` → 處理器 / PM：`ProcessedEvents` 查 eventId（不同，放行）→ `WorkOrderRepository.findOpenBy(CP-A12, E42)` 找到 `WO-2208` → `attachDuplicateReport(18:15)` → 存回、outbox 沒有新的 `opened` 信封 → 只有一張。
+4. ACL 翻成 `ReportFault(CP-A12, GroundFailure, 18:10:08)` → 處理器 / PM：`ProcessedEvents` 查 eventId（不同，放行）→ `WorkOrderRepository.findOpenBy(CP-A12, GroundFailure)` 找到 `WO-2208` → `attachDuplicateReport(18:15)` → 存回、outbox 沒有新的 `opened` 信封 → 只有一張。
 5. 不會少收（事件在 outbox 裡等著，relay 回來就送）；可能多收（at-least-once，例如 relay 送出後標記前掛掉）。Billing 消費者的冪等（`sessionId` + `processed_events`）保證多收也只有一張草稿。
 </details>
 

@@ -84,7 +84,7 @@
 **交付物**：`workshop/day3/context-map.md`、`c4.md`、`adr/0001-*.md`、`adr/0002-*.md`
 
 `context-map.md`
-- [ ] 邊界推導紀錄四小節（語言 / 生命週期 / 一致性 / 團隊），每節 ≥ 2 條證據，引用 Day 1–2 的檔案。
+- [ ] 邊界推導紀錄四小節（語言 / 生命週期 / 一致性 / 獨立存活與團隊——誰在斷線時要活著、誰擁有它），每節 ≥ 2 條證據，引用 Day 1–2 的檔案。
 - [ ] context 清單 3–7 個，四欄齊全：語言、不變條件、獨立存活、Core / Supporting / Generic。
 - [ ] 每條 R1–R8 標擁有的 context，沒有一條跨兩個。
 - [ ] Mermaid context map；每條關係有模式（ACL、Partnership、Customer–Supplier、Conformist 各至少一次）+ 理由 + 反例。
@@ -157,7 +157,7 @@
 - [ ] `.github/workflows/ci.yml`（Day 7 自己加）存在且綠。
 - [ ] PR 開到指定分支；`pr.md` = PR 描述副本，含：範圍、ADR 連結、契約連結、怎麼驗證、金字塔數字、已知限制、請 reviewer 看哪裡。
 - [ ] `retro.md`：Start / Stop / Continue 各 ≥ 2，每個前三項有下一步；「數字」段（commit 數、測試數、卡住次數）。
-- [ ] `sprint-2-backlog.md`：≥ 6 項，含 Billing 合併出帳（R7）、Dispatch、Parking 真整合；每項有 context 與驗收條件。
+- [ ] `sprint-2-backlog.md`：≥ 3 項必做（Billing 合併出帳 R7、Dispatch、Parking 真整合）+ 技術債段；多寫歡迎；每項有 context 與驗收條件。
 - [ ] `takeaway.md`：5 件事、30 天計畫、給主管的一頁（`/takeaway` 產出後自己改）。
 - [ ] 最終評量 ≥ 80%（§3）。
 - 講師看這裡：PR 描述能不能五分鐘內導航；retro 有沒有數字。

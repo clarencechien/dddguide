@@ -53,7 +53,7 @@ grep -rnE "fetch\(|axios|http|requests\.|sqlite|pg\.|prisma|sqlalchemy|kafka|amq
 - [ ] 狀態機明確（`Idle → Charging → Completed`；`Open → Dispatched → Closed`），非法轉移有對應拒絕。
 
 ### C. 領域事件（R8）
-- [ ] 聚合只 `record(event)` 到內部清單（`pendingEvents` / `_events`），不呼叫 bus / broker / outbox。
+- [ ] 聚合只 `record(event)` 到內部清單（`pullEvents()` / `pull_events()` / `_events`），不呼叫 bus / broker / outbox。
 - [ ] 事件是不可變資料（frozen object / dataclass(frozen=True)）。
 - [ ] 事件欄位對齊 §1.8（`sessionId`, `connectorId`, `idTag`, `energyWh`, `startedAt`, `endedAt`, `stopReason`; `chargerId`, `faultCode`, `stillEnergized`）。
 - [ ] 拒絕也是事件（`ChargingStartRejected`），不是只丟例外；例外可以另外丟，但事件要留。
