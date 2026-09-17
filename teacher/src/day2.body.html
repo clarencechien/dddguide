@@ -1,0 +1,588 @@
+<!-- title: 教師版 D2 · 事件風暴與通用語言 -->
+<!-- description: 假設學員把 Day 2 全程跑完：一面逐步揭露的 Event Storming 牆、三份完整交付物（storm-board / glossary / rules）、助教對話重播、驗收要看的行。 -->
+<p class="eyebrow">DAY 2 · EVENT STORMING &amp; UBIQUITOUS LANGUAGE</p>
+<h1 class="display">把那個午後<br>貼成一面<em>事實</em>的牆</h1>
+<p class="lede">Day 1 挖出來的原話，今天要變成三樣東西：一條只准放「已發生的事實」的時間線（含 18:10 之後的故障支線）、一張學員自己寫的通用語言表、以及至少六條帶數字的 Given / When / Then。這一天不畫邊界——邊界是明天的事——但今天標出的樞紐事件與「誰在乎」欄，就是明天切邊界的全部證據。這一頁把 Day 2 從早上 9:15 跑到下午 17:30 跑一遍：牆上每一張便利貼怎麼出現、哪幾張被助教撕掉、最後三個檔案長什麼樣。</p>
+<div class="meta-strip"><span><b>方法論</b> Event Storming（big picture → process）· Glossary · Example Mapping</span><span><b>時長</b> kickoff 15 分 + 先讀 25 分 + 三個 Block 各 90 分 + check-out 30 分</span><span><b>交付物</b> workshop/day2/storm-board.md · glossary.md · rules.md</span><span><b>skills</b> /storm · /storm process · /rules-check · /checkout day2</span></div>
+
+<p class="eyebrow">00 · 跑完會留下什麼</p>
+<h2>三個檔案，一面牆，四條垂直線</h2>
+<ul class="dod">
+  <li><code>workshop/day2/storm-board.md</code> — 主時間線 T0–T6（8 張事實 + 2 張分支 + 2 張拒絕）、故障支線 F1–F5（6 張）、每張有命令 / 執行者、政策 8 條、聚合候選 5 個（各有守的規則，1 個待定）、樞紐事件 4 個、hotspots 13 個（每個有收斂結果或指派給誰）、被退回的便利貼 6 張與理由、一張 Mermaid <code>timeline</code>。</li>
+  <li><code>workshop/day2/glossary.md</code> — 30 個詞，每個有「是 / 不是」與「屬於哪條時間線區段 / 哪個聚合候選」；6 個「不要用的詞」與改用什麼；4 組用語衝突（會話、狀態、故障、開單）。</li>
+  <li><code>workshop/day2/rules.md</code> — R1–R8 八條，每條有守門者、命令、成功事件、拒絕事件、不變條件、≥ 2 個帶數字的 scenario（拒絕場景有 But 行）；R3「相等」邊界已決定（接受）；R4 數字已算（12500 − 100 = 12400）；末尾「待決問題」7 條與「規則各屬於哪個候選」一段。</li>
+  <li>git：<code>workshop/&lt;名字&gt;</code> 分支上三個 commit（<code>docs(day2): storm board</code>、<code>docs(day2): glossary</code>、<code>docs(day2): rules R1-R8</code>）。</li>
+</ul>
+<p>講師視角，這一天最容易失真的地方有三個。第一，<strong>牆是 Claude 生的</strong>：學員把 <code>/storm</code> 當作者而不是引導員，貼回來一張整齊到沒有 hotspot 的板子——Day 3 他就沒有材料推邊界。第二，<strong>假事實沒被撕掉</strong>：「系統送出 StatusNotification」「使用者按開始」「連接器是 Occupied」這三類（系統動作、UI 動作、狀態）混在黃貼裡，因為學員自己讀不出差別。第三，<strong>GWT 沒有數字</strong>：規則寫成「系統應正確處理重複申告」，Then 寫成「資料庫更新為 Completed」，Day 4 變不成測試。這一頁每個 Block 的講師註都標「驗收時看哪一行」，就是針對這三個。</p>
+<div class="teach"><p class="head">講師註 · 一個要提前知道的漏洞</p><p><code>docs/references/event-storming.md</code> §4.2 印著幾乎完整的 T0–T6 + F 時間線與六個熱點，<code>docs/domain/glossary.md</code> 印著 54 個詞的答案。教材要學員「先不要看骨架、自己貼完再對」，但這兩份就在 repo 裡，25 分鐘「先讀」時間就會讀到。你攔不住，只能在 kickoff 說清楚：<em>抄了也可以，但 check-out 我會抽問每一張「誰在乎、哪句訪談來的」</em>。答不出來的那張就是抄的。</p></div>
+
+<p class="eyebrow">BLOCK 1 · BIG-PICTURE EVENT STORMING</p>
+<h2>只貼已經發生的事</h2>
+<h3>實況：09:40 → 11:10</h3>
+<p>學員桌上是 Day 1 的 <code>interviews.md</code>（五段原話）與 <code>to-be.md</code>（事實清單 ≥ 8 條）。前 20 分鐘不開 Claude：他把原話一句一句翻成「已…」的句子，貼滿 26 張——其中 6 張其實不是事實，但他現在看不出來。第 20 分鐘開 <code>/storm</code>，把 26 張整包貼過去；助教逐張過五條判定規則（過去式、領域語言、是事實不是動作、有人在乎、有具體例子），每被退一張學員改一張，理由寫在旁邊。第 50 分鐘開始排時間線、拉故障支線、把「爭議」從「事實」裡分出來變 hotspot。最後 20 分鐘整理進 <code>storm-board.md</code> 前半。下面這面牆就是這 90 分鐘：按「下一步」看每一步牆上多了什麼、少了什麼。</p>
+
+<section data-stepper data-step="1" data-max="7">
+  <ol class="steps">
+    <li data-goto="1">1 貼事實</li><li data-goto="2">2 挑戰非事實</li><li data-goto="3">3 排時間線</li>
+    <li data-goto="4">4 命令與角色</li><li data-goto="5">5 政策</li><li data-goto="6">6 聚合與樞紐</li><li data-goto="7">7 hotspot 收斂</li>
+  </ol>
+  <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="step-note" data-note="1"><p><b>09:40–10:00（學員一個人，不開 Claude）</b>。從五位角色的原話抓事實，一張一句，先貼再說，不排序。目標 ≥ 20 張。這是他的第一版：26 張黃貼，混著「使用者按下開始」「系統送出 StatusNotification」「連接器是 Occupied」這種東西——他覺得都是「發生了的事」。助教這一步不出場；講師走動時聽到「我先讓 Claude 列一遍」就介入：「你列，它挑。」黃貼右上角的 T 標籤是他憑印象寫的，還沒排序。</p></div>
+  <div class="step-note" data-note="2"><p><b>10:00–10:25（/storm 第一輪）</b>。學員把 26 張整包貼給 <code>/storm</code>。助教不改寫，只對每一張問一個問題：「這是系統做的動作，還是業務上發生的事？」「老陳聽得懂這句嗎？」「換一家樁廠商，這張還在嗎？」六張被退回（灰色刪除線）：三張系統動作、一張 UI 動作、一張狀態、一張 As-Is 交接（「阿忠打了電話」——那是 Day 1 的人當 API，不是 To-Be 的事實）。另外兩張「帳單已開立」「與總部連線已中斷」沒被退，但被問「這是事實還是你不確定的地方？」——它們變成 hotspot（紅貼）或變成 R6 的前提。每退一張，學員自己改寫：「呼叫總部工單 API」→「工單已開立」。</p></div>
+  <div class="step-note" data-note="3"><p><b>10:25–10:45（排時間線）</b>。20 張活下來的事實按時間排成兩條線。主線 T0–T6 是 14:02 → 14:33 那 31 分鐘；故障支線 F1–F5 是 18:10:00 → 18:18。欄位就是時間：同一欄的東西同一時刻發生。助教只做一件事：指出「兩張之間應該還有一個事實」的縫隙——「T1 車位占用和 T3 授權開始之間，小美看到了什麼？」學員補上 T2「連接器已插上」。故障支線他原本只有三張（申告 → 開單 → 關單），助教說「從申告到恢復可售你少了兩個事實，數量而已」，他回訪談找到「技術員已指派」與「樁已恢復可售」。「與總部連線已中斷」沒上主線，變成 T6 人工放行那張的前提。</p></div>
+  <div class="step-note" data-note="4"><p><b>Block 2 的前 15 分鐘（學員一個人）</b>。對每張事實補兩欄：誰下了什麼命令（藍貼，祈使句，英文）、誰下的（角色：顧客、阿忠、樁、timer、Vicky、阿豪；外部系統：LPR、車位感測器、broker）。T0–T2 沒有人下命令——那是設備觀測到的事實，執行者是 LPR、感測器、樁。同時補「命令失敗時發生什麼事實」：<code>ChargingStartRejected</code>、<code>MeterValueRejected</code>、<code>DuplicateFaultReported</code> 出現在事實區的第三列——拒絕也是事實，小美要統計它。</p></div>
+  <div class="step-note" data-note="5"><p><b>Block 2 的 /storm process 第一輪（20 分鐘）</b>。政策是「每當 X 就 Y」的紫貼，放在它觸發的那個命令那一欄。學員寫了八條，其中一條寫成了同步呼叫：「樁故障時同步呼叫總部工單 API，等它回 WO 編號」。助教問：「如果總部掛了，樁還算故障嗎？SLA 從哪一秒起算？」學員自己把它改成「每當 <code>ChargerFaulted</code> 就 <code>OpenWorkOrder</code>——總部訂閱，不等回應」。被改掉的那張留在牆上一步，下一步撕掉。注意 T1 那條 timer 政策：「占用 20 分鐘仍無 ChargingStarted → 提醒值班長」，是阿忠隱藏事實 4 變出來的，timer 是它的執行者。</p></div>
+  <div class="step-note" data-note="6"><p><b>/storm process 第二輪（25 分鐘）</b>。聚合候選：把每個命令的受詞圈起來——「開始<em>充電會話</em>」「放行<em>停車會話</em>」「開立<em>帳單</em>」「開<em>工單</em>」「指派<em>技術員</em>」。每個候選要答兩題：哪些命令打在我身上？我守哪條規則？答不出來的標「待定」——「樁（健康）」就是待定。樞紐事件（藍綠外框）是畫垂直線的地方：線的左右兩邊在乎的人換了一批。學員標了四條：<code>ChargingStarted</code>（停車的世界 → 充電 + 計費）、<code>ChargingCompleted</code>（計量 → 可以算錢）、<code>VehicleExited</code>（場站 → 帳務對齊）、<code>ChargerFaulted</code>（賣電 → 修樁）。助教這時候絕對不說「這是 context」。</p></div>
+  <div class="step-note" data-note="7"><p><b>/storm hotspot（Block 2 尾聲 15 分鐘）</b>。13 個 hotspot 逐個收斂成三種結果之一：決定（寫進 storm-board）、指派（誰去問誰）、待決（進 rules.md 末尾）。助教對每個問三題：「總部連不上時這裡會怎樣？」「這裡誰先發現錯？」「這裡的錢是哪一種？」收斂後的紅貼改寫成「決定：…」或「指派：…」留在牆上——不撕，因為 Day 3 切邊界要回來看它們。兩個沒收斂的（修復驗證是誰的責任、插槍未刷卡算不算占用）進 rules.md 的待決問題。</p></div>
+  <div class="wall-scroll"><div class="wall" data-step-target style="--cols: 7">
+
+    <div class="lane" data-from="1" data-until="2">事件池 · 學員第一版（26 張，未排序）</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:02</span>車輛已辨識進場</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:04?</span>充電已授權開始</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:31</span>充電已結束 12.4 kWh</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:10</span>充電器已申告故障</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:33</span>車輛已離場</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:10</span>工單已開立 WO-2208</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:13</span>電量已計量</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:04</span>連接器已插上</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:10</span>技術員已指派 TECH-HAO</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:03</span>充電車位已占用</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:33</span>值班長已人工放行</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:04</span>草稿帳單已建立</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:18</span>工單已關閉</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:28?</span>與總部連線已中斷</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:22</span>計量值被拒（倒退）</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:05</span>充電開始被拒</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:10:08</span>重複申告已附加</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">18:18</span>樁已恢復可售</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">月底?</span>帳單已開立 INV-778</div>
+    <div class="sticky evt" data-from="1" data-until="2"><span class="k">14:22</span>電量已計量（第二筆）</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">14:04</span>使用者按下「開始」</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">18:10</span>系統送出 StatusNotification</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">14:04</span>連接器是 Occupied</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">18:10</span>呼叫總部工單 API</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">18:12</span>阿忠打了電話給客服</div>
+    <div class="sticky evt" data-from="1" data-until="1"><span class="k">14:13</span>收到 MeterValues</div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ UI 動作</span>使用者按下「開始」<span class="fix">按下去之後世界上什麼變了？→ 充電已授權開始（已在牆上）</span></div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ 系統動作 + OCPP</span>系統送出 StatusNotification<span class="fix">老陳聽得懂這句嗎？→ 充電器已申告故障</span></div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ 狀態</span>連接器是 Occupied<span class="fix">狀態是事實的結果；哪個事實讓它變成這樣？→ 充電已授權開始</span></div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ 系統動作</span>呼叫總部工單 API<span class="fix">呼叫完之後 Vicky 看到了什麼？→ 工單已開立</span></div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ As-Is 交接</span>阿忠打了電話給客服<span class="fix">這是 Day 1 圈出來的人當 API，不是 To-Be 事實 → 移到 hotspot</span></div>
+    <div class="sticky rej" data-from="2" data-until="2"><span class="k">✗ OCPP 訊息</span>收到 MeterValues<span class="fix">換一家樁廠商這張還在嗎？→ 電量已計量</span></div>
+
+    <div class="lane" data-from="4">主線 · 角色與外部系統 ACTORS</div>
+    <div class="sticky ext" data-from="4" style="grid-column:1"><span class="k">EXT</span>LPR 車牌辨識</div>
+    <div class="sticky ext" data-from="4" style="grid-column:2"><span class="k">EXT + TIMER</span>車位感測器 / timer</div>
+    <div class="sticky act" data-from="4" style="grid-column:3">顧客 ABC-1234</div>
+    <div class="sticky act" data-from="4" style="grid-column:4">顧客 + 樁 CP-A12</div>
+    <div class="sticky act" data-from="4" style="grid-column:5">樁 CP-A12（每 9 分）</div>
+    <div class="sticky act" data-from="4" style="grid-column:6">顧客（App）</div>
+    <div class="sticky act" data-from="4" style="grid-column:7">阿忠 / 閘門</div>
+
+    <div class="lane" data-from="4">主線 · 命令 COMMANDS</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:4"><span class="k">CMD · 14:04</span>Start<wbr>Charging(CP-A12-2, TAG-MONTHLY-77)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:5"><span class="k">CMD · 14:13 / 14:22</span>Report<wbr>Meter<wbr>Value(S-991, 4100 / 8100)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:6"><span class="k">CMD · 14:31</span>Stop<wbr>Charging(S-991, Local)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:7"><span class="k">CMD · 14:33</span>Release<wbr>Vehicle / Release<wbr>Vehicle<wbr>Manually(P-441)</div>
+
+    <div class="lane" data-from="3">主線 · 事實 EVENTS · 14:02 → 14:33（第二列：分支事實；第三列：拒絕事實）</div>
+    <div class="sticky evt" data-from="3" style="grid-column:1"><span class="k">T0 · 14:02</span>車輛已辨識進場<span class="k">Vehicle<wbr>Entered</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:2"><span class="k">T1 · 14:03</span>充電車位已占用<span class="k">Charging<wbr>Bay<wbr>Occupied</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:3"><span class="k">T2 · 14:04</span>連接器已插上<span class="k">Connector<wbr>Plugged<wbr>In</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:4"><span class="k">T3 · 14:04</span>充電已授權開始<span class="k">Charging<wbr>Started S-991</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:5"><span class="k">T4 · 14:13 / 14:22</span>電量已計量 ×2<span class="k">Energy<wbr>Metered 4100 / 8100 Wh</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:6"><span class="k">T5 · 14:31</span>充電已結束 12.4 kWh<span class="k">Charging<wbr>Completed energyWh=12400</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:7"><span class="k">T6 · 14:33</span>車輛已離場<span class="k">Vehicle<wbr>Exited P-441</span></div>
+    <div class="sticky evt" data-from="5" style="grid-column:4"><span class="k">14:04 · 下游</span>草稿帳單已建立<span class="k">Draft<wbr>Invoice<wbr>Created INV-778</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:7"><span class="k">14:33 · 總部斷線</span>值班長已人工放行<span class="k">Parking<wbr>Manually<wbr>Released</span></div>
+    <div class="sticky evt" data-from="4" style="grid-column:4"><span class="k">14:05 · 拒絕</span>充電開始被拒<span class="k">Charging<wbr>Start<wbr>Rejected(Connector<wbr>Occupied) TAG-VISITOR-01</span></div>
+    <div class="sticky evt" data-from="4" style="grid-column:5"><span class="k">14:22 · 拒絕</span>計量值被拒（3900 &lt; 4100）<span class="k">Meter<wbr>Value<wbr>Rejected(Not<wbr>Monotonic)</span></div>
+
+    <div class="lane" data-from="5">主線 · 政策 POLICIES（每當 X 就 Y）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:2"><span class="k">POL · timer</span>每當車位已占用 20 分仍無充電已授權開始 → 提醒值班長（占用不充電）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:4"><span class="k">POL</span>每當充電已授權開始 → 建立草稿帳單（一個 sessionId 一張）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:6"><span class="k">POL</span>每當充電已結束 → 以 energyWh 結算草稿（12400 Wh × 8 元 = 99.2）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:7"><span class="k">POL</span>每當車輛已離場 / 已人工放行 → 帳務事後對齊 P-441 與 S-991</div>
+
+    <div class="lane" data-from="6">主線 · 聚合候選 AGGREGATES（守的規則）</div>
+    <div class="sticky agg" data-from="6" style="grid-column:1"><span class="k">AGG</span>停車會話 Parking<wbr>Session<span class="k">守：一輛車同一時間一個進行中停車會話；R6</span></div>
+    <div class="sticky agg" data-from="6" style="grid-column:4"><span class="k">AGG</span>充電會話 Charging<wbr>Session<span class="k">守：R1 一個連接器一個進行中會話 · R2 授權 · R3 計量單調 · R4 只有 Charging 可 Stop</span></div>
+    <div class="sticky agg" data-from="6" style="grid-column:6"><span class="k">AGG</span>帳單 Invoice（草稿 → 開立）<span class="k">守：R7 開立後金額不可變</span></div>
+
+    <div class="lane" data-from="6">主線 · 樞紐事件 PIVOTAL（畫垂直線的地方）</div>
+    <div class="sticky evt pivot" data-from="6" style="grid-column:4"><span class="k">PIVOT</span>Charging<wbr>Started<span class="k">左：停車的世界（阿忠）／右：充電 + 計費（小美、老陳）</span></div>
+    <div class="sticky evt pivot" data-from="6" style="grid-column:6"><span class="k">PIVOT</span>Charging<wbr>Completed<span class="k">左：計量（小美）／右：可以算錢了（老陳）</span></div>
+    <div class="sticky evt pivot" data-from="6" style="grid-column:7"><span class="k">PIVOT</span>Vehicle<wbr>Exited<span class="k">左：場站（阿忠）／右：帳務對齊（老陳）</span></div>
+
+    <div class="lane" data-from="4">故障支線 · 角色與外部系統 ACTORS</div>
+    <div class="sticky ext" data-from="4" style="grid-column:1"><span class="k">EXT</span>樁 CP-A12（OCPP，經 ACL）</div>
+    <div class="sticky act" data-from="4" style="grid-column:2">政策（自動）</div>
+    <div class="sticky act" data-from="4" style="grid-column:3">Vicky（派工）</div>
+    <div class="sticky ext" data-from="4" style="grid-column:4"><span class="k">EXT</span>樁 CP-A12 再申告</div>
+    <div class="sticky ext" data-from="4" style="grid-column:5"><span class="k">EXT</span>broker 重送</div>
+    <div class="sticky act" data-from="4" style="grid-column:6">阿豪 TECH-HAO</div>
+    <div class="sticky act" data-from="4" style="grid-column:7">政策（自動）</div>
+
+    <div class="lane" data-from="4">故障支線 · 命令 COMMANDS</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:1"><span class="k">CMD · 18:10:00</span>Report<wbr>Fault(CP-A12, CP-A12-2, Ground<wbr>Failure)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:2"><span class="k">CMD · 18:10:00</span>Open<wbr>Work<wbr>Order(CP-A12, Ground<wbr>Failure)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:3"><span class="k">CMD · 18:10:00</span>Assign<wbr>Technician(WO-2208)</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:4"><span class="k">CMD · 18:10:08</span>Report<wbr>Fault（第二次，同碼）</div>
+    <div class="sticky cmd" data-from="4" style="grid-column:6"><span class="k">CMD · 18:18</span>Close<wbr>Work<wbr>Order(WO-2208, Repaired)</div>
+
+    <div class="lane" data-from="3">故障支線 · 事實 EVENTS · 18:10:00 → 18:18</div>
+    <div class="sticky evt" data-from="3" style="grid-column:1"><span class="k">F1 · 18:10:00</span>充電器已申告故障<span class="k">Charger<wbr>Faulted Ground<wbr>Failure</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:2"><span class="k">F2 · 18:10:00</span>工單已開立<span class="k">Work<wbr>Order<wbr>Opened WO-2208</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:3"><span class="k">F3 · 18:10:00</span>技術員已指派<span class="k">Technician<wbr>Assigned TECH-HAO</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:4"><span class="k">F3' · 18:10:08</span>重複申告已附加<span class="k">Duplicate<wbr>Fault<wbr>Reported → WO-2208</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:6"><span class="k">F4 · 18:18</span>修復已驗證，工單已關閉<span class="k">Work<wbr>Order<wbr>Closed(outcome=Repaired)</span></div>
+    <div class="sticky evt" data-from="3" style="grid-column:7"><span class="k">F5 · 18:18</span>樁已恢復可售<span class="k">Charger<wbr>Back<wbr>In<wbr>Service CP-A12</span></div>
+
+    <div class="lane" data-from="5">故障支線 · 政策 POLICIES</div>
+    <div class="sticky rej" data-from="5" data-until="5" style="grid-column:1"><span class="k">✗ 同步呼叫</span>樁故障時同步呼叫總部工單 API，等它回 WO 編號才算申告成功<span class="fix">總部掛了，樁還算故障嗎？SLA 從哪一秒起算？→ 改成下面那張</span></div>
+    <div class="sticky pol" data-from="5" style="grid-column:1"><span class="k">POL</span>每當充電器已申告故障 → 連接器停售（場站看板立刻變）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:2"><span class="k">POL</span>每當充電器已申告故障 → OpenWorkOrder（總部訂閱，不等回應；SLA 從 occurredAt 起算）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:3"><span class="k">POL</span>每當工單已開立 → AssignTechnician（faultCode → 備品對照）</div>
+    <div class="sticky pol" data-from="5" style="grid-column:4"><span class="k">POL · R5</span>每當充電器已申告故障且同樁同碼工單開放中 → 附加重複申告，不開新單</div>
+    <div class="sticky pol" data-from="5" style="grid-column:7"><span class="k">POL</span>每當工單已關閉(Repaired) → 樁恢復可售</div>
+
+    <div class="lane" data-from="6">故障支線 · 聚合候選 AGGREGATES</div>
+    <div class="sticky agg" data-from="6" style="grid-column:1"><span class="k">AGG · 待定</span>樁 Charger（健康）<span class="k">答不出「守哪條規則」——申告只是翻譯，狀態誰持有？待定</span></div>
+    <div class="sticky agg" data-from="6" style="grid-column:2"><span class="k">AGG</span>工單 Work<wbr>Order<span class="k">守：R5 一座樁同一故障碼在開放期間一張根因工單</span></div>
+    <div class="sticky agg" data-from="6" style="grid-column:3"><span class="k">AGG</span>派工 Technician<wbr>Assignment<span class="k">守：一張工單同一時間一個主責技術員（MVP1 stub 固定 TECH-HAO）</span></div>
+
+    <div class="lane" data-from="6">故障支線 · 樞紐事件 PIVOTAL</div>
+    <div class="sticky evt pivot" data-from="6" style="grid-column:1"><span class="k">PIVOT</span>Charger<wbr>Faulted<span class="k">左：賣電（小美、顧客）／右：修樁（Vicky、阿豪）</span></div>
+
+    <div class="lane" data-from="1">HOTSPOTS · 主線（紅貼 = 爭議 / 不確定；第 7 步改成決定或指派）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:1">進場就要打總部 API 嗎？（阿忠：斷線時進不了場）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:2">車位占用但沒充電，誰知道？（阿忠：每天 5 台）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:3">插槍＝開始充電？（小美 vs 老陳）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:4">跨時段怎麼計價？（小美：21:50 開始全程尖峰）</div>
+    <div class="sticky hot" data-from="2" data-until="6" style="grid-column:5">每次計量都要通知帳務嗎？（老陳）</div>
+    <div class="sticky hot" data-from="2" data-until="6" style="grid-column:6">「帳單已開立」是事實還是政策結果？什麼時候出帳？</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:7">總部斷線時離場怎麼辦？（阿忠：鑰匙 + 日誌本）</div>
+    <div class="sticky hot" data-from="7" style="grid-column:1">決定：進場不呼叫總部；VehicleEntered 只有占位政策在乎<span class="fix">阿忠隱藏事實 1 → R6 家族</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:2">決定：兩張事實（占用 ≠ 開始）+ 一條 timer 政策<span class="fix">阿忠隱藏事實 4</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:3">決定：插槍不建立會話；ChargingStarted 才是開始<span class="fix">待決：插槍未刷卡算占用？→ rules.md</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:4">指派：小美 + 老陳；EnergyMetered 帶時間戳<span class="fix">計價規則不進 MVP1，Sprint 2</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:5">決定：帳務只訂閱 ChargingCompleted；EnergyMetered 不對外<span class="fix">老陳隱藏事實 5：Wh 整數</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:6">決定：「帳單已開立」不在主線；出帳是帳務自己的政策<span class="fix">合併 P-441 + S-991 依顧客，Sprint 2</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:7">決定：人工放行是事實 ParkingManuallyReleased；帳務事後對齊<span class="fix">R6</span></div>
+
+    <div class="lane" data-from="1">HOTSPOTS · 故障支線</div>
+    <div class="sticky hot" data-from="2" data-until="6" style="grid-column:1">「阿忠打了電話給客服」——As-Is 交接，To-Be 還需要嗎？</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:3">派工前備品在不在車上？（Vicky）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:4">重複申告要開幾張單？（Vicky：一晚 20 張）</div>
+    <div class="sticky hot" data-from="2" data-until="6" style="grid-column:5">18:12 broker 重送同一則事件＝再申告嗎？</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:6">修復驗證是誰的責任？（阿豪：樁回 Available 就好 vs Vicky：30 分鐘沒再故障）</div>
+    <div class="sticky hot" data-from="1" data-until="6" style="grid-column:7">「技術員已出發」要不要通知帳務？（Vicky 被淹過）</div>
+    <div class="sticky hot" data-from="7" style="grid-column:1">決定：撕掉。To-Be 由 ChargerFaulted 觸發開單；SLA 從 occurredAt 起算<span class="fix">阿忠隱藏事實 2、Vicky 隱藏事實 2</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:3">指派：Vicky；faultCode → 備品對照表由派工候選守<span class="fix">MVP1 stub</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:4">決定：R5 一張根因工單 WO-2208；第二次附加<span class="fix">Vicky 隱藏事實 1</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:5">決定：不是。同 eventId 重送由消費者去重（Day 5）；再申告是新事實<span class="fix">老陳隱藏事實 4</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:6">待決：問 Vicky——關單條件是「樁回可售」還是「30 分鐘無再故障」<span class="fix">→ rules.md 待決問題</span></div>
+    <div class="sticky hot" data-from="7" style="grid-column:7">決定：不通知。派工是總部內部事，不對帳務發<span class="fix">Vicky 隱藏事實 4</span></div>
+  </div></div>
+</section>
+
+<h3>/storm 第一輪：助教怎麼退回一張假事實</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /storm</p><p>我是 Day 2 Block 1，做 big-picture Event Storming。這是我的第一版事實清單（26 張，每行一張黃貼，含時間與誰在乎）：14:02 車輛已辨識進場（阿忠）、14:03 充電車位已占用（阿忠）、14:04 使用者按下「開始」（顧客）、14:04 連接器是 Occupied（小美）、14:13 收到 MeterValues（小美）、18:10 系統送出 StatusNotification（Vicky）、18:10 呼叫總部工單 API（Vicky）、18:12 阿忠打了電話給客服（阿忠）……（其餘 18 張略同格式）。請你當 facilitator，不要當作者：逐張檢查是不是「已發生、過去式、業務會在乎的事實」；不是的話不要幫我改寫，只問我一個問題。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問你一句：這 26 張裡，哪幾張是你「翻譯」訪談原話得來的，哪幾張是你「想像系統會做什麼」得來的？先自己分一下——分完再往下看。</p><p>我一張一張過。20 張通過。六張我要退回，各問一個問題：</p><p>「使用者按下『開始』」——按下去之後，世界上什麼變了？老陳會在乎「按了」還是在乎那個變化？<br>「系統送出 StatusNotification」——小美聽得懂這句嗎？如果換一家樁廠商，這張還在嗎？<br>「連接器是 Occupied」——這是一個狀態。哪個事實讓它變成這樣的？那個事實在牆上了嗎？<br>「呼叫總部工單 API」——呼叫完之後，Vicky 看到了什麼？<br>「收到 MeterValues」——同上一題：收到之後小美知道了什麼數字？<br>「阿忠打了電話給客服」——這張你昨天在 as-is.md 圈過。它是 To-Be 裡會發生的事，還是 To-Be 要消掉的交接？</p><p>另外兩張沒退，但問你：「帳單已開立」發生在 14:31 還是月底？「與總部連線已中斷」——它是主線上的一張，還是 14:33 那張人工放行的<em>前提</em>？</p><p><b>下一個最小步驟：</b>把六張退回的各改寫成一句「已…」，改的理由寫在旁邊；改不出來的貼成紅貼。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改好了：「使用者按下開始」→ 刪掉，它就是「充電已授權開始」（已經有）。「系統送出 StatusNotification」→「充電器已申告故障」（有了，刪重複）。「連接器是 Occupied」→ 刪，那是 T3 的結果。「呼叫總部工單 API」→「工單已開立」。「收到 MeterValues」→「電量已計量」。「阿忠打了電話」→ 紅貼：「To-Be 還需要打電話嗎？」。「帳單已開立」我不確定什麼時候，貼紅貼。「連線已中斷」放到人工放行旁邊當前提。剩 20 張事實 + 2 張紅貼。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>好，20 張都是過去式、都有人在乎。現在排時間線，我只指縫隙、不說名字：</p><p>1. 主線：「充電車位已占用」（14:03）和「充電已授權開始」（14:04）之間，小美看到了什麼？那是一張你貼了但放錯地方的。<br>2. 故障支線你有 4 張：申告、開單、重複申告已附加、關閉。從「申告」到「恢復可售」我數缺 2 個事實——回去看阿豪和 Vicky 的訪談：「誰去修」與「修好了之後樁怎麼樣」。<br>3. hotspot：你只有 2 張紅貼。訪談裡至少還有五個「兩個人說法不一樣」的地方（小美 vs 老陳的「開始」、阿豪 vs Vicky 的「修好」、Vicky 的 20 張工單……）。目標 ≥ 4。</p><p><b>下一個最小步驟：</b>把 20 張排成 T0–T6 與 F1–F5 兩行，每張右邊寫「誰在乎」（只准寫 1–2 個人），10 分鐘。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>排好了。主線 7 張 + 人工放行 1 張 + 2 張拒絕；支線 6 張（補了「技術員已指派」「樁已恢復可售」）；hotspot 13 張。樞紐事件我覺得是 ChargingStarted、ChargingCompleted、ChargerFaulted——這三張是不是就是 context？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先標「誰在乎」，明天再切。你說得出這三張「左邊在乎的人」和「右邊在乎的人」各是誰嗎？另外 VehicleExited 那條線兩邊的人一樣嗎？——如果不一樣，你少標了一條。</p><p><b>下一個最小步驟：</b>把四條垂直線的左右各寫一個名字，然後開始寫 <code>storm-board.md</code> 的主時間線表。</p></div>
+</div>
+
+<figure class="wide">
+  <p class="title">圖 1 · 兩條時間線、四條垂直線、七個爭議點</p>
+  <p class="subtitle">Block 1 結束時牆的骨架：主線 14:02 → 14:33 與故障支線 18:10:00 → 18:18；藍綠虛線是樞紐事件，紅旗是留到 Block 2 的 hotspot。</p>
+  <div class="diagram"><svg viewBox="0 0 960 470" role="img" aria-label="Day 2 主時間線 T0 到 T6 與故障支線 F1 到 F5，標出四個樞紐事件與七個 hotspot">
+    <rect class="zone" x="8" y="14" width="944" height="206" rx="8"/>
+    <text class="t s" x="20" y="34">主線 · SITE-TPE-01 · ABC-1234 / CP-A12-2 / S-991 / P-441 · 14:02 → 14:33</text>
+    <path class="ar thin" d="M14 150 L946 150"/>
+    <rect class="sticky hot" x="150" y="44" width="118" height="34" rx="3"/>
+    <text class="t s" x="209" y="58" text-anchor="middle">占用 ≠ 充電？</text>
+    <text class="t s" x="209" y="72" text-anchor="middle">阿忠：每天 5 台</text>
+    <rect class="sticky hot" x="283" y="44" width="118" height="34" rx="3"/>
+    <text class="t s" x="342" y="58" text-anchor="middle">插槍 ＝ 開始？</text>
+    <text class="t s" x="342" y="72" text-anchor="middle">小美 vs 老陳</text>
+    <rect class="sticky hot" x="549" y="44" width="118" height="34" rx="3"/>
+    <text class="t s" x="608" y="58" text-anchor="middle">每次計量都出帳？</text>
+    <text class="t s" x="608" y="72" text-anchor="middle">老陳</text>
+    <rect class="sticky hot" x="815" y="44" width="122" height="34" rx="3"/>
+    <text class="t s" x="876" y="58" text-anchor="middle">斷線時怎麼離場？</text>
+    <text class="t s" x="876" y="72" text-anchor="middle">阿忠：鑰匙 + 日誌</text>
+    <path class="ar ev" d="M475 88 L475 212" style="marker-end:none"/>
+    <text class="t a" x="475" y="102" text-anchor="middle">樞紐</text>
+    <path class="ar ev" d="M741 88 L741 212" style="marker-end:none"/>
+    <text class="t a" x="741" y="102" text-anchor="middle">樞紐</text>
+    <path class="ar ev" d="M876 88 L876 212" style="marker-end:none"/>
+    <text class="t a" x="876" y="102" text-anchor="middle">樞紐</text>
+    <rect class="sticky evt" x="14" y="118" width="122" height="64" rx="3"/>
+    <text class="t s" x="75" y="134" text-anchor="middle">T0 · 14:02</text>
+    <text class="t" x="75" y="152" text-anchor="middle">車輛已辨識進場</text>
+    <text class="t m" x="75" y="170" text-anchor="middle">VehicleEntered</text>
+    <rect class="sticky evt" x="148" y="118" width="122" height="64" rx="3"/>
+    <text class="t s" x="209" y="134" text-anchor="middle">T1 · 14:03</text>
+    <text class="t" x="209" y="152" text-anchor="middle">充電車位已占用</text>
+    <text class="t m" x="209" y="170" text-anchor="middle">ChargingBayOccupied</text>
+    <rect class="sticky evt" x="281" y="118" width="122" height="64" rx="3"/>
+    <text class="t s" x="342" y="134" text-anchor="middle">T2 · 14:04</text>
+    <text class="t" x="342" y="152" text-anchor="middle">連接器已插上</text>
+    <text class="t m" x="342" y="170" text-anchor="middle">ConnectorPluggedIn</text>
+    <rect class="sticky evt" x="414" y="118" width="122" height="64" rx="3" stroke="var(--accent)" stroke-width="2"/>
+    <text class="t s" x="475" y="134" text-anchor="middle">T3 · 14:04</text>
+    <text class="t" x="475" y="152" text-anchor="middle">充電已授權開始</text>
+    <text class="t m" x="475" y="170" text-anchor="middle">ChargingStarted</text>
+    <rect class="sticky evt" x="547" y="118" width="122" height="64" rx="3"/>
+    <text class="t s" x="608" y="134" text-anchor="middle">T4 · 14:13 / 14:22</text>
+    <text class="t" x="608" y="152" text-anchor="middle">電量已計量 ×2</text>
+    <text class="t m" x="608" y="170" text-anchor="middle">EnergyMetered</text>
+    <rect class="sticky evt" x="680" y="118" width="122" height="64" rx="3" stroke="var(--accent)" stroke-width="2"/>
+    <text class="t s" x="741" y="134" text-anchor="middle">T5 · 14:31</text>
+    <text class="t" x="741" y="152" text-anchor="middle">充電已結束 12.4 kWh</text>
+    <text class="t m" x="741" y="170" text-anchor="middle">ChargingCompleted</text>
+    <rect class="sticky evt" x="813" y="118" width="126" height="64" rx="3" stroke="var(--accent)" stroke-width="2"/>
+    <text class="t s" x="876" y="134" text-anchor="middle">T6 · 14:33</text>
+    <text class="t" x="876" y="152" text-anchor="middle">車輛已離場</text>
+    <text class="t m" x="876" y="170" text-anchor="middle">VehicleExited</text>
+    <text class="t s" x="475" y="204" text-anchor="middle">↓ 14:05 ChargingStartRejected</text>
+    <text class="t s" x="608" y="204" text-anchor="middle">↓ 14:22 MeterValueRejected</text>
+    <text class="t s" x="876" y="204" text-anchor="middle">↓ 14:33 ParkingManuallyReleased</text>
+
+    <rect class="zone plain" x="8" y="236" width="944" height="222" rx="8"/>
+    <text class="t s" x="20" y="256">故障支線 · 同一根樁 CP-A12 · 18:10:00 → 18:18 · 申告 → 開單 → 派工 → 修復驗證 → 恢復可售</text>
+    <path class="ar thin" d="M14 372 L946 372"/>
+    <rect class="sticky hot" x="283" y="266" width="118" height="34" rx="3"/>
+    <text class="t s" x="342" y="280" text-anchor="middle">備品在不在車上？</text>
+    <text class="t s" x="342" y="294" text-anchor="middle">Vicky</text>
+    <rect class="sticky hot" x="416" y="266" width="118" height="34" rx="3"/>
+    <text class="t s" x="475" y="280" text-anchor="middle">一晚 20 張單？</text>
+    <text class="t s" x="475" y="294" text-anchor="middle">Vicky</text>
+    <rect class="sticky hot" x="549" y="266" width="118" height="34" rx="3"/>
+    <text class="t s" x="608" y="280" text-anchor="middle">18:12 重送 ＝ 再申告？</text>
+    <text class="t s" x="608" y="294" text-anchor="middle">老陳：出過兩次帳</text>
+    <rect class="sticky hot" x="682" y="266" width="118" height="34" rx="3"/>
+    <text class="t s" x="741" y="280" text-anchor="middle">修好了誰說了算？</text>
+    <text class="t s" x="741" y="294" text-anchor="middle">阿豪 vs Vicky</text>
+    <path class="ar ev" d="M75 308 L75 448" style="marker-end:none"/>
+    <text class="t a" x="75" y="322" text-anchor="middle">樞紐</text>
+    <rect class="sticky evt" x="14" y="340" width="122" height="64" rx="3" stroke="var(--accent)" stroke-width="2"/>
+    <text class="t s" x="75" y="356" text-anchor="middle">F1 · 18:10:00</text>
+    <text class="t" x="75" y="374" text-anchor="middle">充電器已申告故障</text>
+    <text class="t m" x="75" y="392" text-anchor="middle">ChargerFaulted</text>
+    <rect class="sticky evt" x="148" y="340" width="122" height="64" rx="3"/>
+    <text class="t s" x="209" y="356" text-anchor="middle">F2 · 18:10:00</text>
+    <text class="t" x="209" y="374" text-anchor="middle">工單已開立 WO-2208</text>
+    <text class="t m" x="209" y="392" text-anchor="middle">WorkOrderOpened</text>
+    <rect class="sticky evt" x="281" y="340" width="122" height="64" rx="3"/>
+    <text class="t s" x="342" y="356" text-anchor="middle">F3 · 18:10:00</text>
+    <text class="t" x="342" y="374" text-anchor="middle">技術員已指派</text>
+    <text class="t m" x="342" y="392" text-anchor="middle">TechnicianAssigned</text>
+    <rect class="sticky evt" x="414" y="340" width="122" height="64" rx="3"/>
+    <text class="t s" x="475" y="356" text-anchor="middle">F3' · 18:10:08</text>
+    <text class="t" x="475" y="374" text-anchor="middle">重複申告已附加</text>
+    <text class="t m" x="475" y="392" text-anchor="middle">DuplicateFaultReported</text>
+    <rect class="box dim" x="547" y="340" width="122" height="64" rx="3"/>
+    <text class="t s" x="608" y="356" text-anchor="middle">18:12</text>
+    <text class="t s" x="608" y="374" text-anchor="middle">broker 重送 evt-A</text>
+    <text class="t s" x="608" y="392" text-anchor="middle">不是事實，不貼</text>
+    <rect class="sticky evt" x="680" y="340" width="122" height="64" rx="3"/>
+    <text class="t s" x="741" y="356" text-anchor="middle">F4 · 18:18</text>
+    <text class="t" x="741" y="374" text-anchor="middle">修復已驗證，工單已關閉</text>
+    <text class="t m" x="741" y="392" text-anchor="middle">WorkOrderClosed</text>
+    <rect class="sticky evt" x="813" y="340" width="126" height="64" rx="3"/>
+    <text class="t s" x="876" y="356" text-anchor="middle">F5 · 18:18</text>
+    <text class="t" x="876" y="374" text-anchor="middle">樁已恢復可售</text>
+    <text class="t m" x="876" y="392" text-anchor="middle">ChargerBackInService</text>
+    <text class="t s" x="20" y="436">阿忠打了電話（As-Is）已撕掉：To-Be 由 F1 事件觸發 F2，SLA 從 18:10:00 起算，不從電話起算。</text>
+  </svg></div>
+  <figcaption>七張主線事實 + 六張支線事實；四條垂直線是學員自己標的樞紐事件。垂直線兩側「在乎的人」不同，是 Day 3 唯一允許帶過去的邊界線索。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+  <tr><th>節點</th><th>時間</th><th>事實（中 / 英）</th><th>樞紐</th><th>旁邊的 hotspot</th></tr>
+  <tr><td>T0</td><td>14:02</td><td>車輛已辨識進場 VehicleEntered</td><td>—</td><td>—</td></tr>
+  <tr><td>T1</td><td>14:03</td><td>充電車位已占用 ChargingBayOccupied</td><td>—</td><td>占用 ≠ 充電？（阿忠）</td></tr>
+  <tr><td>T2</td><td>14:04</td><td>連接器已插上 ConnectorPluggedIn</td><td>—</td><td>插槍 ＝ 開始？（小美 vs 老陳）</td></tr>
+  <tr><td>T3</td><td>14:04</td><td>充電已授權開始 ChargingStarted</td><td>是（停車 → 充電 + 計費）</td><td>分支：14:05 ChargingStartRejected</td></tr>
+  <tr><td>T4</td><td>14:13 / 14:22</td><td>電量已計量 EnergyMetered ×2</td><td>—</td><td>每次計量都出帳？（老陳）；分支：MeterValueRejected</td></tr>
+  <tr><td>T5</td><td>14:31</td><td>充電已結束 ChargingCompleted（12.4 kWh）</td><td>是（計量 → 算錢）</td><td>—</td></tr>
+  <tr><td>T6</td><td>14:33</td><td>車輛已離場 VehicleExited</td><td>是（場站 → 帳務）</td><td>斷線時怎麼離場？；分支：ParkingManuallyReleased</td></tr>
+  <tr><td>F1</td><td>18:10:00</td><td>充電器已申告故障 ChargerFaulted</td><td>是（賣電 → 修樁）</td><td>—</td></tr>
+  <tr><td>F2</td><td>18:10:00</td><td>工單已開立 WorkOrderOpened WO-2208</td><td>—</td><td>—</td></tr>
+  <tr><td>F3</td><td>18:10:00</td><td>技術員已指派 TechnicianAssigned TECH-HAO</td><td>—</td><td>備品在不在車上？（Vicky）</td></tr>
+  <tr><td>F3'</td><td>18:10:08</td><td>重複申告已附加 DuplicateFaultReported</td><td>—</td><td>一晚 20 張單？（Vicky）</td></tr>
+  <tr><td>—</td><td>18:12</td><td>broker 重送同一則事件：不是事實，不貼</td><td>—</td><td>重送 ＝ 再申告？（老陳）</td></tr>
+  <tr><td>F4</td><td>18:18</td><td>修復已驗證，工單已關閉 WorkOrderClosed(Repaired)</td><td>—</td><td>修好了誰說了算？（阿豪 vs Vicky）</td></tr>
+  <tr><td>F5</td><td>18:18</td><td>樁已恢復可售 ChargerBackInService</td><td>—</td><td>—</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day2/storm-board.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
+<h4>Storm Board — SITE-TPE-01 那個午後（ABC-1234 / CP-A12-2 / S-991 / P-441）</h4>
+<p>規則：黃貼只貼「已發生、過去式、業務會在乎」的事實。每張都能追溯到 Day 1 的一句原話（括號內是誰說的）。Context 欄今天不填——只填「誰在乎」。</p>
+
+<h4>1. 主時間線（big picture + process level）</h4>
+<div class="table-scroll"><table>
+  <tr><th class="nowrap">時間</th><th>事實（中文）</th><th class="nowrap">英文事件名</th><th>誰在乎（來源原話）</th><th class="nowrap">命令</th><th class="nowrap">執行者</th><th>政策（每當 X 就 Y）</th><th>拒絕事件</th></tr>
+  <tr><td class="nowrap">T0 14:02</td><td>車輛已辨識進場</td><td class="nowrap">VehicleEntered(plate=ABC-1234, siteId=SITE-TPE-01)</td><td>阿忠（「閘門、車位」）；占位政策</td><td>—（LPR 觀測到的事實）</td><td>LPR + 閘門</td><td>—。決定：進場<em>不</em>呼叫總部（阿忠隱藏事實 1）</td><td>—</td></tr>
+  <tr><td class="nowrap">T1 14:03</td><td>充電車位已占用</td><td class="nowrap">ChargingBayOccupied(bay, plate)</td><td>阿忠（「停在充電車位不充電，別的車進不來」）</td><td>—（感測器）</td><td>車位感測器</td><td>每當占用 20 分仍無 ChargingStarted → 提醒值班長（timer）</td><td>—</td></tr>
+  <tr><td class="nowrap">T2 14:04</td><td>連接器已插上</td><td class="nowrap">ConnectorPluggedIn(connectorId=CP-A12-2)</td><td>小美（「插槍就算開始」——她這樣說，老陳不同意）</td><td>—（樁回報，經 ACL）</td><td>顧客 / 樁</td><td>—。決定：插槍<em>不</em>建立會話</td><td>—</td></tr>
+  <tr><td class="nowrap">T3 14:04</td><td>充電已授權開始</td><td class="nowrap">ChargingStarted(sessionId=S-991, connectorId=CP-A12-2, idTag=TAG-MONTHLY-77, meterStartWh=100, at=14:04)</td><td>小美（「授權要即時」）、老陳（「沒授權不算」）</td><td class="nowrap">StartCharging</td><td>顧客（刷 TAG-MONTHLY-77）經樁</td><td>每當 ChargingStarted → 建立草稿帳單 INV-778（一個 sessionId 一張）</td><td>ChargingStartRejected(reason=ConnectorOccupied) 14:05 TAG-VISITOR-01（R1）；ChargingStartRejected(reason=Unauthorized)（R2）</td></tr>
+  <tr><td class="nowrap">T4 14:13 / 14:22</td><td>電量已計量（兩筆）</td><td class="nowrap">EnergyMetered(sessionId=S-991, meterWh=4100 / 8100, at)</td><td>小美（「度數要準，Wh 整數」）、老陳（「每一塊錢要能追到哪個事件」）</td><td class="nowrap">ReportMeterValue</td><td>樁（每 9 分鐘）</td><td>—。決定：EnergyMetered 不對外，帳務只等 ChargingCompleted</td><td>MeterValueRejected(reason=NotMonotonic, meterWh=3900, lastMeterWh=4100) 14:22（R3）</td></tr>
+  <tr><td class="nowrap">T5 14:31</td><td>充電已結束，12.4 kWh</td><td class="nowrap">ChargingCompleted(sessionId=S-991, energyWh=12400, startedAt=14:04, endedAt=14:31, stopReason=Local)</td><td>小美（「stopReason 要分類」）、老陳（「可以晚，不能漏」）</td><td class="nowrap">StopCharging</td><td>顧客（App）</td><td>每當 ChargingCompleted → 以 energyWh 結算草稿（12400 Wh × 8 元 = 99.2 元）</td><td>非 Charging 狀態下 Stop：呼叫端錯誤，不是業務事實（待決 Q3）</td></tr>
+  <tr><td class="nowrap">T6 14:33</td><td>車輛已離場</td><td class="nowrap">VehicleExited(parkingSessionId=P-441, plate=ABC-1234, releaseMode=Manual)</td><td>阿忠（「總部掛掉時我不要被卡住」）、老陳（「補費 email 常漏」）</td><td class="nowrap">ReleaseVehicle / ReleaseVehicleManually</td><td>閘門（自動）/ 阿忠（斷線）</td><td>每當 VehicleExited 或 ParkingManuallyReleased → 帳務事後對齊 P-441 與 S-991</td><td>—</td></tr>
+  <tr><td class="nowrap">T6 14:33 分支</td><td>值班長已人工放行（前提：與總部連線已中斷）</td><td class="nowrap">ParkingManuallyReleased(parkingSessionId=P-441, releasedBy=阿忠, at=14:33)</td><td>阿忠、老陳</td><td class="nowrap">ReleaseVehicleManually</td><td>阿忠</td><td>同上</td><td>P-441 已放行再放行：待決 Q5</td></tr>
+  <tr><td class="nowrap">14:04 下游</td><td>草稿帳單已建立</td><td class="nowrap">DraftInvoiceCreated(invoiceId=INV-778, sessionId=S-991)</td><td>老陳</td><td>—（政策的結果）</td><td>政策</td><td>—</td><td>同 sessionId 再收到 started：不建第二張（冪等，Day 5）</td></tr>
+</table></div>
+
+<h4>2. 故障支線（F）</h4>
+<div class="table-scroll"><table>
+  <tr><th class="nowrap">時間</th><th>事實（中文）</th><th class="nowrap">英文事件名</th><th>誰在乎（來源原話）</th><th class="nowrap">命令</th><th class="nowrap">執行者</th><th>政策</th><th>拒絕事件</th></tr>
+  <tr><td class="nowrap">F1 18:10:00</td><td>充電器已申告故障</td><td class="nowrap">ChargerFaulted(chargerId=CP-A12, connectorId=CP-A12-2, faultCode=GroundFailure, stillEnergized=false, occurredAt=18:10:00)</td><td>Vicky（「哪座樁掛了」）、阿豪（「故障碼」）、阿忠（「螢幕有東西不對」）</td><td class="nowrap">ReportFault</td><td>樁 CP-A12（經 ACL）</td><td>每當 ChargerFaulted → 連接器停售；每當 ChargerFaulted → OpenWorkOrder（總部訂閱，不等回應）</td><td>—</td></tr>
+  <tr><td class="nowrap">F2 18:10:00</td><td>工單已開立</td><td class="nowrap">WorkOrderOpened(workOrderId=WO-2208, chargerId=CP-A12, faultCode=GroundFailure, openedAt=18:10:00)</td><td>Vicky（「SLA 從設備申告起算」）、阿忠（看板要看到）</td><td class="nowrap">OpenWorkOrder</td><td>政策（自動）</td><td>每當 WorkOrderOpened → AssignTechnician</td><td>同樁同碼工單開放中 → 不開新單，見 F3'</td></tr>
+  <tr><td class="nowrap">F3 18:10:00</td><td>技術員已指派</td><td class="nowrap">TechnicianAssigned(workOrderId=WO-2208, technicianId=TECH-HAO)</td><td>Vicky（「一張工單一個主責人」）、阿豪</td><td class="nowrap">AssignTechnician</td><td>Vicky（MVP1：stub 固定 TECH-HAO）</td><td>—。決定：不對帳務發「技術員已出發」</td><td>工單已有主責技術員：待決（Sprint 2）</td></tr>
+  <tr><td class="nowrap">F3' 18:10:08</td><td>重複申告已附加</td><td class="nowrap">DuplicateFaultReported(workOrderId=WO-2208, chargerId=CP-A12, faultCode=GroundFailure, occurredAt=18:10:08)</td><td>Vicky（「一晚 20 張單」）</td><td class="nowrap">ReportFault（第二次）</td><td>樁 CP-A12</td><td>每當 ChargerFaulted 且同樁同碼工單開放中 → 附加，不開新單（R5）</td><td>這一列本身就是「開第二張單」被拒的事實</td></tr>
+  <tr><td class="nowrap">18:12</td><td>（不是事實）broker 重送 18:10:00 那一則</td><td>—</td><td>老陳（「同一個會話出兩次帳」）</td><td>—</td><td>broker</td><td>消費者以 eventId 去重（Day 5）；不算再申告</td><td>—</td></tr>
+  <tr><td class="nowrap">F4 18:18</td><td>修復已驗證，工單已關閉</td><td class="nowrap">WorkOrderClosed(workOrderId=WO-2208, chargerId=CP-A12, closedAt=18:18, outcome=Repaired)</td><td>阿豪（「修好了，誰來驗證」）、Vicky（SLA 停錶）</td><td class="nowrap">CloseWorkOrder</td><td>阿豪回報 → Vicky 確認</td><td>每當 WorkOrderClosed(Repaired) → 樁恢復可售</td><td>已關閉再關閉：待決（Sprint 2）</td></tr>
+  <tr><td class="nowrap">F5 18:18</td><td>樁已恢復可售</td><td class="nowrap">ChargerBackInService(chargerId=CP-A12)</td><td>小美（可以賣電）、阿忠（看板變綠）</td><td>—（政策的結果）</td><td>政策</td><td>—</td><td>—</td></tr>
+</table></div>
+
+<h4>3. 政策清單（8 條，全部是「每當 X 就 Y」，沒有同步呼叫）</h4>
+<ol>
+  <li>每當 <code>ChargingBayOccupied</code> 後 20 分鐘仍無 <code>ChargingStarted</code> → 提醒值班長（timer；阿忠隱藏事實 4）。</li>
+  <li>每當 <code>ChargingStarted</code> → 建立草稿帳單（一個 sessionId 一張）。</li>
+  <li>每當 <code>ChargingCompleted</code> → 以 energyWh 結算草稿（12400 Wh → 99.2 元）。</li>
+  <li>每當 <code>VehicleExited</code> 或 <code>ParkingManuallyReleased</code> → 帳務事後對齊 P-441 與 S-991（合併依顧客，不依車牌；Sprint 2）。</li>
+  <li>每當 <code>ChargerFaulted</code> → 連接器停售（場站看板立刻變，不等總部）。</li>
+  <li>每當 <code>ChargerFaulted</code> → <code>OpenWorkOrder</code>（總部訂閱；總部掛了事件留著稍後送；SLA 從 occurredAt 起算）。</li>
+  <li>每當 <code>ChargerFaulted</code> 且同樁同碼工單開放中 → 附加重複申告，不開新單（R5）。</li>
+  <li>每當 <code>WorkOrderOpened</code> → <code>AssignTechnician</code>（faultCode → 備品對照）；每當 <code>WorkOrderClosed(Repaired)</code> → 樁恢復可售。</li>
+</ol>
+<p><strong>被我改掉的一條</strong>：原本寫「樁故障時同步呼叫總部工單 API，等它回 WO 編號才算申告成功」。助教問「總部掛了，樁還算故障嗎？」——答案是當然算，所以它不能是同步呼叫。改成第 6 條。</p>
+
+<h4>4. 聚合候選（動詞的受詞；每個要答「哪些命令打在我身上、我守什麼」）</h4>
+<div class="table-scroll"><table>
+  <tr><th>候選</th><th>打在它身上的命令</th><th>守的規則</th><th>狀態</th></tr>
+  <tr><td>充電會話 ChargingSession（S-991，掛在連接器 CP-A12-2 上）</td><td>StartCharging、ReportMeterValue、StopCharging、ReportFault</td><td>R1 一個連接器同一時間一個進行中會話；R2 未授權不得開始；R3 計量單調遞增；R4 只有 Charging 可 Stop</td><td>確定</td></tr>
+  <tr><td>停車會話 ParkingSession（P-441）</td><td>ReleaseVehicle、ReleaseVehicleManually</td><td>一輛車同一時間一個進行中停車會話；R6 放行不依賴總部</td><td>確定（MVP1 stub）</td></tr>
+  <tr><td>帳單 Invoice（INV-778，草稿 → 開立）</td><td>IssueInvoice、AdjustInvoice</td><td>R7 開立後金額不可變，更正走 InvoiceAdjusted</td><td>確定（MVP1 只做草稿）</td></tr>
+  <tr><td>工單 WorkOrder（WO-2208）</td><td>OpenWorkOrder、AssignTechnician、CloseWorkOrder、（附加重複申告）</td><td>R5 一座樁同一故障碼在開放期間一張根因工單</td><td>確定</td></tr>
+  <tr><td>派工 TechnicianAssignment</td><td>AssignTechnician</td><td>一張工單同一時間一個主責技術員；備品先於出發</td><td>確定（MVP1 stub 固定 TECH-HAO）</td></tr>
+  <tr><td>樁 Charger（健康）</td><td>ReportFault？</td><td>答不出來：申告只是翻譯 OCPP，狀態是誰持有？韌體版本又是誰的？</td><td><strong>待定</strong>（明天再看）</td></tr>
+</table></div>
+
+<h4>5. 樞紐事件（畫垂直線的地方；線的左右在乎的人不同）</h4>
+<ul>
+  <li><code>ChargingStarted</code>（T3）：左邊是停車的世界（阿忠：閘門、車位）；右邊是充電 + 計費（小美：授權、度數；老陳：草稿）。</li>
+  <li><code>ChargingCompleted</code>（T5）：左邊是計量（小美）；右邊是可以算錢了（老陳）。energyWh 在這一刻定案。</li>
+  <li><code>VehicleExited</code>（T6）：左邊是場站（阿忠放行）；右邊是帳務對齊（老陳）。放行 ≠ 結清。</li>
+  <li><code>ChargerFaulted</code>（F1）：左邊是賣電（小美、顧客）；右邊是修樁（Vicky、阿豪）。線的兩邊連識別碼都不一樣：左邊講 CP-A12-2（槍），右邊講 CP-A12（樁）。</li>
+</ul>
+
+<h4>6. Hotspots（13 個，各對到一位角色；收斂結果）</h4>
+<div class="table-scroll"><table>
+  <tr><th>#</th><th>爭議 / 不確定</th><th>對到誰</th><th>收斂結果</th></tr>
+  <tr><td>1</td><td>進場就要打總部 API 嗎？</td><td>阿忠（隱藏事實 1）</td><td>決定：不。VehicleEntered 只有占位政策在乎；斷線時進場照常。</td></tr>
+  <tr><td>2</td><td>車位占用但沒充電，誰知道？</td><td>阿忠（隱藏事實 4）</td><td>決定：兩張事實（T1 ≠ T3）+ 一條 timer 政策提醒值班長。</td></tr>
+  <tr><td>3</td><td>插槍 ＝ 開始充電？</td><td>小美 vs 老陳</td><td>決定：插槍不建立會話；ChargingStarted（授權後）才是開始。待決 Q1：插槍未刷卡算「占用」嗎？</td></tr>
+  <tr><td>4</td><td>跨時段怎麼計價？</td><td>小美（隱藏事實 1）</td><td>指派：小美 + 老陳。EnergyMetered 帶時間戳；分段計價不進 MVP1。</td></tr>
+  <tr><td>5</td><td>每次計量都要通知帳務嗎？</td><td>老陳</td><td>決定：不。帳務只訂閱 ChargingCompleted；EnergyMetered 是會話內部事實。</td></tr>
+  <tr><td>6</td><td>「帳單已開立」是事實還是政策結果？什麼時候出帳？</td><td>老陳（隱藏事實 1）</td><td>決定：不在主線。出帳是帳務自己的政策，合併 P-441 與 S-991 依顧客，Sprint 2。</td></tr>
+  <tr><td>7</td><td>總部斷線時離場怎麼辦？</td><td>阿忠（隱藏事實 1）</td><td>決定：人工放行是事實 ParkingManuallyReleased；帳務事後對齊（R6）。</td></tr>
+  <tr><td>8</td><td>「阿忠打了電話給客服」To-Be 還需要嗎？</td><td>阿忠（隱藏事實 2）、Vicky（隱藏事實 2）</td><td>決定：撕掉。ChargerFaulted 事件觸發開單；SLA 從 occurredAt 起算，不從電話起算。</td></tr>
+  <tr><td>9</td><td>派工前備品在不在車上？</td><td>Vicky（隱藏事實 3）</td><td>指派：Vicky。faultCode → 備品對照表由派工候選守；MVP1 stub。</td></tr>
+  <tr><td>10</td><td>重複申告要開幾張單？</td><td>Vicky（隱藏事實 1）</td><td>決定：一張根因工單 WO-2208，第二次附加（R5）。</td></tr>
+  <tr><td>11</td><td>18:12 broker 重送同一則事件 ＝ 再申告嗎？</td><td>老陳（隱藏事實 4）</td><td>決定：不是。同 eventId 的重送由消費者去重（Day 5）；18:10:08 那次是新事實。</td></tr>
+  <tr><td>12</td><td>修復驗證是誰的責任？</td><td>阿豪（隱藏事實 4）vs Vicky</td><td>待決 Q4：關單條件是「樁回可售」還是「30 分鐘無再故障」？問 Vicky。</td></tr>
+  <tr><td>13</td><td>「技術員已出發」要不要通知帳務？</td><td>Vicky（隱藏事實 4）</td><td>決定：不通知。派工是總部內部事。</td></tr>
+</table></div>
+
+<h4>7. 被退回的便利貼（與理由）</h4>
+<ul>
+  <li>「使用者按下開始」→ UI 動作。按下去之後世界上變的是「充電已授權開始」，已在牆上；刪。</li>
+  <li>「系統送出 StatusNotification」→ 系統動作 + OCPP 話。老陳聽不懂；換廠商就消失。改成「充電器已申告故障」。</li>
+  <li>「連接器是 Occupied」→ 狀態，不是事實。讓它變成這樣的事實是「充電已授權開始」；刪。</li>
+  <li>「呼叫總部工單 API」→ 系統動作。呼叫完 Vicky 看到的是「工單已開立」。</li>
+  <li>「收到 MeterValues」→ OCPP 訊息。小美知道的數字是「電量已計量 4100 Wh」。</li>
+  <li>「阿忠打了電話給客服」→ As-Is 的人當 API。To-Be 不該有；移到 hotspot #8 再撕掉。</li>
+</ul>
+
+<h4>8. Mermaid timeline</h4>
+<pre>```mermaid
+timeline
+  title SITE-TPE-01 的午後（ABC-1234 / CP-A12-2 / S-991 / P-441）
+  section 停車與充電 14:02 → 14:33
+    14:02 : VehicleEntered
+    14:03 : ChargingBayOccupied
+    14:04 : ConnectorPluggedIn : ChargingStarted ★ : DraftInvoiceCreated
+    14:05 : ChargingStartRejected（ConnectorOccupied, TAG-VISITOR-01）
+    14:13 : EnergyMetered 4100 Wh
+    14:22 : MeterValueRejected（3900 &lt; 4100） : EnergyMetered 8100 Wh
+    14:31 : ChargingCompleted ★ energyWh=12400
+    14:33 : ParkingManuallyReleased（總部斷線） : VehicleExited ★
+  section 故障 18:10 → 18:18
+    18:10:00 : ChargerFaulted ★ GroundFailure : WorkOrderOpened WO-2208 : TechnicianAssigned TECH-HAO
+    18:10:08 : DuplicateFaultReported → WO-2208
+    18:12 : （broker 重送 evt-A，不是事實）
+    18:18 : WorkOrderClosed(Repaired) : ChargerBackInService
+```</pre>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 1 驗收看哪一行</p>
+<p><strong>看第 1 節表格的「事實」欄，逐張念出來。</strong>任何一張含「收到」「呼叫」「送出」「寫入」「按下」「是 Occupied」就是假事實，直接扣到 1 分（「有，但不對」）。第二個看 hotspots 表的「對到誰」欄：寫「所有人」或空白的不是 hotspot，是他懶得問。第三個看第 7 節「被退回的便利貼」：<em>空白代表他沒把第一版貼給 /storm</em>——沒有人第一版是乾淨的。</p>
+<p><strong>常見失真</strong>：(1) 主線只有 §1.7 那 8 張，沒有分支、沒有拒絕——那是抄骨架，抽問「14:05 那張是哪句訪談來的」。(2) 故障支線只到「工單已關閉」，沒有「恢復可售」——他沒讀阿豪的訪談。(3) 學員自己命名的事實（<code>DraftInvoiceCreated</code>、<code>TechnicianAssigned</code>、<code>DuplicateFaultReported</code>、<code>ChargerBackInService</code>）不在 §1.7 裡，這是<em>正常的</em>——§1.7 只是骨架；但名字必須是過去式、主詞是業務物件，且 Day 3 要跟 <code>docs/domain/glossary.md</code> 對過（後三個 glossary 有）。(4) 「與總部連線已中斷」被貼成主線事實——可以接受，但要問「它旁邊那張是什麼」；答不出「人工放行」就是沒懂 R6。</p>
+<p><strong>怎麼攔</strong>：走動時聽到「我讓 Claude 幫我列一下應該有哪些事件」→ 問「Day 3 你要用什麼推導邊界？」。看到牆上沒有紅貼 → 「你訪談時有沒有兩個人講不一樣的？那就是紅貼。」</p></div>
+
+<p class="eyebrow">BLOCK 2 · PROCESS-LEVEL</p>
+<h2>命令、政策、聚合候選，然後是詞</h2>
+<h3>實況：11:20 → 12:50</h3>
+<p>牆上已經有 20 張事實。前 15 分鐘學員一個人補三欄：命令（藍貼，祈使句、英文）、執行者（誰或什麼發出命令）、政策（紫貼，「每當 X 就 Y」）；每個命令旁邊再補「失敗時發生什麼事實」。接著 45 分鐘開 <code>/storm process</code>，助教對每條政策問「如果 Y 那邊的系統掛了，X 會失敗嗎？」、對每個聚合候選問「哪些命令打在它身上、它守哪條規則」、對每個樞紐事件問「線的左右各是誰」。最後 30 分鐘起草 glossary：從時間線的名詞抓 ≥ 12 個詞，每個寫「是 / 不是」，「不是」那欄填 Day 1 訪談裡容易混淆的東西。牆的第 4–7 步（上面那面牆）就是這 90 分鐘。</p>
+<p>這個 Block 學員最容易犯的一個錯，值得用一張圖說：<strong>把政策寫成同步呼叫</strong>。</p>
+
+<figure class="wide">
+  <p class="title">圖 2 · 政策 vs 同步呼叫：故障申告那一條</p>
+  <p class="subtitle">上半是學員第一版（「樁故障時同步呼叫總部工單 API」），下半是改過的版本。差別不在技術，在「總部掛了，樁還算不算故障」。</p>
+  <div class="diagram"><svg viewBox="0 0 960 440" role="img" aria-label="上半：充電會話同步呼叫總部工單 API，紅色箭頭，總部掛了就失敗；下半：ChargerFaulted 事件經 Outbox 觸發政策，政策下 OpenWorkOrder 命令，開出工單">
+    <rect class="zone plain" x="8" y="10" width="944" height="180" rx="8"/>
+    <text class="t b" x="20" y="34">✗ 第一版：寫成同步呼叫</text>
+    <rect class="box core" x="30" y="70" width="190" height="70" rx="6"/>
+    <text class="t b" x="125" y="99" text-anchor="middle">充電會話（場站）</text>
+    <text class="t s" x="125" y="118" text-anchor="middle">ReportFault(CP-A12, GroundFailure)</text>
+    <path class="ar bad" d="M220 105 L440 105"/>
+    <text class="t s" x="330" y="92" text-anchor="middle">POST /work-orders</text>
+    <text class="t s" x="330" y="128" text-anchor="middle">等 200 + WO 編號才算申告成功</text>
+    <rect class="box ext" x="440" y="70" width="190" height="70" rx="6"/>
+    <text class="t b" x="535" y="99" text-anchor="middle">總部工單 API</text>
+    <text class="t s" x="535" y="118" text-anchor="middle">22:00 後沒人接；維護中回 503</text>
+    <rect class="st hot" x="660" y="62" width="280" height="88" rx="8"/>
+    <text class="t s" x="800" y="84" text-anchor="middle">總部掛了 → ReportFault 失敗</text>
+    <text class="t s" x="800" y="102" text-anchor="middle">→ 樁「不算」故障？顧客照插槍？</text>
+    <text class="t s" x="800" y="120" text-anchor="middle">SLA 從「回應時間」起算，Vicky 隱藏事實 2 又回來了</text>
+    <text class="t s" x="800" y="138" text-anchor="middle">場站與總部生死綁在一起（§1.1 明文禁止）</text>
+    <text class="t s" x="20" y="176">助教的問題：「如果 Y 那邊的系統掛了，X 會失敗嗎？」——會。所以它不是政策，是耦合。</text>
+
+    <rect class="zone" x="8" y="206" width="944" height="224" rx="8"/>
+    <text class="t b" x="20" y="230">✓ 改過：寫成政策（每當 X 就 Y）</text>
+    <rect class="box core" x="30" y="262" width="150" height="70" rx="6"/>
+    <text class="t b" x="105" y="291" text-anchor="middle">充電會話（場站）</text>
+    <text class="t s" x="105" y="310" text-anchor="middle">記錄事實，不呼叫任何人</text>
+    <path class="ar ev" d="M180 297 L214 297"/>
+    <rect class="sticky evt" x="214" y="262" width="140" height="70" rx="3"/>
+    <text class="t s" x="284" y="282" text-anchor="middle">事實 · 18:10:00</text>
+    <text class="t b" x="284" y="300" text-anchor="middle">ChargerFaulted</text>
+    <text class="t s" x="284" y="318" text-anchor="middle">CP-A12 · GroundFailure</text>
+    <path class="ar ev" d="M354 297 L388 297"/>
+    <rect class="box dim" x="388" y="262" width="118" height="70" rx="6"/>
+    <text class="t b" x="447" y="291" text-anchor="middle">Outbox</text>
+    <text class="t s" x="447" y="310" text-anchor="middle">同一交易寫入（R8）</text>
+    <path class="ar ev" d="M506 297 L540 297"/>
+    <rect class="sticky pol" x="540" y="262" width="150" height="70" rx="3"/>
+    <text class="t s" x="615" y="282" text-anchor="middle">政策 · 總部訂閱</text>
+    <text class="t" x="615" y="300" text-anchor="middle">每當 ChargerFaulted</text>
+    <text class="t" x="615" y="318" text-anchor="middle">就 OpenWorkOrder</text>
+    <path class="ar" d="M690 297 L724 297"/>
+    <rect class="sticky cmd" x="724" y="262" width="96" height="70" rx="3"/>
+    <text class="t s" x="772" y="282" text-anchor="middle">命令</text>
+    <text class="t m" x="772" y="300" text-anchor="middle">OpenWork</text>
+    <text class="t m" x="772" y="316" text-anchor="middle">Order</text>
+    <path class="ar" d="M820 297 L846 297"/>
+    <rect class="box" x="846" y="262" width="96" height="70" rx="6"/>
+    <text class="t b" x="894" y="291" text-anchor="middle">工單</text>
+    <text class="t s" x="894" y="310" text-anchor="middle">WO-2208</text>
+    <path class="ar ev" d="M284 332 L284 362"/>
+    <rect class="sticky pol" x="214" y="362" width="292" height="30" rx="3"/>
+    <text class="t s" x="360" y="381" text-anchor="middle">每當 ChargerFaulted 就連接器停售——場站自己做，不等總部</text>
+    <rect class="st good" x="540" y="356" width="402" height="60" rx="8"/>
+    <text class="t s" x="741" y="378" text-anchor="middle">總部掛了：事件留在 Outbox，連線恢復再送；樁照樣停售</text>
+    <text class="t s" x="741" y="398" text-anchor="middle">SLA 從事件的 occurredAt=18:10:00 起算，不從送達時間起算</text>
+  </svg></div>
+  <figcaption>上半的紅箭頭是 §1.7 F 列「現場必須先打電話才產生工單」的程式版——只是把電話換成 HTTP。下半的虛線是事件，實線是命令；政策是唯一把事件變成命令的地方。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+  <tr><th>版本</th><th>從</th><th>到</th><th>線</th><th>意思</th><th>總部掛了會怎樣</th></tr>
+  <tr><td>✗ 同步呼叫</td><td>充電會話（場站）ReportFault</td><td>總部工單 API</td><td>紅實線 POST /work-orders</td><td>等回應才算申告成功</td><td>ReportFault 失敗；樁不算故障；SLA 從回應時間起算</td></tr>
+  <tr><td>✓ 政策</td><td>充電會話（場站）</td><td>事實 ChargerFaulted</td><td>虛線（事件）</td><td>只記錄事實</td><td>照常記錄</td></tr>
+  <tr><td>✓ 政策</td><td>ChargerFaulted</td><td>Outbox</td><td>虛線</td><td>與聚合同一交易寫入（R8）</td><td>留在 Outbox，稍後送</td></tr>
+  <tr><td>✓ 政策</td><td>Outbox</td><td>政策「每當 ChargerFaulted 就 OpenWorkOrder」</td><td>虛線</td><td>總部訂閱</td><td>連線恢復後才收到，occurredAt 不變</td></tr>
+  <tr><td>✓ 政策</td><td>政策</td><td>命令 OpenWorkOrder</td><td>實線（命令）</td><td>事件變命令的唯一地方</td><td>—</td></tr>
+  <tr><td>✓ 政策</td><td>OpenWorkOrder</td><td>工單 WO-2208</td><td>實線</td><td>開出根因工單</td><td>—</td></tr>
+  <tr><td>✓ 政策</td><td>ChargerFaulted</td><td>政策「連接器停售」</td><td>虛線</td><td>場站自己做</td><td>照常停售</td></tr>
+</table></div></details>
+
+<h3>/storm process：三種問題各問一次</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /storm process</p><p>Day 2 Block 2，process-level。這是我補了命令 / 執行者 / 政策 / 拒絕事件的時間線，以及我圈出的聚合候選與樞紐事件（貼上 storm-board.md 目前內容）。政策我寫了 8 條，其中第 6 條是「樁故障時同步呼叫總部工單 API，等它回 WO 編號才算申告成功」。聚合候選：充電會話、停車會話、帳單、工單、派工、樁、場站。請對每個政策問我是不是同步呼叫、對每個候選問我守什麼規則、對每個樞紐事件問左右是誰。不要提 Bounded Context。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>三組問題，你先答第一組。</p><p><strong>政策</strong>。第 6 條：如果總部的工單 API 掛了（22:00 後沒人、或維護中回 503），<code>ReportFault</code> 會失敗嗎？失敗的話，18:10:00 那根樁「算不算」故障？顧客可以插槍嗎？——如果你的答案是「當然算故障」，那這條就不能是同步呼叫。另外第 3 條「每當 ChargingCompleted → 結算草稿」：帳務系統掛了，14:31 充電還能結束嗎？</p><p><strong>聚合候選</strong>。「場站」：哪個命令打在場站身上？<code>StartCharging</code> 改的是場站的什麼？如果只改一個連接器上的一個會話，候選就不是場站。「樁」：它守哪一條規則？申告故障那條是「翻譯」還是「守規則」？</p><p><strong>樞紐</strong>。<code>ChargerFaulted</code> 左邊講的識別碼是什麼、右邊講的是什麼？</p><p><b>下一個最小步驟：</b>把第 6 條改寫成「每當 ___ 就 ___」，並在旁邊寫「總部掛了會怎樣」一句話。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>第 6 條改成「每當 ChargerFaulted 就 OpenWorkOrder——總部訂閱，事件留著稍後送；SLA 從 occurredAt 起算」。第 3 條也是政策，帳務掛了充電照樣結束，事件晚點送。「場站」刪掉：StartCharging 只改 CP-A12-2 上的一個會話。「樁」我答不出來守什麼——申告只是把 OCPP 翻成事實，狀態誰持有我不知道，標待定。ChargerFaulted 左邊講 CP-A12-2（槍，小美賣電），右邊講 CP-A12（樁，Vicky 派工）。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>「左邊講槍、右邊講樁」——記下來，這句話明天很值錢。待定是正確答案，不要硬填。</p><p>glossary 草稿我看了 14 個詞，挑三個「是 / 不是」太籠統的：</p><p>1. 「充電會話：是一次充電；不是停車」——14:04 插槍還沒刷卡、14:05 被拒那次、14:31 結束後車還停著：這三個時刻，哪幾個「在會話裡」？<br>2. 「故障：是樁壞了；不是沒壞」——阿忠說一半的「樁壞了」是 App 連不上。那半算不算你這個詞？小美按 RemoteStop 後車還在充，算不算？<br>3. 「狀態：是樁的狀態」——OCPP 的 <code>Faulted</code>、小美的「異常中止」、Vicky 的「維修中」、老陳的「爭議中」，是同一個「狀態」嗎？如果程式碼裡只有一個 <code>status</code> 欄位，它吃得下這四種嗎？</p><p><b>下一個最小步驟：</b>把「不是」欄改成「訪談裡有人會搞混的那個東西」——每個詞至少寫出一個人名，10 分鐘。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改了。「充電會話」的不是：「OCPP transaction（樁廠商說的）；停車會話（阿忠說的）；插槍未刷卡那段（小美以為算）」。「故障」我拆成兩個詞：「充電器已申告故障」（設備自己聲明無法供電，Vicky）和「客訴」（阿忠接到的，一半不是故障）。「狀態」我決定不當一個詞，寫進「不要用的詞」：四個狀態機，程式碼裡不准有一個 status 吃四種值。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>「故障」拆成兩個詞，是今天最好的一個決定：一個詞一個意思。「狀態」進禁用清單也對。你現在 30 個詞、6 個禁用詞——超過 DoD。</p><p><b>下一個最小步驟：</b>把 glossary 的最後一欄「屬於哪條時間線區段 / 哪個聚合候選」填完（用你自己的候選名，不要猜明天的答案），然後 commit <code>docs(day2): glossary</code>。</p></div>
+</div>
+
+<div class="file"><p class="path">workshop/day2/glossary.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
+<h4>通用語言 Glossary（本組版本，Day 2）</h4>
+<p>規則：一個詞只能有一個意思；同一個意思只能有一個詞。「不是」欄寫的是 Day 1 訪談裡真的有人搞混的東西（括號內是誰）。最後一欄今天只填「哪條時間線區段 / 哪個聚合候選」，明天切完邊界再改。</p>
+<div class="table-scroll"><table>
+  <tr><th>#</th><th class="nowrap">用語</th><th class="nowrap">英文</th><th>是</th><th>不是</th><th>擁有者（時間線區段 / 聚合候選）</th></tr>
+  <tr><td>1</td><td>場站</td><td class="nowrap">Site</td><td>一個有地址、閘門、值班室的營運地點，例 SITE-TPE-01</td><td>總部的行政區劃；一個聚合（沒有命令打在它身上）</td><td>主線 T0–T6 的舞台；不是候選</td></tr>
+  <tr><td>2</td><td>充電樁 / 樁</td><td class="nowrap">Charger</td><td>一台有韌體、會故障、會被修的設備，例 CP-A12</td><td>一把槍（阿豪：「工單說 2 號槍，現場標 B 槍」）；廠商序號</td><td>故障支線 F1–F5；候選「樁（健康）」待定</td></tr>
+  <tr><td>3</td><td>連接器 / 槍</td><td class="nowrap">Connector</td><td>一把槍的業務身份，能獨立插車、獨立計量，例 CP-A12-2</td><td>OCPP 的 <code>connectorId: 2</code>；現場貼的「B 槍」；充電車位</td><td>主線 T2–T5；充電會話候選掛在它上面</td></tr>
+  <tr><td>4</td><td>充電車位</td><td class="nowrap">Charging Bay</td><td>場站裡標示為可充電的停車位，感測器知道有沒有車</td><td>連接器（阿忠：「有車停在充電車位卻不充電」——車位有車，槍沒插）</td><td>主線 T1；停車會話候選</td></tr>
+  <tr><td>5</td><td>停車會話</td><td class="nowrap">ParkingSession</td><td>從進場到放行的一次占用契約，例 P-441（14:02 → 14:33）</td><td>充電會話（阿忠的「會話」= 車進來到出去，小美的「會話」= 插槍到結束）；閘門硬體日誌</td><td>主線 T0、T6；候選「停車會話」</td></tr>
+  <tr><td>6</td><td>充電會話</td><td class="nowrap">ChargingSession</td><td>從授權開始到結束計量的一次能量交付，例 S-991（14:04 → 14:31）</td><td>OCPP Transaction（樁廠商）；停車會話（阿忠）；插槍未刷卡那段（小美以為算）</td><td>主線 T3–T5；候選「充電會話」</td></tr>
+  <tr><td>7</td><td>憑證</td><td class="nowrap">IdTag</td><td>用來授權充電的身份憑證（月票卡、車隊卡、App token），例 TAG-MONTHLY-77</td><td>車牌（Parking 的身份）；月票本身（停車資格，不是充電資格）</td><td>主線 T3；充電會話候選的輸入</td></tr>
+  <tr><td>8</td><td>授權</td><td class="nowrap">Authorization</td><td>憑證被判定可以在此連接器開始充電；斷線時本機白名單可判月票卡</td><td>樁回 <code>Accepted</code> 這個動作；車隊卡在斷線時（小美：會被拒）</td><td>主線 T3；R2</td></tr>
+  <tr><td>9</td><td>計量值</td><td class="nowrap">Meter Value（meterWh）</td><td>電表的累計讀數，Wh 整數，應單調遞增（相等視為重送，接受）</td><td>「這段用了多少」（那是 energyWh）；OCPP <code>MeterValues</code> 訊息</td><td>主線 T4；R3</td></tr>
+  <tr><td>10</td><td>度數 / 能量</td><td class="nowrap">Energy（energyWh）</td><td>最後計量 − 起始計量，Wh 整數，例 12400 Wh = 12.4 kWh</td><td>功率 kW；金額；廠商報表的一位小數 kWh（老陳：每月差幾百元）</td><td>主線 T5；R4</td></tr>
+  <tr><td>11</td><td>中止原因</td><td class="nowrap">Stop Reason</td><td>會話結束的分類：Local / Remote / EVDisconnected / PowerLoss / DeAuthorized（小美要的五類）</td><td>故障碼；「異常」一個字</td><td>主線 T5</td></tr>
+  <tr><td>12</td><td>草稿帳單</td><td class="nowrap">Draft Invoice</td><td>會話進行中或未合併前的暫存計價，例 INV-778 草稿</td><td>已開立的帳單（不可變）；MeterValue 陣列</td><td>主線 T3 下游；候選「帳單」</td></tr>
+  <tr><td>13</td><td>帳單</td><td class="nowrap">Invoice</td><td>對顧客的求償文件，開立後金額不可變，例 INV-778</td><td>草稿；廠商後台的「充電紀錄」；一筆 MeterValue</td><td>候選「帳單」；R7</td></tr>
+  <tr><td>14</td><td>費率</td><td class="nowrap">Tariff</td><td>每度電價 / 每分鐘停車價的規則表，含尖離峰</td><td>電力公司給營運商的躉售價；一個數字（小美：「三個系統常不一致」）</td><td>候選「帳單」的輸入；不進 MVP1</td></tr>
+  <tr><td>15</td><td>顧客</td><td class="nowrap">Customer</td><td>收帳單的人或公司；合併停車費與電費的依據</td><td>車牌（老陳：「合併依顧客，不依車牌」）；憑證持有者</td><td>候選「帳單」；主線上沒有它</td></tr>
+  <tr><td>16</td><td>人工放行</td><td class="nowrap">Manual Release</td><td>值班長不依賴總部開閘讓車出去，事後帳務對齊</td><td>免費放行（老陳：停車費要補）；系統錯誤</td><td>主線 T6 分支；R6</td></tr>
+  <tr><td>17</td><td>工單</td><td class="nowrap">WorkOrder</td><td>總部對一根故障的承諾，例 WO-2208；有開立、指派、關閉</td><td>一通值班電話（阿忠）；一則故障訊息；客服系統的表單</td><td>故障支線 F2–F4；候選「工單」</td></tr>
+  <tr><td>18</td><td>根因工單</td><td class="nowrap">Root-cause WorkOrder</td><td>同樁同故障碼在開放期間唯一的那張工單</td><td>每次申告一張（Vicky：「一晚 20 張」）</td><td>候選「工單」；R5</td></tr>
+  <tr><td>19</td><td>重複申告</td><td class="nowrap">Duplicate Report</td><td>工單開放期間再收到同樁同碼的申告，附加到根因工單，計數 +1</td><td>新工單；broker 重送同一則事件（同 eventId，那是傳輸層的事）</td><td>故障支線 F3'；R5</td></tr>
+  <tr><td>20</td><td>技術員</td><td class="nowrap">Technician</td><td>能被派工的人，例 TECH-HAO</td><td>值班長（阿忠不修樁）</td><td>候選「派工」</td></tr>
+  <tr><td>21</td><td>派工</td><td class="nowrap">Dispatch</td><td>把工單指派給一位主責技術員並確認備品</td><td>開工單（Vicky：兩件事）；「技術員已出發」的通知（帳務不需要）</td><td>故障支線 F3；候選「派工」</td></tr>
+  <tr><td>22</td><td>故障碼</td><td class="nowrap">Fault Code</td><td>故障的分類代碼，例 GroundFailure；決定備品與能否遠端重啟</td><td>客訴文字；OCPP <code>errorCode</code> 原始欄位名</td><td>故障支線 F1；R5 去重鍵的一半</td></tr>
+  <tr><td>23</td><td>恢復可售</td><td class="nowrap">Back in Service</td><td>修復驗證後樁重新可以賣電</td><td>樁回 <code>Available</code> 這則訊息本身（阿豪 vs Vicky 的爭議）</td><td>故障支線 F5</td></tr>
+  <tr><td>24</td><td>車輛已辨識進場</td><td class="nowrap">VehicleEntered</td><td>LPR 認出車牌且閘門放行的事實</td><td>車開到門口（尚未辨識）；打總部 API</td><td>主線 T0</td></tr>
+  <tr><td>25</td><td>充電車位已占用</td><td class="nowrap">ChargingBayOccupied</td><td>感測器確認充電車位有車</td><td>充電已開始（阿忠：每天 5 台占著不充）</td><td>主線 T1</td></tr>
+  <tr><td>26</td><td>連接器已插上</td><td class="nowrap">ConnectorPluggedIn</td><td>槍已物理連接車輛</td><td>已授權；已扣款；會話已開始</td><td>主線 T2</td></tr>
+  <tr><td>27</td><td>充電已授權開始</td><td class="nowrap">ChargingStarted</td><td>授權成功且開始計量的事實；會話從這裡開始</td><td>插槍；刷卡；樁回 Accepted</td><td>主線 T3（樞紐）</td></tr>
+  <tr><td>28</td><td>電量已計量</td><td class="nowrap">EnergyMetered</td><td>一次合法（單調）的累計讀數被記錄</td><td>每次 OCPP MeterValues 訊息；倒退的那筆（那是 MeterValueRejected）</td><td>主線 T4</td></tr>
+  <tr><td>29</td><td>充電已結束</td><td class="nowrap">ChargingCompleted</td><td>會話結束，energyWh 定案，帶 stopReason</td><td>拔槍；RemoteStop 被 Accepted（小美隱藏事實 4：車還在充）</td><td>主線 T5（樞紐）</td></tr>
+  <tr><td>30</td><td>車輛已離場</td><td class="nowrap">VehicleExited</td><td>車通過出口閘門的事實，帶 releaseMode</td><td>帳單已結清（放行 ≠ 結清）</td><td>主線 T6（樞紐）</td></tr>
+  <tr><td>31</td><td>充電器已申告故障</td><td class="nowrap">ChargerFaulted</td><td>設備已聲明自己無法按契約供電，帶 faultCode 與 stillEnergized</td><td>App 連不上的客訴（阿忠：一半不是故障）；會話異常中止（那是 ChargingCompleted(stopReason=PowerLoss)）</td><td>故障支線 F1（樞紐）</td></tr>
+</table></div>
+
+<h4>我們決定「不要用」的詞（以及改用什麼）</h4>
+<div class="table-scroll"><table>
+  <tr><th>不要用</th><th>誰會這樣說</th><th>為什麼</th><th>改用</th></tr>
+  <tr><td>交易 / transaction</td><td>樁廠商（StartTransaction）、DBA（BEGIN…COMMIT）、老陳（一筆帳）</td><td>三個意思，都不是我們的</td><td>充電會話 ChargingSession；OCPP 的 transactionId 只留在 ACL 對應表</td></tr>
+  <tr><td>那個槍 / 2 號槍 / B 槍</td><td>阿豪、阿忠</td><td>三套編號（資產、OCPP、現場標籤）</td><td>連接器 CP-A12-2；對照表由資產登記保存</td></tr>
+  <tr><td>status / 狀態（裸字）</td><td>所有人</td><td>四個狀態機：OCPP 連接器、會話、樁健康、帳單</td><td>會話狀態 Idle / Charging / Completed / Faulted；工單狀態 Open / Assigned / Closed；各自命名，不共用一個欄位</td></tr>
+  <tr><td>開單</td><td>Vicky（工單）、老陳（帳單）</td><td>中文同一個詞，兩件事</td><td>開工單 open WorkOrder；開立帳單 issue Invoice</td></tr>
+  <tr><td>Session（裸字）</td><td>阿忠、小美、Web 工程師（cookie）</td><td>三個生命週期</td><td>ParkingSession P-441 / ChargingSession S-991；程式碼禁用裸字 session</td></tr>
+  <tr><td>樁壞了</td><td>阿忠、顧客</td><td>一半是 App 或卡片問題</td><td>充電器已申告故障 ChargerFaulted（設備自己說的）vs 客訴（人說的）</td></tr>
+</table></div>
+
+<h4>用語衝突（同一個字，不同人，不同意思——明天找邊界的證據）</h4>
+<ol>
+  <li><strong>會話</strong>：阿忠 = 車進來到出去（P-441，14:02 → 14:33）；小美 = 插槍授權到結束計量（S-991，14:04 → 14:31）。同一輛車一個 P-441 可以有零到多個 S-991。</li>
+  <li><strong>狀態</strong>：OCPP 的 Faulted、小美的異常中止、Vicky 的維修中、老陳的爭議中。四個狀態機。</li>
+  <li><strong>故障</strong>：樁說 StatusNotification(Faulted)；小美說異常中止（那不是故障，是 stopReason）；阿忠說螢幕黑掉（一半不是）；Vicky 說一張開放中的工單；阿豪說故障碼。我們把 ChargerFaulted 釘在「設備自己聲明」。</li>
+  <li><strong>開單</strong>：Vicky 開的是 WO-2208，老陳開的是 INV-778。</li>
+  <li><strong>放行</strong>：阿忠 = 閘門開；老陳 = 帳結清。R6 說放行不依賴總部，所以放行 ≠ 結清。</li>
+</ol>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 2 驗收看哪一行</p>
+<p><strong>看 glossary 的「不是」欄，逐列念。</strong>寫「不是別的」「不是停車」這種一個詞的，等於沒寫；合格的「不是」要能對到一個人名或一句原話（第 6 列「插槍未刷卡那段（小美以為算）」）。第二看「會話」有沒有被拆成兩列（第 5、6 列）——沒拆的學員明天會畫出一個「Session context」。第三看「不要用的詞」有沒有「狀態 / status」——這是 Day 4 程式碼裡 <code>session.status = "Faulted"</code> 這種 bug 的預防針。</p>
+<p><strong>看 storm-board 政策清單</strong>：每條都要是「每當 X 就 Y」的句型；出現「呼叫」「打 API」「等回應」就是同步呼叫，問他「Y 掛了 X 會失敗嗎」。第 6 條（故障 → 開工單）是最常寫錯的，因為 As-Is 就是打電話等回覆，學員把電話直譯成 HTTP。</p>
+<p><strong>常見失真</strong>：(1) 聚合候選寫「場站」「充電系統」——太大，問「一個 StartCharging 會同時改到幾個它」。(2) 候選寫「MeterValue」——太小，問「它自己守得住單調遞增嗎」。(3) 樞紐事件只標三個、漏 <code>VehicleExited</code>——可以接受，但要問「放行和結清是不是同一群人在乎」。(4) glossary 的「擁有者」欄直接寫 Charging / Parking / Billing——他偷看了 §1.4 或 <code>docs/domain/glossary.md</code>。不扣分，但明天 B1 他要能「重新推導」一遍，推不出來就是抄的。</p>
+<p><strong>不要做的事</strong>：不要在這個 Block 說出「Bounded Context」四個字，也不要糾正他把「派工」和「工單」分成兩個候選——那是明天 Dispatch / AssetOps 的種子，讓他自己發現。</p></div>

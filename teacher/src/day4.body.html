@@ -1,0 +1,250 @@
+<!-- title: 教師版 D4 · 戰術設計與 TDD -->
+<!-- description: Day 4 全程跑完會留下什麼：model.md、ChargingSession 與 WorkOrder 聚合、R1–R5 紅綠重構實況、Repository port、test-report.md、/aggregate-review 判定與 check-out。 -->
+<p class="eyebrow">DAY 4 · TACTICAL DDD + TDD</p>
+<h1 class="display">規則有<br>唯一的<em>家</em><br>測試是規格</h1>
+<p class="lede">前三天的 <code>rules.md</code> 今天變成測試，<code>storm-board.md</code> 的聚合候選變成 class，事件變成 record。沒有新的領域知識要學，只有紀律：一次一條規則、沒有紅燈不寫產品碼、領域層一行 I/O 都沒有。這一頁假設學員把 Block 1–3 全程跑完，桌上會留下 <code>model.md</code>、兩個活著的聚合、R1–R5 全綠的測試、一份 <code>test-report.md</code>，以及 <code>/aggregate-review</code> 無 High 的判定。講師拿這一頁對照學員交的東西。</p>
+<div class="meta-strip"><span><b>方法論</b> Aggregate / VO / Domain Event · 六角架構 · 紅綠重構</span><span><b>時長</b> kickoff 15 分 + 先讀 30 分 + 3 × 90 分 + check-out 30 分</span><span><b>交付物</b> model.md · test-report.md · src/charging/** · src/assetops/domain/** 全綠</span><span><b>skills</b> /aggregate-review · /tdd · /checkout</span></div>
+
+<h2 id="s00">00 · 跑完會留下什麼</h2>
+<ul class="dod">
+  <li><code>workshop/day4/model.md</code> — ChargingSession 狀態機、R1–R4 對應方法、命令 / 成功事件 / 拒絕事件表、三個 VO 的驗證規則、WorkOrder 形狀、Repository port 簽名、六角目錄對照、四個取捨（授權位置、stop 失敗方式、R3 相等、R5 分層）。</li>
+  <li><code>starter/&lt;lang&gt;/src/charging/domain/**</code> — <code>ChargingSession</code>（idle / start / reportMeter / stop / reportFault / pullEvents）、<code>Connector</code> / <code>Energy</code> / <code>IdTag</code> 值物件、<code>events</code>、<code>errors</code>。零 I/O import。</li>
+  <li><code>starter/&lt;lang&gt;/src/assetops/domain/**</code> — <code>WorkOrder</code>（open / appendDuplicateReport / assign / close / pullEvents）、<code>duplicateReportCount</code>、事件。</li>
+  <li><code>src/charging/application/ports.ts</code>、<code>src/assetops/application/ports.ts</code>（Python：<code>ports.py</code>）— <code>ChargingSessionRepository</code>、<code>WorkOrderRepository.findOpenByFault</code> 兩個 port；<code>src/adapters/persistence/</code> 兩個 in-memory adapter。</li>
+  <li><code>starter/node/test/**</code> 或 <code>starter/python/tests/**</code> — R1 ×1、R2 ×2、R3 ×2、R4 ×2、R5 ×2、ChargerFaulted ×1、repository 契約 ×2；<code>npm test</code> / <code>pytest</code> 全綠（15 passed）。</li>
+  <li><code>workshop/day4/test-report.md</code> — 指令、最後 20 行輸出、每條規則一行（測試名 / 規則 / 紅→綠 commit）、重構紀錄。</li>
+  <li><code>git log</code> 在 <code>workshop/&lt;name&gt;</code> 分支上看得出 R1 red → R1 green → R1 refactor → R2 red … 的粒度（至少 5 個 green commit）。</li>
+</ul>
+<p>講師視角：這一天最容易失真的地方不在程式碼，在<b>順序</b>。學員會在紅燈是 <code>Error: TODO R1</code> 的那一刻就想把整個 <code>start()</code> 寫完（包括 R2 的 <code>authorized</code>），或者乾脆貼整份 <code>rules.md</code> 叫 Claude 一次生完聚合。程式碼最後看起來會跟這一頁一模一樣——差別只在 <code>git log</code> 有沒有紅綠交替、以及學員能不能回答「第 40 行為什麼在那」。第二個失真點是<b>拒絕用 throw</b>：學員用 <code>throw new Error('occupied')</code> 表示 R1，測試就斷言不到 <code>ChargingStartRejected</code>，事件流 Day 5 也就斷了。第三個是<b>聚合越畫越大</b>：把費率、車牌、樁韌體塞進 <code>ChargingSession</code>。驗收時只看三處：<code>git log --oneline</code> 的粒度、<code>grep -rn "publish\|StatusNotification\|new Date" src/*/domain</code> 是不是空的、隨機抽一行問為什麼。</p>
+
+<p class="eyebrow">BLOCK 1 · 戰術建模（90 分）</p>
+<h2 id="b1">01 · 先決定形狀，再寫一行邏輯</h2>
+<p><b>實況。</b>09:15–09:45 學員先讀 <code>ddd-tactical.md</code>、<code>hexagonal.md</code>、<code>tdd.md</code>，把自己的 <code>rules.md</code> R1–R5 印出來放旁邊。09:45–10:00 不開 Claude，在 <code>workshop/day4/model.md</code> 徒手畫狀態機與方法表——這 15 分鐘是整天最重要的 15 分鐘，因為接下來的每個測試都在斷言這張表。10:00–10:45 用 <code>/aggregate-review</code> 審 <code>model.md</code>（還沒有程式碼，審的是模型）；助教會逼學員回答「R2 的授權判斷放哪裡」與「stop 在 Idle 是 throw 還是事件」。10:45–11:15 打開 starter 看骨架：<code>ChargingSession.ts</code> 已經有欄位、getter、<code>pullEvents()</code>、<code>record()</code>，只有四個方法是 <code>throw new Error('TODO Rx')</code>；跑一次測試確認 R1 是紅的。助教在這個 Block 只提問，不畫圖、不寫碼。</p>
+
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /aggregate-review ChargingSession</p><p>Day 4 Block 1。我還沒寫程式碼，這是我的 workshop/day4/model.md（請直接讀檔）：ChargingSession 狀態機、命令方法與事件、三個 VO 的驗證、目錄對照。請審查模型而不是替我寫：R1–R4 各問我「在哪個方法、哪一行判斷會守住」；檢查聚合有沒有塞不屬於這個邊界的東西；授權放聚合裡還是外面請問我兩個問題；事件是不是「聚合記錄、應用層拉取」。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀了 <code>workshop/.config</code>（LANG=node）與你的 <code>model.md</code>。先問三個問題：</p><p>1. 你的狀態機有 <code>Idle → Charging → Completed</code> 與 <code>Faulted</code>。R1「連接器占用時拒絕第二次 Start」——你的聚合是<b>一個會話</b>還是<b>一把槍</b>？如果聚合是 <code>S-991</code> 這個會話，它怎麼知道 <code>CP-A12-2</code> 上有沒有別的會話？</p><p>2. 你的方法表第 3 列 <code>stop(lastMeterWh, at, stopReason)</code> 帶了 <code>lastMeterWh</code>。R3 說計量要單調遞增——這個 <code>lastMeterWh</code> 有經過 R3 的檢查嗎？還是 stop 自己偷偷寫了一次計量？</p><p>3. 欄位清單第 6 個是 <code>tariffPerKwh</code>。R1–R4 哪一條需要它？</p><p><b>下一個最小步驟：</b>在 <code>model.md</code>「聚合根 / 識別」那兩行寫清楚：聚合的身份是 <code>connectorId</code> 還是 <code>sessionId</code>，並用一句話說 R1 因此在哪裡判斷。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改成聚合身份是連接器：<code>ChargingSession.idle('CP-A12-2')</code>，<code>S-991</code> 是它的一段狀態。這樣第二次 start 看 <code>this._status === 'Charging'</code> 就知道占用，不用查 repository。stop 拿掉 <code>lastMeterWh</code>：ACL 收到 StopTransaction 時先呼叫 <code>reportMeter(meterStop)</code> 再 <code>stop()</code>。<code>tariffPerKwh</code> 刪掉，那是 Billing 的。但授權我還是不知道放哪——聚合裡查白名單也算 I/O 嗎？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>三個改動都對，而且你自己講出了 R1 為什麼是純聚合內的不變條件。授權的兩個問題：</p><p>1. 「<code>TAG-MONTHLY-77</code> 今天有沒有效」這件事的答案在哪裡？在聚合的記憶裡，還是在一張總部同步下來的白名單（斷線時場站本地那份）？</p><p>2. 如果答案在聚合外面，聚合要收到的是「一張卡」還是「一個已經判斷好的 yes / no」？收 yes / no 的話，R2 的測試需要 mock 任何東西嗎？</p><p><b>下一個最小步驟：</b>在「取捨」小節寫下你的答案，並把 <code>start()</code> 的簽名改成含 <code>authorized: boolean</code>（或寫下你不這麼做的理由）。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>寫了：授權是領域服務 <code>AuthorizationService</code> 的 port，Day 5 由應用服務先問，把 <code>authorized: boolean</code> 當參數傳進 <code>start()</code>。聚合仍然守 R2（<code>!authorized</code> → <code>ChargingStartRejected(Unauthorized)</code>），但不查任何東西，測試零 mock。另外決定：R1 / R2 / R3 的拒絕是事件，<code>stop()</code> 在非 Charging 是 throw <code>InvalidStateError</code>，因為那是呼叫端的 bug 不是業務上的「不」。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>這個「事件 vs 例外」的判準（利害關係人在乎的「不」是事件；呼叫端的錯是例外）請原封不動抄進 <code>model.md</code>，Day 6 的 HTTP 回應碼會依它決定 202 還是 409。事件那一段我看到 <code>events: []</code> 加 <code>pullEvents()</code>，沒有 bus——R8 過。模型審查沒有 High；一個 Low：<code>Energy</code> 你寫「number」，建議至少有 <code>wattHours()</code> 驗證非負整數，B2 的 R3 測試會用到。</p><p><b>下一個最小步驟：</b><code>cd starter/node &amp;&amp; npm install &amp;&amp; npm test</code>，確認只有 R1 紅、原因是 <code>Error: TODO R1</code>，把最後 20 行貼進 <code>test-report.md</code> 的「起點」。</p></div>
+</div>
+
+<figure class="wide">
+  <p class="title">ChargingSession 狀態機</p><p class="subtitle">聚合身份是連接器 CP-A12-2；S-991 是它的一段狀態。守衛上的 R 標籤 = 那條規則唯一的家。</p>
+  <div class="diagram"><svg viewBox="0 0 960 400" role="img" aria-label="ChargingSession 狀態機：Idle、Charging、Completed、Faulted 四個狀態與 R1–R4 守衛">
+    <!-- states -->
+    <rect class="st" x="40" y="150" width="150" height="56" rx="28"/><text class="t b" x="115" y="174" text-anchor="middle">Idle</text><text class="t s" x="115" y="192" text-anchor="middle">idle('CP-A12-2')</text>
+    <rect class="st good" x="380" y="150" width="190" height="56" rx="28"/><text class="t b" x="475" y="174" text-anchor="middle">Charging</text><text class="t s" x="475" y="192" text-anchor="middle">S-991 · TAG-MONTHLY-77</text>
+    <rect class="st" x="770" y="150" width="160" height="56" rx="28"/><text class="t b" x="850" y="174" text-anchor="middle">Completed</text><text class="t s" x="850" y="192" text-anchor="middle">energyWh 12400</text>
+    <rect class="st hot" x="400" y="320" width="150" height="56" rx="28"/><text class="t b" x="475" y="344" text-anchor="middle">Faulted</text><text class="t s" x="475" y="362" text-anchor="middle">CP-A12 GroundFailure</text>
+    <!-- Idle -> Charging -->
+    <path class="ar" d="M190 172 L378 172"/>
+    <text class="t m" x="284" y="150" text-anchor="middle">start(authorized=true)</text>
+    <text class="t a" x="284" y="164" text-anchor="middle">R1 status≠Charging · R2 authorized</text>
+    <text class="t s" x="284" y="192" text-anchor="middle">→ ChargingStarted</text>
+    <!-- Charging self loop reportMeter -->
+    <path class="ar" d="M430 150 C 400 90, 550 90, 520 150"/>
+    <text class="t m" x="475" y="74" text-anchor="middle">reportMeter(meterWh, at)</text>
+    <text class="t a" x="475" y="90" text-anchor="middle">R3 meterWh ≥ lastMeterWh</text>
+    <text class="t s" x="475" y="106" text-anchor="middle">→ EnergyMetered · 否則 MeterValueRejected(NotMonotonic)</text>
+    <!-- Charging -> Completed -->
+    <path class="ar" d="M570 172 L768 172"/>
+    <text class="t m" x="669" y="150" text-anchor="middle">stop(stopReason, at)</text>
+    <text class="t a" x="669" y="164" text-anchor="middle">R4 只有 Charging 可 Stop</text>
+    <text class="t s" x="669" y="192" text-anchor="middle">→ ChargingCompleted(energyWh=last−start)</text>
+    <!-- rejections drawn as loops back to self -->
+    <path class="ar bad" d="M100 206 C 60 260, 170 260, 130 206"/>
+    <text class="t s" x="115" y="278" text-anchor="middle">start(authorized=false)</text>
+    <text class="t a" x="115" y="292" text-anchor="middle">R2 → ChargingStartRejected(Unauthorized)</text>
+    <text class="t s" x="115" y="306" text-anchor="middle">stop() → throw InvalidStateError</text>
+    <path class="ar bad" d="M600 206 C 640 260, 700 260, 660 206"/>
+    <text class="t s" x="690" y="278" text-anchor="middle">第二次 start(S-992)</text>
+    <text class="t a" x="690" y="292" text-anchor="middle">R1 → ChargingStartRejected(ConnectorOccupied)</text>
+    <text class="t s" x="690" y="306" text-anchor="middle">原會話 S-991 不變</text>
+    <!-- fault -->
+    <path class="ar ev" d="M475 206 L475 318"/>
+    <text class="t m" x="330" y="250" text-anchor="middle">reportFault(faultCode, at)</text>
+    <text class="t s" x="330" y="266" text-anchor="middle">→ ChargerFaulted(stillEnergized=true)</text>
+    <path class="ar ev" d="M190 190 C 250 330, 330 348, 398 348"/>
+    <text class="t s" x="250" y="366" text-anchor="middle">reportFault（Idle 時 stillEnergized=false）</text>
+    <path class="ar bad" d="M850 206 C 890 260, 810 260, 850 206"/>
+    <text class="t s" x="850" y="278" text-anchor="middle">stop() 再一次</text>
+    <text class="t a" x="850" y="292" text-anchor="middle">throw InvalidStateError('Completed')</text>
+    <text class="t s" x="20" y="392">實線 = 命令；虛線 = 故障；紅 = 拒絕（事件或例外）。Preparing / SuspendedEV 是 OCPP 狀態，不在領域層。</text>
+  </svg></div>
+  <figcaption>Idle → Charging 的守衛有兩條（R1 看自己的 status、R2 看傳進來的 authorized）；R3 是 Charging 內的自迴圈；R4 是唯一離開 Charging 的正常路徑。所有拒絕都畫回原狀態——狀態不變是三條規則共同的 Then。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>從</th><th>命令</th><th>守衛（規則）</th><th>到</th><th>記錄的事件 / 例外</th></tr>
+<tr><td>Idle</td><td class="nowrap">start(authorized=true)</td><td>R2 authorized</td><td>Charging</td><td>ChargingStarted{sessionId S-991, connectorId CP-A12-2, idTag TAG-MONTHLY-77, meterStartWh 100, occurredAt 14:04}</td></tr>
+<tr><td>Idle</td><td class="nowrap">start(authorized=false)</td><td>R2</td><td>Idle</td><td>ChargingStartRejected{reason Unauthorized}</td></tr>
+<tr><td>Charging</td><td class="nowrap">start(…)</td><td>R1 status === Charging</td><td>Charging（S-991 不變）</td><td>ChargingStartRejected{reason ConnectorOccupied}</td></tr>
+<tr><td>Charging</td><td class="nowrap">reportMeter(8100)</td><td>R3 8100 ≥ 4100</td><td>Charging</td><td>EnergyMetered{meterWh 8100}</td></tr>
+<tr><td>Charging</td><td class="nowrap">reportMeter(3900)</td><td>R3 3900 &lt; 4100</td><td>Charging（lastMeterWh 仍 4100）</td><td>MeterValueRejected{reason NotMonotonic, meterWh 3900, lastMeterWh 4100}</td></tr>
+<tr><td>Idle / Completed</td><td class="nowrap">reportMeter(…)</td><td>R3 非 Charging</td><td>不變</td><td>MeterValueRejected{reason NotCharging}</td></tr>
+<tr><td>Charging</td><td class="nowrap">stop('Local', 14:31)</td><td>R4</td><td>Completed</td><td>ChargingCompleted{energyWh 12400, startedAt 14:04, endedAt 14:31, stopReason Local}</td></tr>
+<tr><td>Idle / Completed</td><td class="nowrap">stop(…)</td><td>R4</td><td>不變</td><td>throw InvalidStateError('stop', status)</td></tr>
+<tr><td>任何</td><td class="nowrap">reportFault('GroundFailure', 18:10)</td><td>—</td><td>Faulted</td><td>ChargerFaulted{chargerId CP-A12, connectorId CP-A12-2, faultCode, stillEnergized = 之前是 Charging}</td></tr>
+</table></div></details>
+
+<figure class="wide">
+  <p class="title">六角架構：starter 的實際檔案放進四個環</p><p class="subtitle">依賴規則一句話：箭頭永遠指向核心。domain 不 import application，application 不 import adapters；測試是合法的 inbound adapter。</p>
+  <div class="diagram"><svg viewBox="0 0 960 470" role="img" aria-label="六角架構四環：domain、application、adapters、test，標出 starter 的實際檔案">
+    <!-- rings as zones -->
+    <rect class="zone plain" x="20" y="20" width="920" height="430" rx="14"/>
+    <text class="t b" x="36" y="44">test/**（vitest）· tests/**（pytest）— 驅動核心的 inbound adapter</text>
+    <text class="t m" x="36" y="62">test/charging/ChargingSession.test.ts · test/assetops/WorkOrder.test.ts · test/adapters/persistence/InMemoryRepositories.test.ts</text>
+    <rect class="zone" x="40" y="80" width="880" height="350" rx="12"/>
+    <text class="t b" x="56" y="104">src/adapters/**（今天只有 outbound in-memory；Day 6 加 http / ocpp / sqlite）</text>
+    <rect class="box" x="56" y="116" width="270" height="52" rx="6"/><text class="t m" x="191" y="137" text-anchor="middle">adapters/persistence/</text><text class="t m" x="191" y="153" text-anchor="middle">InMemoryChargingSessionRepository.ts</text>
+    <rect class="box" x="345" y="116" width="250" height="52" rx="6"/><text class="t m" x="470" y="137" text-anchor="middle">adapters/persistence/</text><text class="t m" x="470" y="153" text-anchor="middle">InMemoryWorkOrderRepository.ts</text>
+    <rect class="box ext" x="615" y="116" width="140" height="52" rx="6"/><text class="t m" x="685" y="137" text-anchor="middle">adapters/ocpp/</text><text class="t s" x="685" y="153" text-anchor="middle">OcppAcl（Day 6）</text>
+    <rect class="box ext" x="770" y="116" width="134" height="52" rx="6"/><text class="t m" x="837" y="137" text-anchor="middle">adapters/http/</text><text class="t s" x="837" y="153" text-anchor="middle">Fastify（Day 6）</text>
+    <!-- application ring -->
+    <rect class="zone plain" x="60" y="184" width="840" height="230" rx="10"/>
+    <text class="t b" x="76" y="206">src/*/application/（今天只寫 port 介面；命令處理器明天）</text>
+    <rect class="box dim" x="76" y="216" width="250" height="52" rx="6"/><text class="t m" x="201" y="237" text-anchor="middle">charging/application/ports.ts</text><text class="t s" x="201" y="253" text-anchor="middle">ChargingSessionRepository · AuthorizationService</text>
+    <rect class="box dim" x="345" y="216" width="250" height="52" rx="6"/><text class="t m" x="470" y="237" text-anchor="middle">assetops/application/ports.ts</text><text class="t s" x="470" y="253" text-anchor="middle">WorkOrderRepository.findOpenByFault</text>
+    <rect class="box ext" x="615" y="216" width="270" height="52" rx="6"/><text class="t m" x="750" y="237" text-anchor="middle">shared/{DomainEvent, Outbox, EventBus,</text><text class="t s" x="750" y="253" text-anchor="middle">Clock, Ids}（domain 只准 import DomainEvent）</text>
+    <!-- domain core -->
+    <rect class="box core" x="80" y="286" width="800" height="112" rx="10"/>
+    <text class="t b" x="96" y="308">src/charging/domain/ · src/assetops/domain/ — 核心，零 I/O，時間由 at 參數帶進來</text>
+    <rect class="box" x="96" y="320" width="180" height="60" rx="6"/><text class="t m" x="186" y="341" text-anchor="middle">ChargingSession.ts</text><text class="t s" x="186" y="356" text-anchor="middle">idle · start · reportMeter</text><text class="t s" x="186" y="370" text-anchor="middle">stop · reportFault · pullEvents</text>
+    <rect class="box" x="290" y="320" width="180" height="60" rx="6"/><text class="t m" x="380" y="341" text-anchor="middle">Connector.ts · Energy.ts · IdTag.ts</text><text class="t s" x="380" y="356" text-anchor="middle">parseConnectorId · chargerIdOf</text><text class="t s" x="380" y="370" text-anchor="middle">wattHours · parseIdTag</text>
+    <rect class="box" x="484" y="320" width="180" height="60" rx="6"/><text class="t m" x="574" y="341" text-anchor="middle">events.ts · errors.ts</text><text class="t s" x="574" y="356" text-anchor="middle">ChargingStarted … ChargerFaulted</text><text class="t s" x="574" y="370" text-anchor="middle">DomainError · InvalidStateError</text>
+    <rect class="box" x="678" y="320" width="186" height="60" rx="6"/><text class="t m" x="771" y="341" text-anchor="middle">assetops/domain/WorkOrder.ts</text><text class="t s" x="771" y="356" text-anchor="middle">open · appendDuplicateReport</text><text class="t s" x="771" y="370" text-anchor="middle">assign · close · events.ts</text>
+    <!-- arrows: adapters implement ports; ports reference domain types -->
+    <path class="ar ev" d="M191 168 L191 214"/><text class="t a" x="198" y="196">implements</text>
+    <path class="ar ev" d="M470 168 L470 214"/><text class="t a" x="477" y="196">implements</text>
+    <path class="ar" d="M201 268 L201 318"/><text class="t a" x="208" y="288">型別</text>
+    <path class="ar" d="M470 268 L470 318"/><text class="t a" x="477" y="288">型別</text>
+    <path class="ar" d="M660 268 L610 318"/><text class="t a" x="626" y="296">DomainEvent</text>
+    <path class="ar" d="M60 62 C 40 200, 60 300, 96 350"/><text class="t a" x="30" y="240" transform="rotate(-90 30 240)" text-anchor="middle">測試直接 new 聚合</text>
+    <text class="t s" x="96" y="418">禁止方向：domain → adapters、domain → shared/EventBus、domain → shared/Outbox、任何 domain 檔出現 new Date() / publish( / StatusNotification</text>
+    <text class="t s" x="96" y="436">Python 同構、snake_case：charging/domain/charging_session.py · connector.py · energy.py · id_tag.py · events.py · errors.py · assetops/domain/work_order.py · adapters/persistence/in_memory_*.py</text>
+  </svg></div>
+  <figcaption>今天實際會碰的檔案只有核心環（六個 domain 檔 + WorkOrder）、兩個 port、兩個 in-memory adapter、三個測試檔。灰底的 application 與虛線的 http / ocpp 是明天與後天的事——但今天就要決定它們依賴的方向。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>環</th><th>Node 檔案</th><th>Python 檔案</th><th>可以 import</th><th>不可以 import</th></tr>
+<tr><td>domain（核心）</td><td class="nowrap">src/charging/domain/{ChargingSession,Connector,Energy,IdTag,events,errors}.ts · src/assetops/domain/{WorkOrder,events}.ts</td><td class="nowrap">src/charging/domain/{charging_session,connector,energy,id_tag,events,errors}.py · src/assetops/domain/{work_order,events}.py</td><td>同 context 的 domain、shared/DomainEvent</td><td>adapters、shared/EventBus、shared/Outbox、任何 DB / HTTP / 時鐘</td></tr>
+<tr><td>application（port）</td><td class="nowrap">src/charging/application/ports.ts · src/assetops/application/ports.ts</td><td class="nowrap">src/charging/application/ports.py · src/assetops/application/ports.py（Protocol）</td><td>任何 domain、shared/*</td><td>adapters、框架</td></tr>
+<tr><td>adapters（outbound）</td><td class="nowrap">src/adapters/persistence/InMemoryChargingSessionRepository.ts · InMemoryWorkOrderRepository.ts</td><td class="nowrap">src/adapters/persistence/in_memory_charging_session_repository.py · in_memory_work_order_repository.py</td><td>application ports、domain 型別</td><td>其他 adapter</td></tr>
+<tr><td>test（inbound）</td><td class="nowrap">test/charging/ChargingSession.test.ts · test/assetops/WorkOrder.test.ts · test/adapters/persistence/InMemoryRepositories.test.ts</td><td class="nowrap">tests/charging/test_charging_session.py · tests/assetops/test_work_order.py · tests/adapters/persistence/test_in_memory.py</td><td>全部</td><td>—（但聚合測試不起任何 I/O）</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day4/model.md <span class="chip">交付物</span></p><div class="body">
+<h4>戰術模型（Tactical Model）— Charging 與 AssetOps</h4>
+<p>語言：node（<code>workshop/.config</code>）。規則原文：<code>docs/curriculum.md</code> §1.9；我的 GWT：<code>workshop/day2/rules.md</code>。</p>
+
+<h4>1. ChargingSession 聚合</h4>
+<ul>
+  <li><b>聚合根</b>：<code>ChargingSession</code>，也是聚合的全部（沒有子實體）。</li>
+  <li><b>識別</b>：<code>connectorId</code>（<code>CP-A12-2</code>）。一把槍一個聚合；<code>sessionId</code>（<code>S-991</code>）是它進入 Charging 後的一段狀態。這樣 R1「一個連接器同時只有一個進行中會話」是純聚合內的不變條件：第二次 <code>start</code> 看自己的 <code>status</code> 就知道占用，不用查 repository。代價：一把槍的歷史會話不在這個聚合裡（那是查詢 / 事件的事）。</li>
+  <li><b>狀態機</b>（Mermaid，與上圖一致）：</li>
+</ul>
+<pre>stateDiagram-v2
+  [*] --> Idle : idle('CP-A12-2')
+  Idle --> Charging : start(authorized=true) [R2]
+  Idle --> Idle : start(authorized=false) → ChargingStartRejected(Unauthorized) [R2]
+  Charging --> Charging : start(...) → ChargingStartRejected(ConnectorOccupied), S-991 不變 [R1]
+  Charging --> Charging : reportMeter(≥ last) → EnergyMetered [R3]
+  Charging --> Charging : reportMeter(&lt; last) → MeterValueRejected(NotMonotonic), last 不變 [R3]
+  Charging --> Completed : stop(stopReason, at) → ChargingCompleted(energyWh = last − start) [R4]
+  Idle --> Idle : stop() → throw InvalidStateError [R4]
+  Completed --> Completed : stop() → throw InvalidStateError [R4]
+  Charging --> Faulted : reportFault → ChargerFaulted(stillEnergized=true)
+  Idle --> Faulted : reportFault → ChargerFaulted(stillEnergized=false)</pre>
+<ul>
+  <li><b>不變條件 → 方法 → 判斷行</b>：</li>
+</ul>
+<div class="table-scroll"><table>
+<tr><th>規則</th><th>不變條件</th><th>方法</th><th>判斷</th><th>守不住時</th></tr>
+<tr><td>R1</td><td>一個連接器同時最多一個 Charging 會話</td><td class="nowrap">start()</td><td class="nowrap">this._status === Charging</td><td>記錄 ChargingStartRejected(ConnectorOccupied)，return，欄位全部不動</td></tr>
+<tr><td>R2</td><td>未授權憑證不得開始</td><td class="nowrap">start()</td><td class="nowrap">!input.authorized</td><td>記錄 ChargingStartRejected(Unauthorized)，狀態仍 Idle</td></tr>
+<tr><td>R3</td><td>計量單調遞增</td><td class="nowrap">reportMeter()</td><td class="nowrap">value &lt; this._lastMeterWh</td><td>記錄 MeterValueRejected(NotMonotonic, meterWh, lastMeterWh)，lastMeterWh 不變；非 Charging 記錄 NotCharging</td></tr>
+<tr><td>R4</td><td>只有 Charging 可 Stop；energyWh = last − start</td><td class="nowrap">stop()</td><td class="nowrap">this._status !== Charging</td><td>throw InvalidStateError（呼叫端錯誤，不是業務拒絕）</td></tr>
+</table></div>
+<ul>
+  <li><b>命令方法與事件</b>：</li>
+</ul>
+<div class="table-scroll"><table>
+<tr><th>方法（英文祈使）</th><th>成功事件</th><th>拒絕事件 / 例外</th></tr>
+<tr><td class="nowrap">idle(connectorId)</td><td>—（工廠，不記錄事件）</td><td>DomainError（connectorId 格式錯）</td></tr>
+<tr><td class="nowrap">start({ sessionId, idTag, authorized, meterStartWh, at })</td><td>ChargingStarted{ sessionId, connectorId, idTag, meterStartWh, occurredAt }</td><td>ChargingStartRejected{ connectorId, idTag, reason: ConnectorOccupied | Unauthorized, occurredAt }</td></tr>
+<tr><td class="nowrap">reportMeter(meterWh, at)</td><td>EnergyMetered{ sessionId, connectorId, meterWh, occurredAt }</td><td>MeterValueRejected{ sessionId, connectorId, meterWh, lastMeterWh, reason: NotMonotonic | NotCharging, occurredAt }</td></tr>
+<tr><td class="nowrap">stop(stopReason, at)</td><td>ChargingCompleted{ sessionId, connectorId, energyWh, startedAt, endedAt, stopReason, occurredAt }</td><td>throw InvalidStateError('stop', status)</td></tr>
+<tr><td class="nowrap">reportFault(faultCode, at)</td><td>ChargerFaulted{ chargerId, connectorId?, faultCode, stillEnergized, occurredAt }</td><td>—（任何狀態都接受）</td></tr>
+<tr><td class="nowrap">pullEvents()</td><td>回傳並清空 events（R8）</td><td>—</td></tr>
+</table></div>
+<p>事件欄位對齊 §1.8 契約：<code>sessionId</code>、<code>connectorId</code>、<code>energyWh</code>、<code>startedAt</code>、<code>endedAt</code>、<code>stopReason</code>、<code>chargerId</code>、<code>faultCode</code>、<code>stillEnergized</code>。沒有 <code>transactionId</code>、<code>meterStart</code>、<code>sampledValue</code>。</p>
+<ul>
+  <li><b>聚合不該知道的事</b>：費率與金額（Billing）；工單、技術員（AssetOps / Dispatch）；OCPP 的 <code>StatusNotification</code> / <code>StartTransaction</code> / <code>MeterValues</code> / <code>transactionId</code>（<code>adapters/ocpp/</code>）；車牌與停車會話（Parking）；現在幾點（<code>at</code> 由命令帶進來）；有沒有別的會話存在（repository 的事）。</li>
+</ul>
+
+<h4>2. 值物件（Value Objects）</h4>
+<div class="table-scroll"><table>
+<tr><th>VO</th><th>starter 實作</th><th>驗證規則</th><th>為什麼是 VO 不是 Entity</th></tr>
+<tr><td class="nowrap">ConnectorId</td><td class="nowrap">parseConnectorId('CP-A12-2') · chargerIdOf() → 'CP-A12' · connectorIdOf('CP-A12', 2)</td><td>格式 <code>&lt;chargerId&gt;-&lt;n&gt;</code>；不符 throw DomainError</td><td>兩個 'CP-A12-2' 就是同一把槍，沒有各自的生命週期；在 Charging 只在乎「哪一把」，它的歷史是 AssetOps 的事</td></tr>
+<tr><td class="nowrap">Energy（WattHours）</td><td class="nowrap">wattHours(12400) · toKwh(12400) === 12.4</td><td>非負整數 Wh；小數、負數、NaN throw DomainError</td><td>12400 Wh 就是 12400 Wh，用值比較；整數 Wh 避免浮點；12.4 kWh 只在顯示時出現</td></tr>
+<tr><td class="nowrap">IdTag</td><td class="nowrap">parseIdTag('TAG-MONTHLY-77')</td><td>trim 後非空、≤ 20 字</td><td>憑證的「值」；<b>有沒有授權不是 VO 的事</b>——那需要查白名單（I/O），由 AuthorizationService port 回答</td></tr>
+</table></div>
+<p>starter 用 <code>type + parse 函式</code> 而不是 class：VO 的重點是「不可變 + 有驗證 + 以值相等」，字串與整數天生不可變。如果要 <code>Energy.wh(12400).minus(...)</code> 的 class 版，寫進取捨；我先不做。</p>
+
+<h4>3. WorkOrder 聚合（R5）</h4>
+<ul>
+  <li><b>識別</b>：<code>workOrderId</code>（<code>WO-2208</code>）。持有 <code>chargerId</code>（<code>CP-A12</code>）與 <code>faultCode</code>（<code>GroundFailure</code>）字串，不持有 Charger 物件。</li>
+  <li><b>狀態</b>：<code>Open → Assigned → Closed</code>；「開放期間」= <code>isOpen</code> = 非 Closed。</li>
+  <li><b>欄位</b>：<code>workOrderId, chargerId, faultCode, connectorId?, openedAt, reports: string[]</code>（每次申告的 occurredAt，含第一次）、<code>status, technicianId?, outcome?</code>。<code>duplicateReportCount = reports.length − 1</code>。</li>
+  <li><b>方法 / 事件</b>：<code>open()</code> → WorkOrderOpened；<code>appendDuplicateReport(at)</code> → DuplicateFaultReported（R5，只在 isOpen；關單後 throw）；<code>assign(TECH-HAO, at)</code> → TechnicianAssigned；<code>close(outcome, at)</code> → WorkOrderClosed；<code>pullEvents()</code>。</li>
+  <li><b>R5 的分層</b>：「同樁同碼、開放期間、是否已有工單」需要<b>查</b>其他工單 = I/O，聚合做不到。所以：port <code>WorkOrderRepository.findOpenByFault(chargerId, faultCode)</code> 負責查；應用層（Day 5 的 FaultProcessManager）決定開新單或呼叫既有單的 <code>appendDuplicateReport</code>；聚合只負責「開放期間才能附加」與記錄事件。去重鍵 = <code>chargerId + faultCode</code>（§1.8）。</li>
+</ul>
+
+<h4>4. Repository port 簽名</h4>
+<pre>// src/charging/application/ports.ts
+interface ChargingSessionRepository {
+  findById(sessionId: string): Promise&lt;ChargingSession | undefined&gt;;
+  findActiveByConnector(connectorId: string): Promise&lt;ChargingSession | undefined&gt;;  // status === Charging；明天 StartCharging 用
+  save(session: ChargingSession): Promise&lt;void&gt;;
+}
+interface AuthorizationService { isAuthorized(idTag: string): Promise&lt;boolean&gt;; }      // R2 的領域服務 port
+
+// src/assetops/application/ports.ts
+interface WorkOrderRepository {
+  findById(workOrderId: string): Promise&lt;WorkOrder | undefined&gt;;
+  findOpenByFault(chargerId: string, faultCode: string): Promise&lt;WorkOrder | undefined&gt;;  // R5；明天 ReportFault 用
+  save(workOrder: WorkOrder): Promise&lt;void&gt;;
+}</pre>
+<p>回傳型別統一 <code>| undefined</code>（Python：<code>| None</code>），不混用 null。簽名只用領域型別，沒有 row / dict / SQL。</p>
+
+<h4>5. 六角目錄對照</h4>
+<pre>starter/node/src/charging/domain/          ← 聚合、VO、事件、errors（今天 B1–B2）        核心
+starter/node/src/charging/application/     ← ports.ts（今天只寫介面）、命令處理器（明天）  核心
+starter/node/src/assetops/domain/          ← WorkOrder、events（今天 B3）                 核心
+starter/node/src/assetops/application/     ← ports.ts（今天）、FaultProcessManager（明天）  核心
+starter/node/src/billing/                  ← 草稿帳單消費者（明天）                        核心（另一個 context）
+starter/node/src/shared/                   ← DomainEvent（domain 可 import）、IntegrationEvent、Outbox、EventBus、Clock、Ids（明天）
+starter/node/src/adapters/persistence/     ← InMemory*Repository（今天）、SQLite（Day 6）   outbound adapter
+starter/node/src/adapters/http/            ← Fastify（Day 6）                              inbound adapter
+starter/node/src/adapters/ocpp/            ← OcppAcl（Day 6）                              inbound adapter（ACL）
+starter/node/test/**                       ← 測試（inbound adapter）；Python：starter/python/tests/**</pre>
+<p>與教材差異：starter 沒有 <code>infrastructure/</code>，組裝點是 <code>src/app.ts</code>。目錄名字不重要，依賴方向才重要。</p>
+
+<h4>6. 我做過的取捨</h4>
+<div class="table-scroll"><table>
+<tr><th>題目</th><th>選擇</th><th>理由</th><th>影響</th></tr>
+<tr><td>授權判斷放哪</td><td>聚合外（AuthorizationService port），結果以 <code>authorized: boolean</code> 傳進 <code>start()</code></td><td>「這張卡今天有沒有效」的答案在白名單（斷線時場站本地那份），查它是 I/O；聚合零 I/O</td><td>R2 仍在聚合裡守；測試零 mock；Day 5 應用服務先問 port 再呼叫聚合</td></tr>
+<tr><td>拒絕是事件還是例外</td><td>R1 / R2 / R3 記錄拒絕事件；<code>stop()</code> 在非 Charging throw InvalidStateError</td><td>利害關係人在乎的「不」（小美要看到被拒的 Start）是事實；對 Idle 會話喊 Stop 是呼叫端 bug</td><td>Day 6 API：拒絕事件 → 409 或 202；InvalidStateError → 409 / 400</td></tr>
+<tr><td>R3 相等的計量值</td><td>接受（<code>value &lt; last</code> 才拒）</td><td>樁重送同一筆讀數很常見（OCPP 重試）；相等不是倒退</td><td>測試名寫 backwards value is rejected；EnergyMetered 可能重複，Billing 用最後值不用累加</td></tr>
+<tr><td>stop 帶不帶最後計量</td><td>不帶；ACL 收 StopTransaction 先 <code>reportMeter(meterStop)</code> 再 <code>stop()</code></td><td>一個方法一件事；meterStop 也要受 R3 約束</td><td>R4 測試用 100 → 4100 → 8100 → 12500 → stop = 12400</td></tr>
+<tr><td>R5 判斷分層</td><td>port 查、應用層決策、聚合記錄</td><td>聚合查不到其他聚合（零 I/O）</td><td>今天測聚合兩個行為 + port 查詢；FaultProcessManager 明天</td></tr>
+<tr><td>Energy 是 class 還是 type</td><td>type + wattHours() 驗證</td><td>聚合好讀；不可變性由整數天生保證</td><td>要單位安全（kWh / Wh）時再升級成 class，寫進延伸</td></tr>
+</table></div>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 1</p>
+<p><b>驗收看哪一行：</b><code>model.md</code>「識別」那一行——寫 <code>connectorId</code> 還是 <code>sessionId</code>。寫 <code>sessionId</code> 的學員，R1 一定會在 B2 想去 repository 查「有沒有別的會話」，然後聚合就有 I/O 了；那不是錯，但要在取捨寫出「R1 靠 repository 查詢 + DB 唯一約束」兩道防線。第二行看「取捨」表有沒有<b>授權位置</b>與<b>stop 失敗方式</b>兩列；缺一列，B2 的 R2 / R4 測試會沒有依據。</p>
+<p><b>常見失真：</b>(1) 狀態機畫了 Preparing / SuspendedEV / Finishing——那是 OCPP 的狀態，問「小美說過這些字嗎？」；(2) 欄位表塞了 <code>tariff</code>、<code>plate</code>、<code>firmwareVersion</code>——問「R1–R4 哪一條需要它？」；(3) 跳過徒手畫直接 <code>/aggregate-review</code>，Claude 就替他畫了——攔法是要求先看到 <code>model.md</code> 的 mtime 早於對話開始；(4) 聚合直接 <code>bus.publish</code>——B1 就攔，不要等 Day 5。</p>
+<p><b>怎麼攔：</b>10:45 走一圈，只問每人一句：「你的 <code>start()</code> 在占用時做什麼？」答 throw 的，讓他打開 <code>rules.md</code> R1 唸 Then 那一行（「發布 ChargingStartRejected，原會話不變」）。</p>
+</div>

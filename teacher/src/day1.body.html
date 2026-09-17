@@ -1,0 +1,1023 @@
+<!-- title: 教師版 D1 · 進場：領域入門、訪談、BPR -->
+<!-- description: 假設學員把 Day 1 全程跑完，桌上會留下的東西：五份訪談紀錄（含全部隱藏事實）、As-Is 時間線與七個「人當 API」交接、套四原則的 To-Be、助教對話實況與驗收要看的行。 -->
+<p class="eyebrow">DAY 1 · ENTRY · INTERVIEWS · BPR</p>
+<h1 class="display">從不懂充電樁<br>到看見<em>人當 API</em><br>的那個下午</h1>
+<p class="lede">Day 1 不教 DDD。它做三件事：把環境跑起來（看到一個故意的紅燈）、讓學員從五位由 Claude 扮演的利害關係人嘴裡挖出「隱藏事實」、再把那個 14:02 進場 → 18:10 故障的下午攤成一條 As-Is 時間線，圈出每一個「一個人在兩個系統之間搬資訊」的交接點，用 BPR 四原則寫 To-Be。今天挖到的原話是 Day 2 glossary 的原料，圈到的交接點是 Day 2 hotspot，跨角色矛盾是 Day 3 找邊界的證據——所以這一天做得淺，後面六天都會缺料。</p>
+<div class="meta-strip"><span>方法論 · <b>領域入門 / 利害關係人訪談 / As-Is–To-Be / BPR 四原則</b></span><span>時長 · <b>開場 45 分 + 3 × 90 分 + check-out 30 分</b></span><span>交付物 · <b>interviews.md · as-is.md · to-be.md · .config · site-sketch</b></span><span>skills · <b>/ta /interview /bpr-review /checkout</b></span></div>
+
+<section>
+<p class="eyebrow">00 · 跑完會留下什麼</p>
+<h2>桌上的五樣東西</h2>
+<ul class="dod">
+  <li><b><code>workshop/.config</code></b> — 一行 <code>LANG=node</code> 或 <code>LANG=python</code>。助教每次對話先讀它；沒有它 <code>/ta</code> 會反問，而且 Day 4 起的 starter 路徑會指錯邊。</li>
+  <li><b><code>workshop/day1/interviews.md</code></b> — 訪談前的 10 個問題（分好給誰問）、五位角色各四小節（一天的工作 / 最痛三件事 / 隱藏事實 / 原話）、每位「沒問到的隱藏事實數」、跨角色矛盾 ≥ 3 條、「我引導了他嗎」。這是 Day 2 glossary 與 Day 3 邊界證據的唯一來源。</li>
+  <li><b><code>workshop/day1/as-is.md</code></b> — 14:02 → 18:10（含隔天與月底）的時間線表、≥ 4 個「人當 API」交接點（本頁參考版圈 7 個），每個有 sensor / transport / deserializer、代價、「如果他請假」、斷線情境、增值時間與總時長。</li>
+  <li><b><code>workshop/day1/to-be.md</code></b> — 同一條時間線改寫後、每個交接點的四原則檢核（改 / 不改 + 理由）、保留的人工步驟（人工放行必須在）、產生的事實清單 ≥ 8、「故意沒有的東西」、待驗證假設 ≥ 5。</li>
+  <li><b><code>workshop/day1/site-sketch.jpg</code></b> — 手畫的「一個場站」。畫錯是重點；本頁的 SVG 是講師對照用，不是給學員抄的。</li>
+</ul>
+<p>講師視角：這一天最容易失真的地方不是檔案有沒有，而是<b>原話有沒有逐字</b>與<b>隱藏事實是不是問出來的</b>。學員最常做的三件偷懶：(1) 訪談時問「你希望系統有什麼功能」，拿到一堆「大按鈕」；(2) 訪完直接讀 <code>stakeholders.md</code> 把五條隱藏事實抄進去，卻沒標「我沒問到的」；(3) To-Be 把阿忠的人工放行也「自動化」掉，違反 curriculum §1.1 那句「連線中斷時仍要能人工放行」。驗收時各看一行就能抓到：原話小節有沒有引號與土話、隱藏事實旁有沒有「← 我用哪個問題問到的」、to-be.md 的「保留的人工步驟」有沒有放行。</p>
+</section>
+
+<section>
+<p class="eyebrow">BLOCK 1 · 環境與領域入門 · 90 分</p>
+<h2>紅燈、<code>/ta</code>、與一張畫錯的場站圖</h2>
+<h3>實況</h3>
+<p>09:45 開場結束後，學員各自 clone、建分支、選語言、跑測試。前 30 分鐘教室裡最常見的聲音是「全部都失敗」（Node 18 或 Python 3.10）與「<code>/ta</code> 回得很泛」（在 <code>starter/node</code> 裡開 Claude Code，沒讀到根目錄的 <code>CLAUDE.md</code>）。這兩個都是環境問題，助教與講師可以直接給指令，不用等 20 分鐘。10:20 左右第一批人看到「1 failed | 1 passed | 4 skipped」，開始讀 primer；講師此時走動，聽到「我先看一下 curriculum §1.4 有哪幾個 context」就攔。10:50 起學員手畫場站圖並列 10 個問題；11:05 貼 <code>/ta</code> 提示請助教把問題分給五位角色。Block 結束時桌上要有：<code>.config</code>、一張手繪圖、一份分好類的 10 個問題。</p>
+
+<h3>starter 測試：那個故意的紅燈</h3>
+<p>學員把最後 10 行貼進 check-out。兩個語言的實際輸出如下（在 2025 年 starter 上實跑）：</p>
+<div class="tabs" data-tabs><button data-pane="b1-node" class="on">Node · vitest</button><button data-pane="b1-py">Python · pytest</button></div>
+<div class="pane on" id="b1-node">
+<pre class="term">$ cd starter/node &amp;&amp; npm install &amp;&amp; npm test
+
+ RUN  v2.1.9 /home/you/dddguide/starter/node
+
+ <span class="dim">↓ test/assetops/WorkOrder.test.ts (1 test | 1 skipped)</span>
+ <span class="green">✓ test/shared/EventBus.test.ts (1 test) 4ms</span>
+ <span class="red">❯ test/charging/ChargingSession.test.ts (4 tests | 1 failed | 3 skipped) 5ms</span>
+   <span class="red">× ChargingSession aggregate (Day 4) &gt; R1 occupied connector rejects a second start 4ms</span>
+     → TODO R1
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ <span class="red">FAIL</span>  test/charging/ChargingSession.test.ts &gt; ChargingSession aggregate (Day 4) &gt; R1 occupied connector rejects a second start
+Error: TODO R1
+ ❯ ChargingSession.start src/charging/domain/ChargingSession.ts:72:11
+     70|   // otherwise -&gt; become Charging, remember sessionId/idTag/meterStart…
+     71|   start(input: StartInput): void {
+     72|     throw new Error('TODO R1');
+       |           ^
+     73|   }
+ ❯ test/charging/ChargingSession.test.ts:12:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  <span class="red">1 failed</span> | <span class="green">1 passed</span> | <span class="dim">1 skipped</span> (3)
+      Tests  <span class="red">1 failed</span> | <span class="green">1 passed</span> | <span class="dim">4 skipped</span> (6)
+   Start at  10:18:53
+   Duration  385ms (transform 220ms, setup 0ms, collect 176ms, tests 9ms, environment 0ms, prepare 367ms)</pre>
+</div>
+<div class="pane" id="b1-py">
+<pre class="term">$ cd starter/python &amp;&amp; python -m venv .venv &amp;&amp; . .venv/bin/activate &amp;&amp; pip install -r requirements.txt &amp;&amp; pytest -q
+
+<span class="dim">s</span><span class="red">F</span><span class="dim">sss</span><span class="green">.</span>                                                                   [100%]
+=================================== FAILURES ===================================
+______________ test_R1_occupied_connector_rejects_a_second_start _______________
+
+    def test_R1_occupied_connector_rejects_a_second_start():
+        session = ChargingSession.idle("CP-A12-2")
+&gt;       session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+
+tests/charging/test_charging_session.py:14:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;charging.domain.charging_session.ChargingSession object at 0x7fc8fbcd5450&gt;
+session_id = 'S-991', id_tag = 'TAG-MONTHLY-77', authorized = True
+meter_start_wh = 100, at = '2025-05-20T14:04:00+08:00'
+
+    def start(self, *, session_id: str, id_tag: str, authorized: bool, meter_start_wh: int, at: str) -&gt; None:
+        """R1: if this connector is already Charging -&gt; record ChargingStartRejected(ConnectorOccupied), change nothing.
+        R2: if not authorized -&gt; record ChargingStartRejected(Unauthorized).
+        otherwise -&gt; become Charging, remember session_id/id_tag/meter_start/started_at, record ChargingStarted."""
+&gt;       raise NotImplementedError("TODO R1")
+<span class="red">E       NotImplementedError: TODO R1</span>
+
+src/charging/domain/charging_session.py:53: NotImplementedError
+=========================== short test summary info ============================
+<span class="red">FAILED tests/charging/test_charging_session.py::test_R1_occupied_connector_rejects_a_second_start</span>
+<span class="red">1 failed</span>, <span class="green">1 passed</span>, <span class="dim">4 skipped</span> in 0.08s</pre>
+</div>
+<p>看的重點：<b>只有 R1 紅</b>、EventBus 綠、其餘 skip。學員此時不需要懂 <code>ChargingSession</code> 是什麼；他只要知道「紅燈在 <code>src/charging/domain/</code> 第 72 行，Day 4 會修」。如果學員問「那我先把 <code>throw</code> 拿掉可以嗎」，答案是不行——沒有紅燈測試不寫產品碼，Day 4 才動。</p>
+
+<div class="file"><p class="path">workshop/.config <span class="chip">交付物</span></p><div class="body">
+<pre># 複製自 workshop/.config.example；助教每次對話先讀這個檔決定用哪邊的 starter。
+LANG=node
+# LANG=python
+BRANCH=workshop/xiaolin</pre>
+</div></div>
+
+<h3>助教對話重播：<code>/ta</code> 把 10 個問題分給五個人</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /ta</p><p>我是 Day 1 Block 1 的學員，剛跑完 starter 測試。這是輸出的最後 10 行：（貼上「Test Files 1 failed | 1 passed | 1 skipped」那段）。請不要解釋紅燈怎麼修。我想請你做三件事：1. 確認你讀到我的 workshop/.config，告訴我你認為我用哪個語言、在第幾天。2. 我讀完 primer 之後列了 10 個不懂的問題（如下），不要直接回答，幫我分類該去問誰、為什麼。3. 挑出你覺得我漏問的一個方向，用一個問題提示我。</p><p>我的問題：1. idTag 是誰發的？月票卡跟充電卡是同一張嗎？ 2. 一根樁有幾把槍？壞了是整根停還是一把停？ 3. 閘門在總部斷線時會開嗎？ 4. 停車費和電費是同一張單嗎？誰合併？ 5. 12.4 kWh 是誰量的？後台跟電表一樣嗎？ 6. 「樁壞了」是誰第一個知道？ 7. 工單是誰開的？開一張要多久？ 8. 技術員怎麼知道要帶什麼零件？ 9. 月票車充電要付錢嗎？ 10. OCPP 到底是什麼？誰看得懂？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀到 <code>workshop/.config</code>：<code>LANG=node</code>。<code>workshop/day1/</code> 只有 <code>TEMPLATE.md</code>，所以你在 <b>Day 1：進場</b>。輸出正確——R1 那個紅燈是故意的，EventBus 綠、其餘 skip，環境沒問題。</p><p>先問你一件事再分類：這 10 題裡，哪幾題你其實是在問「規則」（什麼情況下不准做什麼），哪幾題是在問「資料」（數字、格式）？我猜 4、7、9 是規則，5、10 是資料。你同意嗎？分類會影響你問的方式：規則要問「上次發生時你怎麼處理」，資料只要問「多少」。</p><p>分給誰（理由用他每天看的螢幕決定）：</p><p>阿忠（值班室兩個螢幕、閘門）→ 3、6。他是唯一站在閘門旁邊的人。<br>小美（廠商後台、費率、憑證）→ 1、5。憑證與度數她每天看。<br>老陳（Excel、ERP、發票）→ 4、9。合併與「誰付錢」是他的痛。<br>Vicky（客服系統、Sheet、LINE）→ 7、8 的前半（誰開單）。<br>阿豪（現場、廂型車）→ 2、8 的後半（帶什麼零件）。<br>第 10 題：沒有人。阿豪懂一點但會把你帶進協定細節；今天只需要知道「樁用 OCPP 對後台講話，訊息名像 <code>StatusNotification</code>」，Day 6 再碰。</p><p>你漏問的方向：你的 10 題裡沒有一題是關於<b>斷線時的充電</b>。第 3 題問了閘門，但——「總部斷線時，哪些卡還能刷得過、哪些不能？」你會拿這題去問誰？</p><p><b>下一個最小步驟：</b>把這 10 題照角色抄進 <code>workshop/day1/interviews.md</code> 最上面的「訪談前的問題」小節，每題後面加上「規則 / 資料」標記，10 分鐘。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>斷線充電那題我會問小美，因為憑證是她管的。另外我把第 2 題也分給了 Vicky，因為「壞了是整根停還是一把停」關係到她怎麼開單。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>兩個判斷都合理。第 2 題分給兩個人更好——阿豪告訴你物理上的答案，Vicky 告訴你工單上的答案，如果兩人不一樣，那就是你今天要記的第一條「跨角色矛盾」。</p><p><b>下一個最小步驟：</b>在紙上畫你的場站（閘門、車位、樁、槍、值班室），不要讓我畫。畫完拍照存成 <code>workshop/day1/site-sketch.jpg</code>。</p></div>
+</div>
+
+<div class="file"><p class="path">workshop/day1/interviews.md · 第一節「訪談前的問題」 <span class="chip">交付物（片段）</span></p><div class="body">
+<h4>訪談前的問題（B1 讀完 primer 列的 10 題，助教幫我分好給誰）</h4>
+<div class="table-scroll"><table>
+<tr><th>#</th><th>問題</th><th>類型</th><th>去問誰</th><th>為什麼是他</th></tr>
+<tr><td>1</td><td>idTag 是誰發的？月票卡跟充電卡是同一張嗎？</td><td>規則</td><td class="nowrap">小美</td><td>憑證（月票卡 / 車隊卡 / App）是她管的</td></tr>
+<tr><td>2</td><td>一根樁有幾把槍？壞了是整根停還是一把停？</td><td>資料 + 規則</td><td class="nowrap">阿豪、Vicky</td><td>阿豪知道物理答案；Vicky 知道工單上怎麼算。兩人答案可能不同</td></tr>
+<tr><td>3</td><td>閘門在總部斷線時會開嗎？</td><td>規則</td><td class="nowrap">阿忠</td><td>唯一站在閘門旁邊的人</td></tr>
+<tr><td>4</td><td>停車費和電費是同一張單嗎？誰合併？</td><td>規則</td><td class="nowrap">老陳</td><td>合併是他每月底的痛</td></tr>
+<tr><td>5</td><td>12.4 kWh 是誰量的？後台跟電表一樣嗎？</td><td>資料</td><td class="nowrap">小美</td><td>她每天對廠商後台的度數</td></tr>
+<tr><td>6</td><td>「樁壞了」是誰第一個知道？</td><td>交接</td><td class="nowrap">阿忠</td><td>投訴都打到值班室</td></tr>
+<tr><td>7</td><td>工單是誰開的？開一張要多久？</td><td>交接</td><td class="nowrap">Vicky</td><td>客服系統與 Sheet 是她的</td></tr>
+<tr><td>8</td><td>技術員怎麼知道要帶什麼零件？</td><td>規則</td><td class="nowrap">Vicky、阿豪</td><td>派工前 vs 到場後兩個視角</td></tr>
+<tr><td>9</td><td>月票車充電要付錢嗎？</td><td>規則</td><td class="nowrap">老陳</td><td>「誰付什麼錢」是帳務決定的</td></tr>
+<tr><td>10</td><td>OCPP 到底是什麼？誰看得懂？</td><td>資料</td><td class="nowrap">（今天不問）</td><td>阿豪懂一點，但會把訪談帶去協定細節；Day 6 再碰</td></tr>
+<tr><td>+</td><td>總部斷線時，哪些卡還能充、哪些不能？（助教提示我漏的）</td><td>規則</td><td class="nowrap">小美</td><td>斷線授權是憑證的事</td></tr>
+</table></div>
+</div></div>
+
+<figure class="wide">
+  <p class="title">一個場站長什麼樣（講師對照版）</p><p class="subtitle">學員手畫的圖對照這張：兩層地理（場站 / 總部）、三種錢、一條會斷的線。</p>
+  <div class="diagram"><svg viewBox="0 0 960 500" role="img" aria-label="SITE-TPE-01 場站示意：閘門與 LPR、一般車位、充電車位、充電樁 CP-A12 的兩把槍、值班室阿忠的兩個螢幕，右側總部 HQ 的小美、客服、Vicky、老陳、阿豪，中間一條會斷的連線，下方三種錢">
+    <!-- SITE zone -->
+    <rect class="zone" x="12" y="36" width="600" height="452" rx="8"/>
+    <text class="t b" x="24" y="58">SITE-TPE-01 · 場站（既有停車場 + 新裝的樁）</text>
+    <!-- gate -->
+    <rect class="box" x="28" y="76" width="170" height="64" rx="6"/>
+    <text class="t b" x="113" y="100" text-anchor="middle">閘門 + LPR</text>
+    <text class="t s" x="113" y="120" text-anchor="middle">14:02 ABC-1234 進場</text>
+    <text class="t s" x="113" y="134" text-anchor="middle">停車會話 P-441 開始</text>
+    <path class="ar" d="M198 108 L218 108"/>
+    <!-- ordinary bays -->
+    <rect class="box dim" x="218" y="76" width="60" height="64" rx="4"/><text class="t" x="248" y="103" text-anchor="middle">一般</text><text class="t" x="248" y="121" text-anchor="middle">車位</text>
+    <rect class="box dim" x="286" y="76" width="60" height="64" rx="4"/><text class="t" x="316" y="103" text-anchor="middle">一般</text><text class="t" x="316" y="121" text-anchor="middle">車位</text>
+    <rect class="box dim" x="354" y="76" width="60" height="64" rx="4"/><text class="t" x="384" y="103" text-anchor="middle">一般</text><text class="t" x="384" y="121" text-anchor="middle">車位</text>
+    <!-- charging bays -->
+    <rect class="box core" x="458" y="76" width="68" height="64" rx="4"/><text class="t" x="492" y="103" text-anchor="middle">充電車位</text><text class="t" x="492" y="121" text-anchor="middle">3 號</text>
+    <rect class="box" x="534" y="76" width="68" height="64" rx="4"/><text class="t" x="568" y="103" text-anchor="middle">充電車位</text><text class="t" x="568" y="121" text-anchor="middle">4 號</text>
+    <text class="t s" x="492" y="158" text-anchor="middle">14:03 ABC-1234 停進來（占用 ≠ 充電）</text>
+    <!-- charger -->
+    <rect class="box core" x="420" y="200" width="180" height="130" rx="6"/>
+    <text class="t b" x="510" y="222" text-anchor="middle">充電樁 CP-A12</text>
+    <rect class="box dim" x="430" y="234" width="80" height="84" rx="4"/>
+    <text class="t m" x="470" y="254" text-anchor="middle">CP-A12-1</text>
+    <text class="t s" x="470" y="272" text-anchor="middle">槍 1 · 可用</text>
+    <text class="t s" x="470" y="290" text-anchor="middle">現場貼「A 槍」</text>
+    <rect class="box" x="518" y="234" width="80" height="84" rx="4"/>
+    <text class="t m" x="558" y="254" text-anchor="middle">CP-A12-2</text>
+    <text class="t s" x="558" y="272" text-anchor="middle">槍 2 · 充電中</text>
+    <text class="t m" x="558" y="290" text-anchor="middle">S-991</text>
+    <text class="t m" x="558" y="306" text-anchor="middle">12.4 kWh</text>
+    <path class="ar thin" d="M492 140 L492 176 L558 176 L558 234"/>
+    <text class="t s" x="530" y="192" text-anchor="middle">14:04 插槍 · 刷 TAG-MONTHLY-77</text>
+    <!-- duty room -->
+    <rect class="box" x="28" y="200" width="250" height="130" rx="6"/>
+    <text class="t b" x="153" y="222" text-anchor="middle">值班室 · 阿忠</text>
+    <rect class="box dim" x="40" y="234" width="108" height="52" rx="4"/>
+    <text class="t s" x="94" y="254" text-anchor="middle">螢幕 1</text>
+    <text class="t" x="94" y="272" text-anchor="middle">停車場系統</text>
+    <rect class="box dim" x="158" y="234" width="108" height="52" rx="4"/>
+    <text class="t s" x="212" y="254" text-anchor="middle">螢幕 2</text>
+    <text class="t" x="212" y="272" text-anchor="middle">廠商網頁</text>
+    <text class="t s" x="153" y="312" text-anchor="middle">市話 · 鑰匙 · 手寫值班日誌本</text>
+    <path class="ar thin" d="M113 140 L113 176 L94 176 L94 234"/>
+    <text class="t s" x="150" y="170" text-anchor="middle">閘門 / 車位 / 車牌</text>
+    <path class="ar thin" d="M420 265 L300 265 L300 260 L266 260"/>
+    <text class="t s" x="348" y="256" text-anchor="middle">只顯示上線 / 離線</text>
+    <!-- money -->
+    <rect class="st" x="28" y="372" width="180" height="56" rx="28"/>
+    <text class="t b" x="118" y="394" text-anchor="middle">① 停車費</text>
+    <text class="t s" x="118" y="412" text-anchor="middle">按分鐘 · 月票 0 元 · 老陳</text>
+    <rect class="st" x="222" y="372" width="190" height="56" rx="28"/>
+    <text class="t b" x="317" y="394" text-anchor="middle">② 電費</text>
+    <text class="t s" x="317" y="412" text-anchor="middle">按 kWh · 12.4 度 · 老陳</text>
+    <rect class="st" x="426" y="372" width="176" height="56" rx="28"/>
+    <text class="t b" x="514" y="394" text-anchor="middle">③ 維修成本</text>
+    <text class="t s" x="514" y="412" text-anchor="middle">內部成本 · 總部承擔</text>
+    <text class="t s" x="312" y="454" text-anchor="middle">三種錢：①② 向顧客收、③ 是公司內部；來源分別是閘門的時間、樁的電表、總部的工單。</text>
+    <text class="t s" x="312" y="472" text-anchor="middle">停車費與電費是兩件事：月票是停車的月票，不是電的。</text>
+    <!-- link -->
+    <path class="ar ev" d="M612 262 L660 262"/>
+    <path class="ar ev" d="M660 282 L612 282"/>
+    <text class="t a" x="636" y="250" text-anchor="middle">會斷</text>
+    <!-- HQ zone -->
+    <rect class="zone plain" x="660" y="36" width="288" height="452" rx="8"/>
+    <text class="t b" x="672" y="58">總部 HQ</text>
+    <rect class="box" x="672" y="76" width="264" height="58" rx="6"/>
+    <text class="t b" x="804" y="98" text-anchor="middle">小美 · 充電營運</text>
+    <text class="t s" x="804" y="118" text-anchor="middle">廠商後台 · 費率表 · 憑證 · 每日報表</text>
+    <rect class="box" x="672" y="146" width="264" height="58" rx="6"/>
+    <text class="t b" x="804" y="168" text-anchor="middle">客服專線 → 客服系統</text>
+    <text class="t s" x="804" y="188" text-anchor="middle">聽電話、手 key 工單（WO-2208）</text>
+    <rect class="box" x="672" y="216" width="264" height="58" rx="6"/>
+    <text class="t b" x="804" y="238" text-anchor="middle">Vicky · 總部調度</text>
+    <text class="t s" x="804" y="258" text-anchor="middle">Google Sheet 排班 · LINE 派工 · SLA</text>
+    <rect class="box" x="672" y="286" width="264" height="58" rx="6"/>
+    <text class="t b" x="804" y="308" text-anchor="middle">老陳 · 帳務</text>
+    <text class="t s" x="804" y="328" text-anchor="middle">Excel · 舊 ERP · 月結 · 發票 · 爭議</text>
+    <rect class="box ext" x="672" y="356" width="264" height="58" rx="6"/>
+    <text class="t b" x="804" y="378" text-anchor="middle">阿豪 · TECH-HAO（在路上）</text>
+    <text class="t s" x="804" y="398" text-anchor="middle">廂型車 + 備品箱 · 手機 App · 地下室沒訊號</text>
+    <text class="t s" x="804" y="440" text-anchor="middle">總部要看全國 40 站、200 多根樁的健康度</text>
+    <text class="t s" x="804" y="458" text-anchor="middle">並派工；場站只上報。</text>
+  </svg></div>
+  <figcaption>學員的手繪版通常缺三樣：槍與樁分不開（只畫一個「充電站」）、值班室不見了（沒有人，就看不到人當 API）、總部與場站之間沒有那條會斷的線。缺哪一樣，B2 就叫他去問哪一位。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>節點</th><th>層級</th><th>誰擁有這個詞（Day 3 才講）</th><th>在圖裡的位置</th></tr>
+<tr><td>SITE-TPE-01</td><td>場站</td><td>—</td><td>左側大區</td></tr>
+<tr><td>閘門 + LPR</td><td>場站設備</td><td>—</td><td>左上；14:02 辨識 ABC-1234，開停車會話 P-441</td></tr>
+<tr><td>一般車位 × 3、充電車位 3 號 / 4 號</td><td>場站</td><td>—</td><td>上排；14:03 ABC-1234 停進 3 號</td></tr>
+<tr><td>充電樁 CP-A12</td><td>樁</td><td>—</td><td>中右；含連接器 CP-A12-1（可用）與 CP-A12-2（充電中 S-991、12.4 kWh）</td></tr>
+<tr><td>值班室 · 阿忠</td><td>場站</td><td>—</td><td>中左；螢幕 1 停車場系統、螢幕 2 廠商網頁（只顯示上線 / 離線）、市話、鑰匙、日誌本</td></tr>
+<tr><td>三種錢</td><td>—</td><td>—</td><td>下排：① 停車費（按分鐘，老陳）② 電費（按 kWh，老陳）③ 維修成本（總部內部）</td></tr>
+<tr><td>連線（會斷）</td><td>場站 ↔ 總部</td><td>—</td><td>中間虛線；curriculum §1.1：斷線時仍要能進場、充電、人工放行</td></tr>
+<tr><td>總部 HQ</td><td>總部</td><td>—</td><td>右側：小美（廠商後台）、客服（客服系統）、Vicky（Sheet + LINE）、老陳（Excel + ERP）、阿豪（廂型車，虛線＝在路上）</td></tr>
+</table></div></details>
+
+<div class="teach"><p class="head">講師註 · Block 1</p>
+<p><b>驗收看哪一行：</b>(1) <code>workshop/.config</code> 第一個非註解行是不是恰好一個 <code>LANG=</code>；(2) 學員貼的測試輸出倒數第 3 行是不是「1 failed | 1 passed | 4 skipped」——如果是「6 failed」或「0 tests」，是版本問題，當場修；(3) 10 個問題那張表的「去問誰」欄有沒有出現同一題分給兩個人（那是好訊號，代表他預期矛盾）。</p>
+<p><b>常見失真：</b>10 個問題全部是「系統該怎麼做」（「要不要做 App 推播？」）而不是「現在怎麼發生」。攔法：問他「這題你打算怎麼問阿忠？阿忠聽得懂『推播』嗎？」。另一個失真是手繪圖是 Claude 畫的 Mermaid——一眼看得出來（太整齊、有英文節點名）。要求重畫，五分鐘。</p>
+<p><b>時間：</b>環境問題平均吃掉 25 分鐘，primer 讀 15 分鐘、畫圖 10 分鐘、列問題 10 分鐘、<code>/ta</code> 對話 10 分鐘。90 分鐘剛好，沒有餘裕；Node 22 以下的人請他 Block 2 中間補跑測試，不要卡在這裡。</p>
+</div>
+</section>
+
+<section>
+<p class="eyebrow">BLOCK 2 · 訪談五位角色 · 90 分</p>
+<h2>從五張嘴裡挖出他們沒打算說的事</h2>
+<h3>實況</h3>
+<p>11:30 開始，每位角色計時 10 分鐘，順序阿忠 → 小美 → 老陳 → Vicky → 阿豪（從現場往總部走）。學員每問完一位花 5 分鐘把筆記整理進 <code>interviews.md</code>，所以五位剛好 75 分鐘，剩 15 分鐘寫跨角色矛盾與回頭補問一位。實際上前兩位會超時：學員第一次問「你希望系統有什麼功能」拿到「大按鈕」之後要花 2–3 分鐘才轉回「昨天下午你做了什麼」。講師走動時聽的關鍵句是「你需要……嗎」（引導式）與「你們的流程是怎樣」（太籠統，角色會反問）。Claude 扮演的角色在 5–8 回合後會主動問「差不多了嗎」，學員說「謝謝阿忠」它就出戲給 debrief：「你問出了 N/M 個關鍵事實」——那個 N/M 要抄進檔案。</p>
+
+<h3>訪談重播：阿忠（10 句來回，含一個爛問題與一個引導式問題）</h3>
+<p>按「下一句」逐句看。第 1 句與第 5 句是壞問題，對照第 2、3、6 句怎麼把同一件事問出來。</p>
+<section data-replay>
+  <div class="stepper"><button data-next class="primary">下一句</button><button data-all>全部</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="chat">
+    <div class="msg stu" data-item><p class="who">學員 → /interview 阿忠</p><p>我是 Day 1 的學員，要訪談你 10 分鐘。請你完全以「場站值班長阿忠」的身份回答，用他的口吻、他的詞，一次只回答我問的那件事。訪談結束我會說「謝謝阿忠」，那時請你跳出角色，只告訴我我沒問到的隱藏事實有幾個。</p><p>第一個問題：阿忠，你希望新系統有什麼功能？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：欸你就是總部派來做系統的？坐。我是 SITE-TPE-01 的值班長。功能喔……給我一個大按鈕啦。現在要放一台車出去我要點五個畫面，客人在對講機那邊罵，我在這邊點。還有系統要快一點。就這樣，你們工程師最會做按鈕了不是嗎？</p><p><i>下一個最小步驟：你拿到的是「解法」（按鈕），不是「事實」。改問他昨天下午照時間順序做了什麼。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>好，換個問法。昨天下午 14:00 到 18:30，你在值班室做了哪些事？照時間順序講。</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：14:02 一台 ABC-1234 進來，月票車，LPR 有認到，桿子自己開。它停到 3 號充電位，我螢幕上那格就變紅。14:05 左右對講機響，另一個客人說「這根槍刷不過」——我看螢幕 2，廠商那個網頁只寫「上線」，我哪知道它在不在充？就打給小美。她說 A12 的 2 號槍 14:04 就有人在充了，叫客人去 4 號位。14:31 那台月票車充完，14:33 要出去——結果總部那條線又斷了，桿子不開。我拿鑰匙出去開。18:10 左右我在巡場，回來看到 A12 螢幕在閃紅，就……你要聽壞掉的那段嗎？</p><p><i>下一個最小步驟：他剛才講了三個交接（打給小美、鑰匙開桿、螢幕閃紅之後）。挑「螢幕閃紅之後」追問：一步一步做了什麼、經過哪些人。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>要。18:10 螢幕閃紅之後，你一步一步做了什麼？從你看到，到有人知道，中間經過哪些人？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：先講，我不是 18:10 看到的，我在外面巡場，回值班室大概 18:25 才看到它在閃。看到就打總部客服專線，等人接、報場站、報樁號「A12」、報螢幕上那串英文——我唸 G-r-o-u-n-d 什麼的，客服再手打到他們的系統開一張單。從我看到到那張單存在，平均 20 分鐘跑不掉。然後就沒我的事了，進度也沒人告訴我。對了，22:00 以後專線沒人接，晚上壞的就等隔天早上。</p><p><i>下一個最小步驟：記下「打電話 → 客服手打」這條線與「22:00 沒人接」。這是一個交接點，B3 會用到。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>你怎麼分辨樁真的壞掉，跟是 App 壞掉或卡壞掉？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：分不出來啊。客人來按對講機說「樁不能用」，我經手的十次裡面大概五次是他 App 連不上，或者卡過期。可是我這邊的網頁只有「上線 / 離線」兩個字，樁在閃我也不知道是它壞還是它在等人刷卡。所以我都先打給小美，她那邊看得到。你如果能讓我在同一個畫面看到「這把槍現在能不能賣」，我什麼按鈕都不要了。</p><p><i>下一個最小步驟：「一半不是樁壞」與「能不能賣」都是原話，逐字抄。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>你覺得需要 offline mode 嗎？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：off……什麼 mode？你講中文。你是要問我斷線的事嗎？斷線就是斷線，我還能怎樣。</p><p><i>下一個最小步驟：這是引導式問題，而且用了他聽不懂的詞。改問「上一次總部連不上是什麼時候？你當時一步一步做了什麼？」</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>抱歉。上一次總部連不上是什麼時候？你當時一步一步做了什麼？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：就昨天 14:33 那台啊。桿子不開，我拿鑰匙去手動抬，然後在日誌本上寫車牌 ABC-1234、時間 14:33、「斷線人工放行」。隔天早上我把那一頁拍照，email 給老陳，他去補停車費——月票車是 0 元啦，臨停的就要補。一個月會斷個三四次。有沒有漏過？……有，至少兩次，我忘了拍，老陳月底才發現有車出去沒帳。他在電話裡也沒罵我，就說「查不到」。</p><p><i>下一個最小步驟：這是今天最重要的一條事實：斷線放行是紙本流程、靠 email、漏過兩次。抄下每一個數字。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>有車停在充電車位卻不充電的情況，你怎麼知道的？多常發生？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：每天都有，大概五台。停車那個螢幕告訴我車位被占了，可是它不知道有沒有在充；小美的網頁知道有沒有在充，可是它不知道車位。兩個螢幕不會講話。我只能走出去看，沒插槍的就貼紙條。占著位子不充電，後面要充的車就進不來，客訴又是我接。</p><p><i>下一個最小步驟：「占著 ≠ 在充」、「兩個螢幕不會講話」都是原話。你已經問到 4 條關鍵的事了，還剩最後兩題必問。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>最後兩題。有沒有哪件事是你每天都要打電話或用 LINE 傳給別人的？還有，如果你講的跟小美講的不一樣，你覺得誰對？</p></div>
+    <div class="msg ta" data-item><p class="who">阿忠（Claude 扮演）</p><p><b>阿忠</b>：每天打給小美問「這把槍在不在充、幾度了」，一天兩三次跑不掉。樁壞了就打客服。放行漏掉就 email 老陳。LINE 群組是貼樁螢幕的照片給總部，看他們要不要開單，那要看 Vicky 心情。誰對？她那邊看得到度數、看得到刷卡，我這邊只看得到車位跟桿子。充電的事她對，車位跟放人出去的事我對。你要是把這兩件事做成同一個東西，我們兩個都會罵你。</p><p><i>下一個最小步驟：他剛才替你講出了一條「跨角色矛盾」的邊界——記下來，不要當場翻成術語。</i></p></div>
+    <div class="msg stu" data-item><p class="who">學員</p><p>謝謝阿忠。</p></div>
+    <div class="msg ta" data-item><p class="who">助教（出戲 · debrief）</p><p>出戲：訪談阿忠結束。你問出了 <b>4/5 個關鍵事實</b>。沒問到的那一個，可以這樣問：「你的兩個螢幕分別給你看什麼？你最想在同一個畫面看到什麼？」——其實他在第 4 句差點說了，你沒接。</p><p>你引導了他一次（「offline mode」），但你自己改了問法，那一段記進「我引導了他嗎」。</p><p><b>下一個最小步驟：</b>把 4 條事實、每條旁邊「我用哪個問題問到的」、以及至少 5 句原話寫進 <code>workshop/day1/interviews.md</code> 的「阿忠」小節，然後 <code>/interview 小美</code>。</p></div>
+  </div>
+</section>
+
+<figure class="wide">
+  <p class="title">五位訪完之後拼出來的資訊流（As-Is）</p><p class="subtitle">每一條紅線都是「一個人把一個系統的資料搬進另一個系統或另一個人的腦袋」。B3 會把它們編號。</p>
+  <div class="diagram"><svg viewBox="0 0 960 430" role="img" aria-label="As-Is 資訊流：樁與閘門的訊息經過阿忠，用市話、日誌本 email、LINE 傳給小美、客服、老陳；客服手 key 工單到 Vicky 的 Sheet；Vicky 用 LINE 派給阿豪；阿豪打電話問小美數據、LINE 回報修好">
+    <!-- nodes -->
+    <rect class="box" x="40" y="60" width="140" height="56" rx="6"/><text class="t b" x="110" y="83" text-anchor="middle">樁 CP-A12</text><text class="t s" x="110" y="103" text-anchor="middle">螢幕閃紅 · 廠商網頁</text>
+    <rect class="box core" x="40" y="190" width="140" height="56" rx="6"/><text class="t b" x="110" y="213" text-anchor="middle">阿忠 · 值班室</text><text class="t s" x="110" y="233" text-anchor="middle">兩個螢幕 · 市話 · 日誌本</text>
+    <rect class="box" x="40" y="320" width="140" height="56" rx="6"/><text class="t b" x="110" y="343" text-anchor="middle">閘門 + LPR</text><text class="t s" x="110" y="363" text-anchor="middle">斷線時桿子不開</text>
+    <rect class="box" x="320" y="60" width="150" height="56" rx="6"/><text class="t b" x="395" y="83" text-anchor="middle">小美 · 充電營運</text><text class="t s" x="395" y="103" text-anchor="middle">廠商後台 · 度數 · 憑證</text>
+    <rect class="box" x="320" y="190" width="150" height="56" rx="6"/><text class="t b" x="395" y="213" text-anchor="middle">總部客服</text><text class="t s" x="395" y="233" text-anchor="middle">客服系統 · 手 key 工單</text>
+    <rect class="box" x="320" y="320" width="150" height="56" rx="6"/><text class="t b" x="395" y="343" text-anchor="middle">老陳 · 帳務</text><text class="t s" x="395" y="363" text-anchor="middle">Excel · ERP · 月底對帳</text>
+    <rect class="box" x="580" y="190" width="150" height="56" rx="6"/><text class="t b" x="655" y="213" text-anchor="middle">Vicky · 調度</text><text class="t s" x="655" y="233" text-anchor="middle">Google Sheet · LINE</text>
+    <rect class="box ext" x="796" y="190" width="150" height="56" rx="6"/><text class="t b" x="871" y="213" text-anchor="middle">阿豪 · 技術員</text><text class="t s" x="871" y="233" text-anchor="middle">手機 App · 地下室沒訊號</text>
+    <!-- plain arrows -->
+    <path class="ar thin" d="M110 116 L110 190"/><text class="t s" x="118" y="150">閃紅（沒人在看，0–120 分）</text>
+    <path class="ar thin" d="M110 320 L110 246"/><text class="t s" x="118" y="290">對講機 · 桿子不開</text>
+    <!-- human hops -->
+    <path class="ar bad" d="M180 200 L320 96"/>
+    <rect class="st hot" x="196" y="128" width="120" height="20" rx="10"/><text class="t s" x="256" y="142" text-anchor="middle">#1 市話：在充嗎？度數？</text>
+    <path class="ar bad" d="M180 218 L320 218"/>
+    <rect class="st hot" x="200" y="196" width="100" height="20" rx="10"/><text class="t s" x="250" y="210" text-anchor="middle">#4 市話：A12 壞了</text>
+    <path class="ar bad" d="M180 236 L320 340"/>
+    <rect class="st hot" x="196" y="268" width="132" height="20" rx="10"/><text class="t s" x="262" y="282" text-anchor="middle">#2 日誌本 → 拍照 email</text>
+    <path class="ar bad" d="M470 218 L580 218"/>
+    <rect class="st hot" x="472" y="150" width="106" height="20" rx="10"/><text class="t s" x="525" y="164" text-anchor="middle">#5 手 key 工單 ×20</text>
+    <text class="t s" x="525" y="200" text-anchor="middle">→ Sheet</text>
+    <path class="ar bad" d="M730 210 L796 210"/>
+    <rect class="st hot" x="716" y="150" width="96" height="20" rx="10"/><text class="t s" x="764" y="164" text-anchor="middle">#6 LINE 派工</text>
+    <path class="ar bad" d="M796 228 L730 228"/>
+    <text class="t s" x="763" y="262" text-anchor="middle">LINE 回報修好</text>
+    <text class="t s" x="763" y="278" text-anchor="middle">（沒訊號，晚 30 分）</text>
+    <path class="ar bad" d="M871 190 C 871 20, 470 20, 470 70"/>
+    <rect class="st hot" x="560" y="36" width="150" height="20" rx="10"/><text class="t s" x="635" y="50" text-anchor="middle">#7 電話：故障前 10 分數據？</text>
+    <rect class="st hot" x="300" y="390" width="190" height="20" rx="10"/><text class="t s" x="395" y="404" text-anchor="middle">#3 月底用車牌對停車單 + 充電單</text>
+    <!-- Vicky -> 老陳 nothing -->
+    <path class="ar thin" d="M580 240 L470 330"/>
+    <text class="t s" x="560" y="300" text-anchor="middle">（沒有線：老陳月底才知道</text>
+    <text class="t s" x="560" y="316" text-anchor="middle">這根樁停售三天）</text>
+    <text class="t a" x="948" y="418" text-anchor="end">紅線 = 人當 API，共 7 條</text>
+  </svg></div>
+  <figcaption>阿忠在中間，是三條線的起點——他不是「使用者」，他是這個場站的訊息匯流排。To-Be 的問題不是「怎麼讓他打電話更快」，而是「哪幾條線根本不該經過他」。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>#</th><th>從</th><th>到</th><th>方式</th><th>搬什麼</th><th>誰告訴我的</th></tr>
+<tr><td>#1</td><td>阿忠</td><td>小美</td><td>市話</td><td>這把槍在不在充、幾度</td><td>阿忠、小美</td></tr>
+<tr><td>#2</td><td>阿忠</td><td>老陳</td><td>日誌本 → 拍照 → email（隔天）</td><td>斷線放行的車牌與時間</td><td>阿忠、老陳</td></tr>
+<tr><td>#3</td><td>老陳</td><td>老陳（Excel）</td><td>用車牌對兩份報表</td><td>停車單與充電單合併</td><td>老陳</td></tr>
+<tr><td>#4</td><td>阿忠</td><td>客服</td><td>市話（22:00 後無人）</td><td>樁號、螢幕上的故障碼</td><td>阿忠、Vicky</td></tr>
+<tr><td>#5</td><td>客服</td><td>客服系統 → Vicky 的 Sheet</td><td>手 key</td><td>同一根樁每 5 分鐘一張，一晚 20 張</td><td>Vicky</td></tr>
+<tr><td>#6</td><td>Vicky</td><td>阿豪</td><td>LINE</td><td>樁號、地址、故障碼（沒有備品資訊）</td><td>Vicky、阿豪</td></tr>
+<tr><td>#7</td><td>阿豪</td><td>小美</td><td>電話</td><td>故障前 10 分鐘的計量與狀態</td><td>阿豪、小美</td></tr>
+<tr><td>—</td><td>阿豪</td><td>Vicky</td><td>LINE（地下室沒訊號）</td><td>「修好了」；Vicky 看到才手動關單</td><td>阿豪、Vicky</td></tr>
+<tr><td>—</td><td>Vicky</td><td>老陳</td><td>沒有</td><td>樁停售幾天；老陳月底才從報表發現</td><td>老陳</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day1/interviews.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
+<h4>利害關係人訪談紀錄（Stakeholder Interviews）</h4>
+<p>訪談者：小林　日期：Day 1　每位 10 分鐘，由 Claude 依 <code>docs/domain/stakeholders.md</code> 扮演。<br>隱藏事實旁的 ✅ 是我問出來的、❌ 是五位訪完後讀 <code>stakeholders.md</code> 才知道我沒問到的（誠實標記）。合計 <b>18 / 25</b>。</p>
+<p>（訪談前的問題：見上一節那張表。）</p>
+
+<h4>阿忠（場站值班長 · SITE-TPE-01）</h4>
+<h5>他一天的工作</h5>
+<p>08:00 開閘門、巡場；值班室兩個螢幕（停車場系統：閘門 / 車位 / LPR；廠商網頁：只顯示樁「上線 / 離線」）；一支市話、一串鑰匙、一本手寫值班日誌。接對講機處理「刷不過」「桿子不開」；每天兩三次打給小美問「這把槍在不在充」；有車占充電位不充電就走出去貼紙條；樁螢幕閃紅就打客服專線；斷線時拿鑰匙手動抬桿並記日誌本；22:00 交班。</p>
+<h5>最痛的三件事</h5>
+<ol>
+<li>總部斷線時桿子不會自己開，要拿鑰匙去抬，回來還要記本子、隔天拍照。</li>
+<li>客人說「樁不能用」，他分不出是樁壞、App 壞還是卡壞，網頁只有「上線 / 離線」。</li>
+<li>晚上樁壞了客服沒人接（22:00 後），隔天早上才有人處理；而且開單之後沒人回報進度。</li>
+</ol>
+<h5>隱藏事實（4 / 5）</h5>
+<ol>
+<li>✅ <b>斷線放行是紙本流程</b>：總部斷線時，他用鑰匙開閘，在日誌本寫車牌與時間，隔天早上把本子拍照 email 給老陳補停車費。平均每月 3–4 次，漏掉過至少兩次。← 問「上一次總部連不上是什麼時候？你當時一步一步做了什麼？」</li>
+<li>✅ <b>故障申告靠電話，SLA 從電話起算</b>：樁螢幕顯示故障時，他打總部客服專線，客服再手動開工單。從他看到到工單存在平均 20 分鐘；22:00 後沒人接。← 問「18:10 螢幕閃紅之後，你一步一步做了什麼？中間經過哪些人？」</li>
+<li>✅ <b>一半的「樁壞了」不是樁壞</b>：他經手的投訴裡約一半是 App 連不上或卡片過期。他沒辦法分辨，因為廠商網頁只顯示「離線 / 上線」。← 問「你怎麼分辨樁壞掉跟 App 壞掉？」</li>
+<li>✅ <b>占用 ≠ 充電</b>：每天約 5 台車停在充電車位不充電。他要去貼紙條。停車系統知道車位被占，充電系統知道沒在充，但兩個螢幕不會互相講話。← 問「有車停在充電車位卻不充電，你怎麼知道的？」</li>
+<li>❌ <b>他不知道什麼是 OCPP</b>，也不需要知道。他只想在同一個看板上看到「這把槍現在能不能賣」。← 我沒直接問「你的兩個螢幕分別給你看什麼」；他第 4 句其實提了「能不能賣」，我沒接。</li>
+</ol>
+<p>Claude 出戲時說：我沒問到 <b>1</b> 個。</p>
+<h5>他用的詞（原話，逐字）</h5>
+<ul>
+<li>「給我一個大按鈕啦。現在要放一台車出去我要點五個畫面。」</li>
+<li>「樁又壞了」（其實十次有五次是 App 或卡過期）</li>
+<li>「桿子不開，我拿鑰匙去手動抬，然後在日誌本上寫車牌、時間、斷線人工放行。」</li>
+<li>「我唸 G-r-o-u-n-d 什麼的，客服再手打到他們的系統開一張單。」</li>
+<li>「兩個螢幕不會講話。」「占著位子不充電。」</li>
+<li>「這把槍現在能不能賣」</li>
+<li>「充電的事她對，車位跟放人出去的事我對。」</li>
+<li>「那要看 Vicky 心情。」（LINE 貼照片之後會不會開單）</li>
+</ul>
+<h5>交接（誰 → 誰，用什麼）</h5>
+<div class="table-scroll"><table>
+<tr><th>從</th><th>到</th><th>方式</th><th>頻率</th><th>出錯過嗎</th></tr>
+<tr><td>阿忠</td><td>小美</td><td>市話</td><td>每天 2–3 次</td><td>小美不在就沒人答</td></tr>
+<tr><td>阿忠</td><td>客服</td><td>市話</td><td>每次故障</td><td>22:00 後無人；唸錯故障碼</td></tr>
+<tr><td>阿忠</td><td>老陳</td><td>日誌本拍照 email</td><td>每月 3–4 次</td><td>漏過 ≥ 2 次</td></tr>
+<tr><td>阿忠</td><td>總部 LINE 群</td><td>貼樁螢幕照片</td><td>不定</td><td>沒人回覆進度</td></tr>
+</table></div>
+
+<h4>小美（充電營運）</h4>
+<h5>她一天的工作</h5>
+<p>看廠商後台：每把槍的狀態（她看得懂「Faulted」）、每日充電報表、度數；維護費率表（尖峰週一至週五 09:00–22:00 每度 8 元、離峰 5 元）並通知三個系統；管三種憑證（月票卡、車隊卡、臨停 App）；接阿忠與阿豪的電話問度數與狀態；必要時按遠端停止；月底把報表丟給老陳。</p>
+<h5>最痛的三件事</h5>
+<ol>
+<li>費率表改版要通知三個系統，常常不一致；跨時段的會話算法她自己都覺得不公平。</li>
+<li>車隊卡被車隊公司停權後還能在場站充電；斷線時哪些卡能刷過她也說不清楚。</li>
+<li>廠商後台的度數跟她自己算的對不起來；「異常中止」只有一個「結束」，沒辦法跟廠商談 SLA。</li>
+</ol>
+<h5>隱藏事實（3 / 5）</h5>
+<ol>
+<li>✅ <b>跨時段會話目前按開始時間全程計價</b>：21:50 開始的會話全程算尖峰。她知道不公平，想改成按分段計量，但需要每一筆 <code>EnergyMetered</code> 帶時間戳。← 問「一個 21:50 開始、22:20 結束的會話，你們現在怎麼算錢？你覺得應該怎麼算？」</li>
+<li>✅ <b>授權有三種憑證與一份斷線白名單</b>：月票卡由營運商管、車隊卡由車隊公司黑名單（每小時同步一次）、臨停 App 走線上。總部斷線時，場站本機只有月票卡的 24 小時快取白名單，車隊卡與 App 會被拒。← 問「總部斷線時，哪些卡還能充？哪些不能？」（助教在 B1 提示我漏的那題）</li>
+<li>❌ <b>計量值倒退每月發生 2–3 次</b>：是某批韌體的 bug。廠商後台目前直接用新值覆蓋，她想要「被拒絕的紀錄」以便跟廠商吵。← 我問了「度數對不起來」但沒追「對不起來的時候數字長什麼樣」。</li>
+<li>✅ <b>遠端停止曾誤判被客訴</b>：她按了 RemoteStop，後台顯示「已停止」，其實車還在充，車主被多收 40 分鐘。← 問「你按下遠端停止之後，你怎麼知道它真的停了？」</li>
+<li>❌ <b>她要的異常分類</b>：<code>EVDisconnected</code>（車主拔槍）、<code>PowerLoss</code>（停電）、<code>DeAuthorized</code>（停權）、<code>Remote</code>（她按的）、<code>Local</code>（車主 App / 樁上按的）。前兩者算廠商責任。← 她說「異常只有一個結束」，我沒問「你想分成哪幾種」。</li>
+</ol>
+<p>Claude 出戲時說：我沒問到 <b>2</b> 個。</p>
+<h5>她用的詞（原話，逐字）</h5>
+<ul>
+<li>「度數要準。給我 Wh 的整數，不要四捨五入過的 kWh。」</li>
+<li>「插槍就算開始充電啊，車主是這樣認為的。」（老陳不同意，見矛盾 1）</li>
+<li>「21:50 插的全程算尖峰，我知道不公平，可是後台只給我一個開始時間。」</li>
+<li>「斷線的時候月票卡刷得過，因為場站那邊有存 24 小時的名單；車隊卡跟 App 就不行。」</li>
+<li>「我按了遠端停止，後台寫已停止，車主回來說它還在充，多收了他 40 分鐘。」</li>
+<li>「授權要即時——停權之後五分鐘內就不能再充。」</li>
+<li>「會話就是插槍到拔槍那段。」（阿忠的「會話」是車進來到出去，見矛盾 2）</li>
+</ul>
+<h5>交接</h5>
+<div class="table-scroll"><table>
+<tr><th>從</th><th>到</th><th>方式</th><th>頻率</th><th>出錯過嗎</th></tr>
+<tr><td>小美</td><td>三個系統</td><td>手動改費率表</td><td>每次改版</td><td>不一致</td></tr>
+<tr><td>車隊公司</td><td>小美</td><td>黑名單每小時同步</td><td>每小時</td><td>停權後仍可充</td></tr>
+<tr><td>小美</td><td>老陳</td><td>月底報表（kWh 一位小數）</td><td>每月</td><td>與電力公司帳單差幾百元（老陳說的）</td></tr>
+</table></div>
+
+<h4>老陳（帳務）</h4>
+<h5>他一天的工作</h5>
+<p>月結、開發票、對帳、處理爭議。停車單來自停車系統、充電單來自廠商後台，用 Excel 以車牌手動對；用一套舊 ERP 開發票；收阿忠的斷線放行 email 補停車費；每個月最後三天不接電話。</p>
+<h5>最痛的三件事</h5>
+<ol>
+<li>兩份報表要用車牌手動對，但合併的依據其實是「顧客」不是車牌。</li>
+<li>有人在後台直接改帳單金額，稽核問不出誰改的。</li>
+<li>廠商後台重送資料，同一個會話出兩次帳；阿忠的放行 email 又常漏——一個多收、一個少收。</li>
+</ol>
+<h5>隱藏事實（4 / 5）</h5>
+<ol>
+<li>✅ <b>合併的依據是顧客，不是車牌</b>：車隊合約下一張車牌可能對應車隊帳戶（電費）與駕駛個人（停車費）。月票車的停車費是 0，但電費照收。← 問「一張帳單上的停車費與電費，你是用什麼把它們湊在一起的？」</li>
+<li>✅ <b>帳單開立後被直接改過</b>：去年稽核發現三張帳單金額與原始資料不符，ERP 沒留軌跡。他現在要求「改一律用更正單」。← 問「上次金額對不起來是怎麼發現的？後來怎麼處理？」</li>
+<li>✅ <b>人工放行補費依賴 email</b>：阿忠的照片 email 一個月漏一兩次，每次幾百元。他不在乎金額，在乎「查不到」。← 問「阿忠斷線放行的那些車，你怎麼知道要補多少？」</li>
+<li>✅ <b>重複出帳的真實案例</b>：廠商後台上個月重送了一整天的 StopTransaction，同一個會話出了兩張帳。← 問「同一個會話出兩次帳，你怎麼知道是同一個？」</li>
+<li>❌ <b>精度</b>：廠商報表給 kWh 一位小數，他用它乘單價，每月與電力公司帳單差幾百元。← 他提了「差幾百元」，我以為是重複出帳造成的，沒追問。</li>
+</ol>
+<p>Claude 出戲時說：我沒問到 <b>1</b> 個。</p>
+<h5>他用的詞（原話，逐字）</h5>
+<ul>
+<li>「帳要對得起來——每一塊錢要能追到是哪一筆。」</li>
+<li>「可以晚一點沒關係，但不能少。」</li>
+<li>「我不怕錯，我怕改了沒人知道。改要留痕，用更正單。」</li>
+<li>「沒授權的不算充電，不能收錢。」（vs 小美「插槍就算開始」）</li>
+<li>「合併是按顧客，不是按車牌。車隊的車，電費算公司、停車費算司機。」</li>
+<li>「上個月廠商重送了一整天的資料，同一個會話出了兩張。」</li>
+<li>「阿忠那個 email 一個月漏一兩次。我不在乎那幾百塊，我在乎查不到。」</li>
+</ul>
+<h5>交接</h5>
+<div class="table-scroll"><table>
+<tr><th>從</th><th>到</th><th>方式</th><th>頻率</th><th>出錯過嗎</th></tr>
+<tr><td>停車系統 + 廠商後台</td><td>老陳的 Excel</td><td>匯出兩份報表，用車牌 VLOOKUP</td><td>每月</td><td>車隊車對不到人</td></tr>
+<tr><td>阿忠</td><td>老陳</td><td>email 照片</td><td>每月 3–4 次</td><td>漏 1–2 次</td></tr>
+<tr><td>廠商後台</td><td>老陳</td><td>重送整天資料</td><td>偶發</td><td>重複出帳</td></tr>
+</table></div>
+
+<h4>Vicky（總部調度）</h4>
+<h5>她一天的工作</h5>
+<p>管全國 40 座場站、200 多根樁、6 位技術員。早上第一件事看客服系統「昨晚哪些樁掛了」，把工單整理進 Google Sheet 排班，用 LINE 派給技術員；追 SLA；被帳務部門問「技術員什麼時候到」；技術員回報後手動關單。</p>
+<h5>最痛的三件事</h5>
+<ol>
+<li>同一根樁一晚產生 20 張工單，她要一張一張挑。</li>
+<li>SLA 從「她知道」開始算，但故障其實早發生了。</li>
+<li>派技術員出去才發現車上沒有備品。</li>
+</ol>
+<h5>隱藏事實（4 / 5）</h5>
+<ol>
+<li>✅ <b>20 張工單事件</b>：樁每 5 分鐘重送一次 <code>Faulted</code>，客服系統每次都開單。技術員一早看到 20 張同樣的單。← 問「昨天早上你打開系統，看到的第一張單長什麼樣？第二張呢？」</li>
+<li>✅ <b>SLA 起算點錯了</b>：目前從客服接到電話起算。她想要從設備申告的 <code>occurredAt</code> 起算。← 問「SLA 的時鐘從什麼時候開始跑？你希望從什麼時候開始？」</li>
+<li>✅ <b>備品是派工的前提</b>：<code>GroundFailure</code> 幾乎一定要換接地保護模組；<code>WeakSignal</code> 只要換 SIM。她要工單一開就知道「這個故障碼對應什麼備品」。← 問「派出去才發現沒備品，是哪一種故障？你怎麼判斷要帶什麼？」</li>
+<li>✅ <b>帳務不該收到「技術員已出發」</b>：她曾經被帳務部門要求把派工狀態同步到帳務系統，結果帳務被大量通知淹沒。← 問「有哪些人會問你工單進度？他們各自想知道什麼？」</li>
+<li>❌ <b>場站看板要有最後已知狀態</b>：總部系統維護時，阿忠的看板要能繼續顯示「WO-2208 / TECH-HAO / 處理中」。← 我沒問「總部系統維護時場站看得到什麼」。</li>
+</ol>
+<p>Claude 出戲時說：我沒問到 <b>1</b> 個。</p>
+<h5>她用的詞（原話，逐字）</h5>
+<ul>
+<li>「哪座樁掛了、誰去修、備品在不在車上。就這三件事。」</li>
+<li>「同一根樁一個晚上 20 張單，全部一樣，我要一張一張挑。」</li>
+<li>「SLA 從我知道開始算，可是它早就壞了，客人早就在罵了。」</li>
+<li>「一張單一個人，不能兩個人都以為對方會去。」</li>
+<li>「帳務問我技術員到了沒，關他們什麼事？上次同步給他們，他們被通知淹死。」</li>
+<li>「GroundFailure 一定要換接地那顆模組；WeakSignal 換 SIM 就好。」</li>
+<li>「修好了要 30 分鐘沒再跳才算，我才關單。」（vs 阿豪「樁回 Available 就是修好了」）</li>
+</ul>
+<h5>交接</h5>
+<div class="table-scroll"><table>
+<tr><th>從</th><th>到</th><th>方式</th><th>頻率</th><th>出錯過嗎</th></tr>
+<tr><td>客服系統</td><td>Vicky 的 Sheet</td><td>手動整理</td><td>每天早上</td><td>20 張重複單</td></tr>
+<tr><td>Vicky</td><td>技術員</td><td>LINE</td><td>每張單</td><td>沒帶備品</td></tr>
+<tr><td>技術員</td><td>Vicky</td><td>LINE「修好了」</td><td>每張單</td><td>地下室沒訊號；看到才關單</td></tr>
+</table></div>
+
+<h4>阿豪（技術員 · TECH-HAO）</h4>
+<h5>他一天的工作</h5>
+<p>跑北區 12 座場站，開一台廂型車，車上有備品箱。用手機 App 收工單（地下室沒訊號）。到場先對編號、拍照、打電話問小美故障前的數據、試重啟；換模組；LINE 回報「修好了」等總部關單。</p>
+<h5>最痛的三件事</h5>
+<ol>
+<li>工單上的樁編號與現場貼的序號對不上；工單說「2 號槍」，現場標「B 槍」。</li>
+<li>很多故障遠端重啟就好，但他還是得跑一趟。</li>
+<li>修好了工單還開著，因為要總部的人手動關；地下室回報不出去還被判逾時。</li>
+</ol>
+<h5>隱藏事實（3 / 5）</h5>
+<ol>
+<li>✅ <b>三套編號</b>：總部資產編號 <code>CP-A12</code>、廠商序號（<code>BootNotification.chargePointSerialNumber</code>）、現場標籤「A12」。槍的編號 OCPP 說 <code>connectorId: 2</code>，現場貼「B 槍」，通用語言叫 <code>CP-A12-2</code>。← 問「你到現場第一件事做什麼？怎麼確認你面前這根就是工單上那根？」</li>
+<li>❌ <b>遠端重啟能解決約 30%</b>：<code>InternalError</code>、<code>WeakSignal</code>、<code>ReaderFailure</code> 通常重啟就好；<code>GroundFailure</code>、<code>PowerMeterFailure</code> 一定要到場。← 他抱怨「很多不用跑」，我沒問「哪些不用？比例？」。</li>
+<li>✅ <b>離線回報</b>：他在地下室完成維修時 App 沒訊號，回到地面才同步。曾經因此工單被判「逾時」。← 問「你修好之後，工單是怎麼關掉的？」</li>
+<li>✅ <b>修復驗證是誰的責任不清楚</b>：樁回報 <code>Available</code> 後，他覺得修好了，但 Vicky 要看到 30 分鐘沒再故障才關單。← 同上一題追問「那誰決定算修好？」</li>
+<li>❌ <b>他最需要的診斷資料是故障前 10 分鐘的計量與狀態序列</b>，但現在只能打電話問小美。← 他說「打電話問小美數據」，我沒問「問什麼數據」。</li>
+</ol>
+<p>Claude 出戲時說：我沒問到 <b>2</b> 個。</p>
+<h5>他用的詞（原話，逐字）</h5>
+<ul>
+<li>「編號對不上。總部叫它 A12，機器上貼的是廠商的序號，現場那張貼紙又是另一個。」</li>
+<li>「工單寫 2 號槍，現場貼 B 槍，我要猜。」</li>
+<li>「一半以上遠端重啟就好，先試遠端行不行再派我。」</li>
+<li>「我在地下室，回報要等我上來。上次因為這樣被算逾時。」</li>
+<li>「修好了啊，樁都回 Available 了。可是 Vicky 說要 30 分鐘沒再跳。」</li>
+<li>「我到場都先拍照、打給小美問數據、重啟。」</li>
+</ul>
+<h5>交接</h5>
+<div class="table-scroll"><table>
+<tr><th>從</th><th>到</th><th>方式</th><th>頻率</th><th>出錯過嗎</th></tr>
+<tr><td>阿豪</td><td>小美</td><td>電話問故障前數據</td><td>每次到場</td><td>小美忙就等</td></tr>
+<tr><td>阿豪</td><td>Vicky</td><td>LINE「修好了」</td><td>每張單</td><td>地下室沒訊號，被判逾時</td></tr>
+<tr><td>工單</td><td>阿豪</td><td>App（樁號 / 槍號）</td><td>每張單</td><td>三套編號對不上</td></tr>
+</table></div>
+
+<h4>跨角色矛盾（≥ 3 條：A 說 X，B 說 Y）</h4>
+<ol>
+<li><b>「開始」是什麼時候</b>——小美：「插槍就算開始充電啊，車主是這樣認為的。」vs 老陳：「沒授權的不算充電，不能收錢。」→ 插槍與授權是兩個時間點；誰擁有「開始」？</li>
+<li><b>「會話」是什麼</b>——阿忠：會話 = 車從進來到出去（14:02 → 14:33）；小美：會話 = 插槍到拔槍（14:04 → 14:31）。同一個字、兩個生命週期。阿忠自己說「你要是把這兩件事做成同一個東西，我們兩個都會罵你」。</li>
+<li><b>故障是幾點發生的</b>——Vicky：「SLA 從我知道開始算」（客服接到電話）；阿忠：「我 18:25 才看到它在閃」；阿豪：「它早就壞了」。三個時間：設備申告、人看到、人打電話。</li>
+<li><b>什麼叫修好</b>——阿豪：「樁都回 Available 了」；Vicky：「要 30 分鐘沒再跳才關單」。恢復可售的定義沒有人擁有。</li>
+<li><b>什麼叫壞</b>——阿忠：「樁又壞了」（十次有五次是 App 或卡）；小美：看得懂後台的「Faulted」，只有那個才算。「壞」在現場是客訴，在總部是故障碼。</li>
+<li><b>帳務要不要知道派工</b>——Vicky：「帳務問技術員到了沒，關他們什麼事」；老陳：「這根樁停售三天我月底才知道」。老陳要的不是「技術員已出發」，是「停售了多久」。</li>
+</ol>
+
+<h4>我引導了他們嗎？（誠實）</h4>
+<ul>
+<li>對阿忠問了「你覺得需要 offline mode 嗎」——引導式，而且他聽不懂。改問「上次斷線你一步一步做了什麼」之後才問出紙本流程。</li>
+<li>對老陳問了「你要即時出帳嗎」——他說不用；差點漏掉「可以晚但不能少」，是他自己補的。</li>
+<li>對阿豪第一題問了「你懂 OCPP 嗎」——他開始講 BootNotification，浪費了 2 分鐘才拉回「你到現場第一件事做什麼」。</li>
+</ul>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 2</p>
+<p><b>驗收看哪一行：</b>(1) 每位角色的「隱藏事實」小節，每條後面有沒有「← 我用哪個問題問到的」——沒有的多半是抄 <code>stakeholders.md</code>；(2) 「原話」小節有沒有引號與土話（「桿子」「那把槍」「跳」），出現 <code>ChargingSession</code>、<code>Bounded Context</code> 就是 Claude 出戲替他翻譯了，或他先讀了 glossary；(3) 每位的「Claude 出戲時說：我沒問到 N 個」與 ✅/❌ 數量對不對得起來。及格線每人 ≥ 1、合計 ≥ 5；本頁參考版 18/25。學員實際多落在 8–12。</p>
+<p><b>常見失真：</b>矛盾寫成「阿忠想要按鈕、小美想要報表」——那是需求差異不是矛盾。矛盾的形式必須是「同一個詞 / 同一件事，兩個人說法不同」。攔法：問「這兩個人在講同一個東西嗎？如果是，誰對？」。另一個失真是 10 分鐘只問到一條事實就換人；<code>/interview</code> 的角色在 5–8 回合會問「要不要換人」，學員常順勢就換——講師 kickoff 要先講「說『繼續』它會再給你 4 回合」。</p>
+<p><b>怎麼攔引導式問題：</b>走動時聽到「你需要……嗎」「你覺得應該……吧」就站到旁邊，等他問完看角色怎麼答（通常是「你講中文」或「對啊」），然後只說一句：「他剛才回答的是你的假設還是他的事實？」</p>
+</div>
+</section>
+
+<section>
+<p class="eyebrow">BLOCK 3 · AS-IS / TO-BE 與 BPR 四原則 · 90 分</p>
+<h2>把那個下午攤平，圈出七個人當 API</h2>
+<h3>實況</h3>
+<p>14:00 開始。前 40 分鐘學員把訪談翻成時間線：骨架是 curriculum §1.6 的 14:02 → 14:04 → 14:31 → 14:33 → 18:10，但訪談出來的故障支線會延伸到隔天下午與月底，這是正常的——時間線不等距。學員最常在這裡卡的是「人當 API 圈不到 4 個」，因為他只寫了正常午後；講師走過去只說「18:10 之後誰看到、誰通知、誰開單、誰派人、誰確認修好」。14:40 起寫 To-Be：每個交接點套一條原則就夠，決定「改 / 不改」，保留的人工步驟要有理由。15:10 跑 <code>/bpr-review</code>，它會挑一個「你漏掉的交接點，在時間線的哪一段」與一條「斷線時站不站得住」的原則；修完 15:25 再跑一次，沒有新的漏掉才算過。</p>
+
+<h3>As-Is 時間線：逐步揭露</h3>
+<p>四步：正常午後 → 故障支線 → 圈出人當 API → 斷線情境。第 3 步出現的紅點就是 <code>as-is.md</code> 要編號的交接點。</p>
+<section data-stepper data-step="1" data-max="4">
+  <ol class="steps"><li data-goto="1">1 正常午後 14:02–14:33</li><li data-goto="2">2 故障支線 18:10 → 月底</li><li data-goto="3">3 圈人當 API（7 處）</li><li data-goto="4">4 斷線情境</li></ol>
+  <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="step-note" data-note="1"><p>第 1 步：只寫正常午後。每一行開頭是時間，寫「顧客 / 現場在做什麼、哪個系統、哪個人」。注意 14:03 與 14:04 是兩行——占用與充電不是同一個時間點。助教此時只問：「14:05 那通電話，阿忠是在做判斷，還是在搬資訊？」</p></div>
+  <div class="step-note" data-note="2"><p>第 2 步：故障支線。學員通常寫到「客服開單」就停；要逼他寫到「誰把樁重新上架」。時間線會跨到隔天與月底——那是真的，不要為了整齊砍掉。助教問：「Vicky 早上看到的是 1 張還是 20 張？」</p></div>
+  <div class="step-note" data-note="3"><p>第 3 步：圈交接。判準只有一個：一個人把 A 系統的資料讀出來，用電話 / email / LINE / 手 key 放進 B 系統或另一個人的腦袋。每個紅點寫 sensor / transport / deserializer 與代價。「阿忠拿鑰匙抬桿」不是交接（那是決策），「他隔天拍日誌本 email 老陳」才是。</p></div>
+  <div class="step-note" data-note="4"><p>第 4 步：把「總部斷線」當第一公民寫一段。進場、充電、放行、故障、對帳各一行——As-Is 在斷線時哪些還走得通、靠什麼走得通（通常是靠阿忠）。這一段是 To-Be 保留人工放行的理由來源。</p></div>
+  <ol class="timeline" data-step-target>
+    <li data-from="1"><span class="t">14:02</span>ABC-1234 開到閘門。LPR 認出是月票車，桿子自己開；停車場系統開了停車會話 P-441。阿忠螢幕 1 多一台車。</li>
+    <li data-from="1"><span class="t">14:03</span>車停進 3 號充電車位，車位感測器回報占用；阿忠螢幕 1 那格變紅。<b>此時沒有人在充電。</b></li>
+    <li data-from="1"><span class="t">14:04</span>車主把 CP-A12-2 的槍插上、刷 TAG-MONTHLY-77；樁向廠商後台線上授權；螢幕「充電中」；S-991 從 0 Wh 起算。阿忠螢幕 2 只顯示「上線」。</li>
+    <li data-from="1"><span class="t">14:05</span>另一位車主在同一把槍刷卡，樁顯示 Blocked，他按對講機。阿忠看不出這把槍在不在充，<b>打市話給小美</b>；小美查後台回「2 號槍 14:04 有人在充」，阿忠叫客人去 4 號位。</li>
+    <li class="hot" data-from="3"><span class="t">#1</span>交接 · 阿忠 → 小美（市話）。sensor = 阿忠的眼睛看到對講機與螢幕 2；transport = 市話；deserializer = 小美讀廠商後台再唸給他。代價：客人等 3–5 分鐘；小美不在就沒人答；一天 2–3 次。</li>
+    <li data-from="1"><span class="t">14:13 / 14:22</span>樁回報計量 4,000 Wh、8,000 Wh。廠商後台看得到，值班室看不到，帳務更看不到。</li>
+    <li data-from="1"><span class="t">14:31</span>車主在 App 按停止；樁螢幕「本次 12.4 kWh」；廠商後台記一筆結束。</li>
+    <li data-from="1"><span class="t">14:33</span>車開到出口閘門——<b>總部連線斷了</b>，臨停出票要總部，桿子不開；客人按對講機。阿忠拿鑰匙出去手動抬桿，回來在日誌本寫「ABC-1234 14:33 斷線人工放行」。</li>
+    <li class="hot" data-from="3"><span class="t">#2</span>交接 · 阿忠 → 老陳（日誌本 → 隔天拍照 → email）。sensor = 阿忠的手寫；transport = email；deserializer = 老陳看照片手 key 進 ERP 補費。代價：延遲一天；每月 3–4 次、漏過 ≥ 2 次；漏了誰也不知道，老陳背「查不到」。</li>
+    <li data-from="2"><span class="t">18:10</span>沒有車在充。CP-A12 螢幕閃紅（GroundFailure），廠商網頁上它變成「離線」。值班室沒人——阿忠在巡場。</li>
+    <li data-from="2"><span class="t">18:15 起</span>樁每 5 分鐘重送一次 Faulted 給廠商後台。沒有人在聽。</li>
+    <li data-from="2"><span class="t">18:25</span>阿忠回值班室看到閃紅，打總部客服專線：報場站、唸「A12」、唸螢幕上那串英文。</li>
+    <li class="hot" data-from="3"><span class="t">#4</span>交接 · 阿忠 → 客服（市話）。sensor = 阿忠的眼睛（樁 18:10 就說了，人 18:25 才看到）；transport = 市話；deserializer = 客服聽寫。代價：從看到到工單存在平均 20 分鐘；唸錯樁號 / 故障碼；22:00 後沒人接，晚上壞的等隔天；SLA 從電話起算，晚了 25 分鐘。</li>
+    <li data-from="2"><span class="t">18:35</span>客服在客服系統手 key 一張工單（樁號「A12」、故障碼照唸）。之後樁每重送一次，客服再開一張——一晚 20 張。</li>
+    <li class="hot" data-from="3"><span class="t">#5</span>交接 · 客服 → 客服系統（手 key）。sensor = 客服的耳朵；transport = 鍵盤；deserializer = 客服系統表單。代價：10 分鐘一張；同樁同碼開 20 張；「A12」對不到資產編號 CP-A12；Vicky 隔天要一張一張挑。</li>
+    <li data-from="2"><span class="t">隔天 08:30</span>Vicky 打開客服系統，看到 20 張一樣的單，挑一張整理進 Google Sheet，用 LINE 派給阿豪：樁號、地址、故障碼。沒有寫要帶什麼備品。</li>
+    <li class="hot" data-from="3"><span class="t">#6</span>交接 · Vicky → 阿豪（Sheet → LINE）。sensor = Vicky 的眼睛挑單；transport = LINE；deserializer = 阿豪讀訊息。代價：一個晚上的等待；備品資訊沒帶上，白跑一趟的機率高；一張單有沒有兩個人去，靠記憶。</li>
+    <li data-from="2"><span class="t">隔天 09:00</span>阿忠把日誌本那頁拍照 email 給老陳（14:33 那台的放行）。這次沒漏。</li>
+    <li data-from="2"><span class="t">隔天 13:00</span>阿豪到場。工單寫「2 號槍」、現場貼「B 槍」、機器上是廠商序號，先花 10 分鐘對編號。打電話問小美「故障前 10 分鐘的度數與狀態」。備品箱裡有接地模組，開始換。</li>
+    <li class="hot" data-from="3"><span class="t">#7</span>交接 · 阿豪 → 小美（電話）。sensor = 小美讀廠商後台；transport = 電話；deserializer = 阿豪在地下室邊聽邊記。代價：10 分鐘；小美忙就等；資料早就存在後台，只是阿豪拿不到。</li>
+    <li data-from="2"><span class="t">隔天 14:30</span>換好，樁回 Available。阿豪覺得修好了，LINE 回報「修好了」——地下室沒訊號，15:00 上到地面才送出。</li>
+    <li data-from="2"><span class="t">隔天 15:00</span>Vicky 看到 LINE，等 30 分鐘沒再跳，手動關單。樁恢復可售。老陳不知道這根樁停售了 21 小時。</li>
+    <li data-from="2"><span class="t">月底</span>老陳匯出停車系統與廠商後台兩份報表，Excel 用車牌對：ABC-1234 月票停車 0 元 + 12.4 度 × 8 = 99.2 元，合併成 INV-778。另一台斷線放行的臨停車查不到停車費。廠商重送過一天的資料，有一個會話出了兩張。</li>
+    <li class="hot" data-from="3"><span class="t">#3</span>交接 · 老陳 → 老陳的 Excel（車牌 VLOOKUP）。sensor = 兩份報表；transport = 匯出 / 匯入；deserializer = 老陳。代價：每月最後三天不接電話；車隊車對不到人；重送造成重複出帳；精度只有一位小數。</li>
+    <li data-from="4"><span class="t">斷線 · 進場</span>月票車 LPR 本機名單認得，桿子開；臨停車要總部出票，桿子不開 → 阿忠鑰匙。</li>
+    <li data-from="4"><span class="t">斷線 · 充電</span>月票卡有 24 小時快取白名單刷得過；車隊卡與臨停 App 被拒（小美說的）。樁照充、照計量，資料先留在樁上。</li>
+    <li data-from="4"><span class="t">斷線 · 放行</span>紙本流程：鑰匙、日誌本、隔天 email（交接 #2）。是唯一在斷線時「一定走得通」的步驟——因為它完全不依賴總部。</li>
+    <li data-from="4"><span class="t">斷線 · 故障</span>電話照打（交接 #4），但廠商網頁顯示「離線」，阿忠分不出是樁壞還是網路斷；客服只能先開單。</li>
+    <li data-from="4"><span class="t">斷線 · 對帳</span>全部事後補：email、月底 Excel。可以晚，但已經漏過兩次——老陳要的是「查得到」。</li>
+  </ol>
+</section>
+
+<figure class="wide">
+  <p class="title">As-Is 泳道圖：那個下午、那個晚上、隔天、月底</p><p class="subtitle">六條泳道、九個時間點（不等距）。紅箭頭與紅膠囊是人當 API，共 7 處。</p>
+  <div class="diagram"><svg viewBox="0 0 960 620" role="img" aria-label="As-Is 泳道圖：顧客、閘門與 LPR、樁 CP-A12、阿忠、總部人員、老陳六條泳道；14:02 進場、14:04 插槍、14:31 結束、14:33 斷線放行、18:10 故障、18:25 打電話、隔天早上派工、隔天下午維修、月底對帳；紅色標出七個人當 API 交接">
+    <!-- lane backgrounds -->
+    <rect class="zone plain" x="0" y="40" width="948" height="90"/>
+    <rect class="zone plain" x="0" y="220" width="948" height="90"/>
+    <rect class="zone plain" x="0" y="400" width="948" height="90"/>
+    <!-- lane labels -->
+    <text class="t b" x="8" y="90">顧客</text>
+    <text class="t b" x="8" y="180">閘門 + LPR</text>
+    <text class="t b" x="8" y="262">樁</text><text class="t m" x="8" y="280">CP-A12</text>
+    <text class="t b" x="8" y="360">阿忠</text>
+    <text class="t b" x="8" y="440">總部人員</text><text class="t s" x="8" y="456">小美 · 客服</text><text class="t s" x="8" y="470">Vicky · 阿豪</text>
+    <text class="t b" x="8" y="540">老陳</text>
+    <!-- time headers -->
+    <text class="t a" x="143" y="26" text-anchor="middle">14:02</text>
+    <text class="t a" x="237" y="26" text-anchor="middle">14:04</text>
+    <text class="t a" x="331" y="26" text-anchor="middle">14:31</text>
+    <text class="t a" x="425" y="26" text-anchor="middle">14:33</text>
+    <text class="t a" x="519" y="26" text-anchor="middle">18:10</text>
+    <text class="t a" x="613" y="26" text-anchor="middle">18:25</text>
+    <text class="t a" x="707" y="26" text-anchor="middle">隔天早上</text>
+    <text class="t a" x="801" y="26" text-anchor="middle">隔天下午</text>
+    <text class="t a" x="895" y="26" text-anchor="middle">月底</text>
+    <!-- 顧客 lane (mid 85) -->
+    <rect class="box" x="98" y="57" width="90" height="56" rx="4"/><text class="t" x="143" y="79" text-anchor="middle">到閘門</text><text class="t m" x="143" y="97" text-anchor="middle">ABC-1234</text>
+    <rect class="box" x="192" y="57" width="90" height="56" rx="4"/><text class="t" x="237" y="79" text-anchor="middle">插槍 · 刷卡</text><text class="t s" x="237" y="97" text-anchor="middle">月票卡</text>
+    <rect class="box" x="286" y="57" width="90" height="56" rx="4"/><text class="t" x="331" y="79" text-anchor="middle">App 按停止</text><text class="t s" x="331" y="97" text-anchor="middle">12.4 kWh</text>
+    <rect class="box" x="380" y="57" width="90" height="56" rx="4"/><text class="t" x="425" y="79" text-anchor="middle">到出口</text><text class="t s" x="425" y="97" text-anchor="middle">桿子不開</text>
+    <!-- 閘門 lane (mid 175) -->
+    <rect class="box" x="98" y="147" width="90" height="56" rx="4"/><text class="t" x="143" y="169" text-anchor="middle">LPR 辨識</text><text class="t s" x="143" y="187" text-anchor="middle">開桿 · P-441</text>
+    <rect class="box" x="380" y="147" width="90" height="56" rx="4"/><text class="t" x="425" y="169" text-anchor="middle">總部斷線</text><text class="t s" x="425" y="187" text-anchor="middle">不開桿</text>
+    <!-- 樁 lane (mid 265) -->
+    <rect class="box" x="192" y="237" width="90" height="56" rx="4"/><text class="t" x="237" y="259" text-anchor="middle">線上授權</text><text class="t s" x="237" y="277" text-anchor="middle">充電中 S-991</text>
+    <rect class="box" x="286" y="237" width="90" height="56" rx="4"/><text class="t" x="331" y="259" text-anchor="middle">結束</text><text class="t s" x="331" y="277" text-anchor="middle">12,400 Wh</text>
+    <rect class="box" x="474" y="237" width="90" height="56" rx="4"/><text class="t" x="519" y="259" text-anchor="middle">螢幕閃紅</text><text class="t s" x="519" y="277" text-anchor="middle">GroundFailure</text>
+    <rect class="box" x="568" y="237" width="90" height="56" rx="4"/><text class="t" x="613" y="259" text-anchor="middle">每 5 分重送</text><text class="t s" x="613" y="277" text-anchor="middle">Faulted</text>
+    <!-- 阿忠 lane (mid 355) -->
+    <rect class="box" x="192" y="327" width="90" height="56" rx="4"/><text class="t" x="237" y="349" text-anchor="middle">打給小美</text><text class="t s" x="237" y="367" text-anchor="middle">在充嗎？</text>
+    <rect class="box" x="380" y="327" width="90" height="56" rx="4"/><text class="t" x="425" y="349" text-anchor="middle">鑰匙抬桿</text><text class="t s" x="425" y="367" text-anchor="middle">寫日誌本</text>
+    <rect class="box" x="568" y="327" width="90" height="56" rx="4"/><text class="t" x="613" y="349" text-anchor="middle">18:25 看到</text><text class="t s" x="613" y="367" text-anchor="middle">打客服專線</text>
+    <rect class="box" x="662" y="327" width="90" height="56" rx="4"/><text class="t" x="707" y="349" text-anchor="middle">拍日誌本</text><text class="t s" x="707" y="367" text-anchor="middle">email 老陳</text>
+    <!-- 總部 lane (mid 445) -->
+    <rect class="box" x="192" y="417" width="90" height="56" rx="4"/><text class="t" x="237" y="439" text-anchor="middle">小美查後台</text><text class="t s" x="237" y="457" text-anchor="middle">回電</text>
+    <rect class="box" x="568" y="417" width="90" height="56" rx="4"/><text class="t" x="613" y="439" text-anchor="middle">客服手 key</text><text class="t s" x="613" y="457" text-anchor="middle">工單 ×20</text>
+    <rect class="box" x="662" y="417" width="90" height="56" rx="4"/><text class="t" x="707" y="439" text-anchor="middle">Vicky 挑單</text><text class="t s" x="707" y="457" text-anchor="middle">LINE 派阿豪</text>
+    <rect class="box" x="756" y="417" width="90" height="56" rx="4"/><text class="t" x="801" y="439" text-anchor="middle">阿豪到場</text><text class="t s" x="801" y="457" text-anchor="middle">對編號 · 修</text>
+    <!-- 老陳 lane (mid 535) -->
+    <rect class="box" x="662" y="507" width="90" height="56" rx="4"/><text class="t" x="707" y="529" text-anchor="middle">收 email</text><text class="t s" x="707" y="547" text-anchor="middle">補停車費</text>
+    <rect class="box" x="850" y="507" width="90" height="56" rx="4"/><text class="t" x="895" y="529" text-anchor="middle">車牌對帳</text><text class="t s" x="895" y="547" text-anchor="middle">Excel · ERP</text>
+    <!-- plain arrows -->
+    <path class="ar thin" d="M143 113 L143 147"/>
+    <path class="ar thin" d="M237 113 L237 237"/>
+    <path class="ar thin" d="M331 237 L331 113"/>
+    <path class="ar thin" d="M425 113 L425 147"/>
+    <path class="ar thin" d="M425 203 L425 327"/><text class="t s" x="433" y="270">對講機</text>
+    <path class="ar thin" d="M519 293 L568 327"/><text class="t s" x="519" y="350" text-anchor="middle">沒人看 15 分</text>
+    <path class="ar thin" d="M425 327 L425 318 L707 318 L707 327"/><text class="t s" x="566" y="314" text-anchor="middle">日誌本躺一晚</text>
+    <!-- human hops -->
+    <path class="ar bad" d="M237 383 L237 417"/>
+    <rect class="st hot" x="246" y="391" width="70" height="18" rx="9"/><text class="t s" x="281" y="404" text-anchor="middle">#1 市話</text>
+    <path class="ar bad" d="M707 383 L707 507"/>
+    <rect class="st hot" x="716" y="436" width="96" height="18" rx="9"/><text class="t s" x="764" y="449" text-anchor="middle">#2 email 隔天</text>
+    <rect class="st hot" x="850" y="489" width="90" height="18" rx="9"/><text class="t s" x="895" y="502" text-anchor="middle">#3 車牌對帳</text>
+    <path class="ar bad" d="M613 383 L613 417"/>
+    <rect class="st hot" x="622" y="391" width="70" height="18" rx="9"/><text class="t s" x="657" y="404" text-anchor="middle">#4 市話</text>
+    <rect class="st hot" x="568" y="474" width="90" height="18" rx="9"/><text class="t s" x="613" y="487" text-anchor="middle">#5 手 key ×20</text>
+    <path class="ar bad" d="M707 417 L707 408 L801 408 L801 417"/>
+    <rect class="st hot" x="724" y="399" width="60" height="18" rx="9"/><text class="t s" x="754" y="412" text-anchor="middle">#6 LINE</text>
+    <rect class="st hot" x="756" y="474" width="90" height="18" rx="9"/><text class="t s" x="801" y="487" text-anchor="middle">#7 電話問小美</text>
+    <!-- legend -->
+    <text class="t s" x="8" y="604">紅箭頭 / 紅膠囊 = 人當 API（7 處）· 細箭頭 = 實體動作或對講機 · 時間軸不等距 · 老陳在故障那條線上完全沒有節點，他月底才知道樁停售了 21 小時。</text>
+  </svg></div>
+  <figcaption>看阿忠那條泳道：四個方塊有三個是在替別人搬資訊。看老陳那條：兩個方塊都在事後。看樁那條：18:10 它就說話了，但下一個聽到的人在 18:25。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>時間</th><th>顧客</th><th>閘門 + LPR</th><th>樁 CP-A12</th><th>阿忠</th><th>總部人員</th><th>老陳</th></tr>
+<tr><td>14:02</td><td>到閘門 ABC-1234</td><td>LPR 辨識、開桿、P-441</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>14:04</td><td>插槍、刷月票卡</td><td></td><td>線上授權、充電中 S-991</td><td>打給小美「在充嗎」（#1 市話）</td><td>小美查後台回電</td><td></td></tr>
+<tr><td>14:31</td><td>App 按停止 12.4 kWh</td><td></td><td>結束 12,400 Wh</td><td></td><td></td><td></td></tr>
+<tr><td>14:33</td><td>到出口、桿子不開</td><td>總部斷線、不開桿</td><td></td><td>鑰匙抬桿、寫日誌本（對講機）</td><td></td><td></td></tr>
+<tr><td>18:10</td><td></td><td></td><td>螢幕閃紅 GroundFailure</td><td>（在巡場，沒人看 15 分）</td><td></td><td></td></tr>
+<tr><td>18:25</td><td></td><td></td><td>每 5 分重送 Faulted</td><td>看到、打客服專線（#4 市話）</td><td>客服手 key 工單 ×20（#5）</td><td></td></tr>
+<tr><td>隔天早上</td><td></td><td></td><td></td><td>拍日誌本 email 老陳（#2）</td><td>Vicky 挑單、LINE 派阿豪（#6）</td><td>收 email 補停車費</td></tr>
+<tr><td>隔天下午</td><td></td><td></td><td></td><td></td><td>阿豪到場、對編號、電話問小美（#7）、修、LINE 回報、Vicky 關單</td><td></td></tr>
+<tr><td>月底</td><td></td><td></td><td></td><td></td><td></td><td>車牌對帳 Excel / ERP（#3）</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day1/as-is.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
+<h4>As-Is 顧客旅程（14:02 → 18:10 那個下午，以及它的尾巴）</h4>
+<p>來源：五位訪談的原話（<code>interviews.md</code>）。畫的時候不改任何蠢步驟，包括「日誌本躺一晚」。時間線不等距：正常午後 31 分鐘，故障支線 21 小時，帳務尾巴到月底。</p>
+<h4>旅程表</h4>
+<div class="table-scroll"><table>
+<tr><th class="nowrap">時間</th><th>顧客 / 現場在做什麼</th><th>哪個系統</th><th>哪個人</th><th class="nowrap">「人當 API」？</th></tr>
+<tr><td class="nowrap">14:02</td><td>ABC-1234 到閘門，月票車，桿子自開；停車會話 P-441 開始</td><td>停車場系統（LPR、閘門）</td><td>— （阿忠螢幕 1 看到多一台車）</td><td>否</td></tr>
+<tr><td class="nowrap">14:03</td><td>停進 3 號充電車位；車位感測器回報占用，螢幕 1 那格變紅</td><td>停車場系統</td><td>—</td><td>否，但「占用 ≠ 充電」，兩個螢幕不會講話</td></tr>
+<tr><td class="nowrap">14:04</td><td>插 CP-A12-2、刷 TAG-MONTHLY-77；樁線上授權；螢幕「充電中」；S-991 從 0 Wh 起</td><td>樁 → 廠商後台</td><td>—（阿忠螢幕 2 只顯示「上線」）</td><td>否</td></tr>
+<tr><td class="nowrap">14:05</td><td>另一位車主在同一把槍刷卡，Blocked，按對講機；阿忠分不出這把槍在不在充，打給小美；小美查後台回「2 號槍 14:04 有人在充」；阿忠叫客人去 4 號位</td><td>樁、廠商後台</td><td>阿忠 → 小美</td><td><b>是 #1</b>（市話）</td></tr>
+<tr><td class="nowrap">14:13 / 14:22</td><td>計量 4,000 / 8,000 Wh</td><td>樁 → 廠商後台</td><td>—</td><td>否</td></tr>
+<tr><td class="nowrap">14:31</td><td>車主 App 按停止；螢幕「本次 12.4 kWh」</td><td>樁 → 廠商後台</td><td>—</td><td>否</td></tr>
+<tr><td class="nowrap">14:33</td><td>到出口閘門，總部斷線，桿子不開；阿忠鑰匙抬桿，日誌本寫「ABC-1234 14:33 斷線人工放行」</td><td>閘門（斷線）、日誌本</td><td>阿忠（決策：放行）</td><td>放行本身<b>否</b>——那是決策；記錄與傳遞見 #2</td></tr>
+<tr><td class="nowrap">隔天 09:00</td><td>阿忠把日誌本那頁拍照 email 給老陳補停車費</td><td>email → ERP</td><td>阿忠 → 老陳</td><td><b>是 #2</b>（日誌本 → 照片 → email → 手 key）</td></tr>
+<tr><td class="nowrap">18:10</td><td>沒有車在充；CP-A12 螢幕閃紅 GroundFailure；廠商網頁顯示「離線」；值班室沒人</td><td>樁 → 廠商後台</td><td>—（阿忠在巡場）</td><td>否，但沒有人在聽</td></tr>
+<tr><td class="nowrap">18:15 起</td><td>樁每 5 分鐘重送一次 Faulted</td><td>樁 → 廠商後台</td><td>—</td><td>否</td></tr>
+<tr><td class="nowrap">18:25</td><td>阿忠回來看到閃紅，打總部客服專線，報場站、唸「A12」、唸螢幕上的英文</td><td>市話</td><td>阿忠 → 客服</td><td><b>是 #4</b>（市話）</td></tr>
+<tr><td class="nowrap">18:35</td><td>客服在客服系統手 key 工單；之後每次重送再開一張，一晚 20 張</td><td>客服系統</td><td>客服</td><td><b>是 #5</b>（手 key）</td></tr>
+<tr><td class="nowrap">隔天 08:30</td><td>Vicky 從 20 張挑一張整理進 Sheet，LINE 派給阿豪：樁號、地址、故障碼；沒寫備品</td><td>客服系統 → Google Sheet → LINE</td><td>Vicky → 阿豪</td><td><b>是 #6</b>（LINE）</td></tr>
+<tr><td class="nowrap">隔天 13:00</td><td>阿豪到場，工單「2 號槍」現場「B 槍」，先對編號 10 分鐘；打電話問小美故障前 10 分鐘的數據；換接地模組</td><td>電話、廠商後台</td><td>阿豪 → 小美</td><td><b>是 #7</b>（電話）</td></tr>
+<tr><td class="nowrap">隔天 14:30</td><td>樁回 Available；阿豪 LINE 回報「修好了」，地下室沒訊號，15:00 才送出</td><td>LINE</td><td>阿豪 → Vicky</td><td>是（同 #6 的回程）</td></tr>
+<tr><td class="nowrap">隔天 15:00</td><td>Vicky 看到，等 30 分鐘沒再跳，手動關單；樁恢復可售。老陳不知道停售了 21 小時</td><td>客服系統</td><td>Vicky（決策：算修好）</td><td>關單是決策，否</td></tr>
+<tr><td class="nowrap">月底</td><td>老陳匯出兩份報表，Excel 用車牌對；ABC-1234：停車 0 元 + 12.4 度 × 8 = 99.2 元 → INV-778；斷線放行的臨停車查不到；廠商重送造成一個會話兩張帳</td><td>停車系統、廠商後台 → Excel → ERP</td><td>老陳</td><td><b>是 #3</b>（車牌 VLOOKUP）</td></tr>
+</table></div>
+
+<h4>「人當 API」的交接點（圈出來，7 個）</h4>
+<div class="table-scroll"><table>
+<tr><th>#</th><th class="nowrap">時間</th><th>誰 → 誰</th><th>sensor（誰的眼睛 / 耳朵）</th><th>transport</th><th>deserializer（誰把它 key 進去）</th><th>可追溯到的原話</th></tr>
+<tr><td>#1</td><td class="nowrap">14:05</td><td>阿忠 → 小美</td><td>阿忠看對講機 + 螢幕 2</td><td>市話</td><td>小美讀廠商後台唸回來</td><td>阿忠：「每天打給小美問這把槍在不在充、幾度了」</td></tr>
+<tr><td>#2</td><td class="nowrap">14:33 → 隔天 09:00</td><td>阿忠 → 老陳</td><td>阿忠的手寫日誌本</td><td>拍照 → email</td><td>老陳看照片 key 進 ERP</td><td>阿忠：「隔天早上把那一頁拍照 email 給老陳」；老陳：「一個月漏一兩次」</td></tr>
+<tr><td>#3</td><td class="nowrap">月底</td><td>老陳 → 老陳的 Excel</td><td>兩份報表</td><td>匯出 / 匯入</td><td>老陳 VLOOKUP</td><td>老陳：「用車牌對，可是合併是按顧客」</td></tr>
+<tr><td>#4</td><td class="nowrap">18:25</td><td>阿忠 → 客服</td><td>阿忠的眼睛（樁 18:10 就說了）</td><td>市話（22:00 後無人）</td><td>客服聽寫</td><td>阿忠：「我唸 G-r-o-u-n-d 什麼的，客服再手打」</td></tr>
+<tr><td>#5</td><td class="nowrap">18:35 起</td><td>客服 → 客服系統 → Vicky 的 Sheet</td><td>客服的耳朵</td><td>鍵盤 → 客服系統 → 手動整理</td><td>客服表單、Vicky 挑單</td><td>Vicky：「同一根樁一個晚上 20 張單」</td></tr>
+<tr><td>#6</td><td class="nowrap">隔天 08:30</td><td>Vicky → 阿豪</td><td>Vicky 的眼睛</td><td>LINE</td><td>阿豪讀訊息</td><td>Vicky：「派出去才發現車上沒備品」；阿豪：「工單寫 2 號槍，現場貼 B 槍」</td></tr>
+<tr><td>#7</td><td class="nowrap">隔天 13:00</td><td>阿豪 → 小美</td><td>小美讀廠商後台</td><td>電話</td><td>阿豪在地下室記</td><td>阿豪：「到場都先拍照、打給小美問數據、重啟」</td></tr>
+</table></div>
+<p>沒圈的兩個，理由：14:33「阿忠拿鑰匙抬桿」是<b>決策</b>（他決定放行），不是搬資訊；隔天 15:00「Vicky 判斷算修好、關單」也是決策。<code>/bpr-review</code> 另外指出我漏了一個：14:03–14:05 之間「阿忠走出去看有沒有插槍、貼紙條」——他是停車系統與充電系統之間唯一的整合，補為 <b>#1b</b>（眼睛 / 走路 / 紙條；每天約 5 台）。</p>
+
+<h4>每個交接點的代價</h4>
+<div class="table-scroll"><table>
+<tr><th>#</th><th>等待多久</th><th>錯誤率 / 失敗模式</th><th>誰背鍋</th><th>如果他今天請假</th></tr>
+<tr><td>#1</td><td>客人等 3–5 分；一天 2–3 次</td><td>小美不在就沒人答；口頭轉述槍號會錯</td><td>阿忠接客訴</td><td>阿忠只能叫客人「換一根試試」</td></tr>
+<tr><td>#1b</td><td>每台 5–10 分（走出去看）</td><td>貼紙條不一定有人看</td><td>阿忠</td><td>充電位被占一整天，後面的車進不來</td></tr>
+<tr><td>#2</td><td>一天（日誌本躺一晚）</td><td>每月 3–4 次、漏 ≥ 2 次；漏了誰都不知道</td><td>老陳「查不到」</td><td>那幾筆停車費永遠補不到</td></tr>
+<tr><td>#3</td><td>月底三天</td><td>車隊車對不到人；重送造成兩張帳；kWh 一位小數差幾百元</td><td>老陳（稽核問他）</td><td>整個月結延後</td></tr>
+<tr><td>#4</td><td>看到才打（0–120 分）+ 等接聽 5 分；22:00 後等到隔天</td><td>唸錯樁號 / 故障碼；SLA 從電話起算，晚 15–25 分</td><td>阿忠「總部都不理我」</td><td>晚上壞的樁沒人申告，隔天客訴</td></tr>
+<tr><td>#5</td><td>10 分一張</td><td>同樁同碼 20 張；「A12」對不到 CP-A12</td><td>Vicky 隔天挑</td><td>工單根本不存在</td></tr>
+<tr><td>#6</td><td>一個晚上 + 挑單 30 分</td><td>沒帶備品白跑；兩人都以為對方會去</td><td>阿豪跑兩趟</td><td>沒有人被派</td></tr>
+<tr><td>#7</td><td>10 分；小美忙就更久</td><td>口頭轉述數據會錯；資料明明在後台</td><td>阿豪修錯方向</td><td>阿豪只能盲修 / 直接重啟</td></tr>
+</table></div>
+
+<h4>連線中斷時會發生什麼（As-Is）</h4>
+<ul>
+<li><b>進場</b>：月票車 LPR 本機名單認得，桿子開；臨停車要總部出票，桿子不開 → 客人按對講機 → 阿忠鑰匙抬桿。</li>
+<li><b>充電</b>：月票卡靠場站本機 24 小時快取白名單刷得過；車隊卡與臨停 App 被拒（小美）。樁照充照計量，資料留在樁上，恢復後才回廠商後台。</li>
+<li><b>放行</b>：完全是紙本——鑰匙、日誌本、隔天 email。這是 As-Is 唯一在斷線時「一定走得通」的步驟，因為它不依賴總部。</li>
+<li><b>故障</b>：電話照打（客服在總部，市話不受影響），但廠商網頁顯示「離線」，阿忠分不出是樁壞還是網路斷；客服只能先開單。</li>
+<li><b>對帳</b>：全部事後補。可以晚，但已經漏過兩次；老陳要的是「查得到」，不是「即時」。</li>
+</ul>
+<p>結論：As-Is 在斷線時之所以還活著，<b>全靠阿忠</b>。他是備援系統。To-Be 不能把他拿掉，只能把他從「搬運工」變成「例外處理者」。</p>
+
+<h4>增值時間與總時長</h4>
+<div class="table-scroll"><table>
+<tr><th>流程</th><th>總時長</th><th>增值時間</th><th>等待 / 傳話</th><th>占比</th></tr>
+<tr><td>正常午後（14:02 → 14:33）</td><td>31 分</td><td>27 分（充電）</td><td>#1 那通電話 3–5 分（顧客等）</td><td>增值 ~87%</td></tr>
+<tr><td>斷線放行到補費（14:33 → 隔天 09:00）</td><td>~18.5 小時</td><td>1 分（抬桿）</td><td>日誌本躺一晚</td><td>增值 &lt; 1%</td></tr>
+<tr><td>故障到恢復可售（18:10 → 隔天 15:00）</td><td>~21 小時</td><td>~40 分（對編號 10 + 換模組 30）</td><td>沒人看 15 分 + 電話 20 分 + 一晚 + 挑單 30 分 + 路程 + 地下室 30 分</td><td>增值 ~3%</td></tr>
+<tr><td>出帳（14:31 → 月底）</td><td>最多 30 天</td><td>—</td><td>全部是等待</td><td>—</td></tr>
+</table></div>
+</div></div>
+
+<figure class="wide">
+  <p class="title">To-Be 泳道圖：交接變成事實，人工放行留下</p><p class="subtitle">同樣六條泳道，時間點改成 18:10:00 / 18:10:08 / 18:12 / 18:18 那串真實的秒。虛線是事實（事件），粗框是刻意保留的人工步驟。</p>
+  <div class="diagram"><svg viewBox="0 0 960 620" role="img" aria-label="To-Be 泳道圖：樁自己申告故障，總部自動開單 WO-2208 並指派阿豪，看板讓阿忠看到；重複申告只附加、重送被忽略；阿豪驗證後關單、樁恢復可售；14:33 人工放行保留但變成被記錄的事實；老陳邊收事件邊合併草稿">
+    <rect class="zone plain" x="0" y="40" width="948" height="90"/>
+    <rect class="zone plain" x="0" y="220" width="948" height="90"/>
+    <rect class="zone plain" x="0" y="400" width="948" height="90"/>
+    <text class="t b" x="8" y="90">顧客</text>
+    <text class="t b" x="8" y="180">閘門 + LPR</text>
+    <text class="t b" x="8" y="262">樁</text><text class="t m" x="8" y="280">CP-A12</text>
+    <text class="t b" x="8" y="360">阿忠</text>
+    <text class="t b" x="8" y="440">總部</text><text class="t s" x="8" y="456">自動開單 · 派工</text><text class="t s" x="8" y="470">阿豪</text>
+    <text class="t b" x="8" y="540">老陳</text>
+    <text class="t a" x="143" y="26" text-anchor="middle">14:02</text>
+    <text class="t a" x="237" y="26" text-anchor="middle">14:04</text>
+    <text class="t a" x="331" y="26" text-anchor="middle">14:31</text>
+    <text class="t a" x="425" y="26" text-anchor="middle">14:33</text>
+    <text class="t a" x="519" y="26" text-anchor="middle">18:10:00</text>
+    <text class="t a" x="613" y="26" text-anchor="middle">18:10:08</text>
+    <text class="t a" x="707" y="26" text-anchor="middle">18:12</text>
+    <text class="t a" x="801" y="26" text-anchor="middle">18:18</text>
+    <text class="t a" x="895" y="26" text-anchor="middle">之後</text>
+    <!-- 顧客 -->
+    <rect class="box" x="98" y="57" width="90" height="56" rx="4"/><text class="t" x="143" y="79" text-anchor="middle">到閘門</text><text class="t m" x="143" y="97" text-anchor="middle">ABC-1234</text>
+    <rect class="box" x="192" y="57" width="90" height="56" rx="4"/><text class="t" x="237" y="79" text-anchor="middle">插槍 · 刷卡</text><text class="t s" x="237" y="97" text-anchor="middle">月票卡</text>
+    <rect class="box" x="286" y="57" width="90" height="56" rx="4"/><text class="t" x="331" y="79" text-anchor="middle">App 按停止</text><text class="t s" x="331" y="97" text-anchor="middle">12.4 kWh</text>
+    <rect class="box" x="380" y="57" width="90" height="56" rx="4"/><text class="t" x="425" y="79" text-anchor="middle">到出口</text><text class="t s" x="425" y="97" text-anchor="middle">出去了</text>
+    <!-- 閘門 -->
+    <rect class="box" x="98" y="147" width="90" height="56" rx="4"/><text class="t" x="143" y="169" text-anchor="middle">LPR 辨識</text><text class="t s" x="143" y="187" text-anchor="middle">車輛已進場</text>
+    <rect class="box core" x="380" y="147" width="90" height="56" rx="4"/><text class="t" x="425" y="169" text-anchor="middle">人工放行</text><text class="t s" x="425" y="187" text-anchor="middle">已記錄事實</text>
+    <!-- 樁 -->
+    <rect class="box" x="192" y="237" width="90" height="56" rx="4"/><text class="t" x="237" y="259" text-anchor="middle">本機白名單</text><text class="t s" x="237" y="277" text-anchor="middle">充電已開始</text>
+    <rect class="box" x="286" y="237" width="90" height="56" rx="4"/><text class="t" x="331" y="259" text-anchor="middle">12,400 Wh</text><text class="t s" x="331" y="277" text-anchor="middle">充電已結束</text>
+    <rect class="box" x="474" y="237" width="90" height="56" rx="4"/><text class="t" x="519" y="259" text-anchor="middle">申告故障</text><text class="t s" x="519" y="277" text-anchor="middle">GroundFailure</text>
+    <rect class="box" x="568" y="237" width="90" height="56" rx="4"/><text class="t" x="613" y="259" text-anchor="middle">再申告</text><text class="t s" x="613" y="277" text-anchor="middle">附加到 WO</text>
+    <rect class="box dim" x="662" y="237" width="90" height="56" rx="4"/><text class="t" x="707" y="259" text-anchor="middle">broker 重送</text><text class="t s" x="707" y="277" text-anchor="middle">同一則 · 忽略</text>
+    <rect class="box" x="756" y="237" width="90" height="56" rx="4"/><text class="t" x="801" y="259" text-anchor="middle">恢復可售</text><text class="t s" x="801" y="277" text-anchor="middle">工單已關閉</text>
+    <!-- 阿忠 -->
+    <rect class="box core" x="380" y="327" width="90" height="56" rx="4"/><text class="t" x="425" y="349" text-anchor="middle">按放行</text><text class="t s" x="425" y="367" text-anchor="middle">斷線也能</text>
+    <rect class="box" x="490" y="327" width="74" height="56" rx="4"/><text class="t" x="527" y="349" text-anchor="middle">看板顯示</text><text class="t m" x="527" y="367" text-anchor="middle">WO-2208</text>
+    <!-- 總部 -->
+    <rect class="box" x="474" y="417" width="90" height="56" rx="4"/><text class="t" x="519" y="439" text-anchor="middle">自動開單</text><text class="t s" x="519" y="457" text-anchor="middle">WO-2208 → 阿豪</text>
+    <rect class="box" x="568" y="417" width="90" height="56" rx="4"/><text class="t" x="613" y="439" text-anchor="middle">去重</text><text class="t s" x="613" y="457" text-anchor="middle">不開第二張</text>
+    <rect class="box dim" x="662" y="417" width="90" height="56" rx="4"/><text class="t" x="707" y="439" text-anchor="middle">認得 eventId</text><text class="t s" x="707" y="457" text-anchor="middle">什麼都不做</text>
+    <rect class="box core" x="756" y="417" width="90" height="56" rx="4"/><text class="t" x="801" y="439" text-anchor="middle">阿豪驗證</text><text class="t s" x="801" y="457" text-anchor="middle">關單 · 離線同步</text>
+    <!-- 老陳 -->
+    <rect class="box" x="192" y="507" width="90" height="56" rx="4"/><text class="t" x="237" y="529" text-anchor="middle">草稿帳單</text><text class="t m" x="237" y="547" text-anchor="middle">S-991</text>
+    <rect class="box" x="286" y="507" width="90" height="56" rx="4"/><text class="t" x="331" y="529" text-anchor="middle">12.4 度</text><text class="t s" x="331" y="547" text-anchor="middle">99.2 元</text>
+    <rect class="box" x="380" y="507" width="90" height="56" rx="4"/><text class="t" x="425" y="529" text-anchor="middle">P-441 對齊</text><text class="t s" x="425" y="547" text-anchor="middle">人工放行 · 0 元</text>
+    <rect class="box" x="850" y="507" width="90" height="56" rx="4"/><text class="t" x="895" y="529" text-anchor="middle">合併 INV-778</text><text class="t s" x="895" y="547" text-anchor="middle">P-441 + S-991</text>
+    <!-- arrows -->
+    <path class="ar thin" d="M143 113 L143 147"/>
+    <path class="ar thin" d="M237 113 L237 237"/>
+    <path class="ar thin" d="M331 237 L331 113"/>
+    <path class="ar ev" d="M237 293 L237 507"/><text class="t a" x="245" y="400">充電已開始</text>
+    <path class="ar ev" d="M331 293 L331 507"/><text class="t a" x="339" y="400">充電已結束</text>
+    <path class="ar" d="M425 327 L425 203"/><text class="t s" x="433" y="270">放行（命令）</text>
+    <path class="ar ev" d="M425 383 L425 507"/><text class="t a" x="433" y="450">停車已人工放行</text>
+    <path class="ar ev" d="M478 293 L478 417"/><text class="t a" x="484" y="318">充電器已申告故障</text>
+    <path class="ar ev" d="M540 417 L540 383"/><text class="t a" x="546" y="404">工單已開立</text>
+    <path class="ar ev" d="M613 293 L613 417"/><text class="t a" x="621" y="360">再申告</text>
+    <path class="ar ev" d="M707 293 L707 417"/><text class="t a" x="715" y="360">重送 · 同 eventId</text>
+    <path class="ar ev" d="M801 417 L801 293"/><text class="t a" x="809" y="360">工單已關閉</text>
+    <text class="t s" x="801" y="540" text-anchor="middle">（沒有「技術員已出發」）</text>
+    <text class="t s" x="8" y="604">虛線 = 事實（事件）· 實線 = 命令 · 粗框 = 保留的人工步驟（放行、修復驗證）· 灰底 = 什麼都不做也是一個決定 · 人當 API：0 · SLA 從 18:10:00 起算。</text>
+  </svg></div>
+  <figcaption>阿忠那條泳道只剩兩個方塊：一個是他自己的決定（放行），一個是他看到的（看板）。老陳從月底搬到了 14:04——但他仍然可以晚一點出帳；他要的從來不是即時，是不漏。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>時間</th><th>誰</th><th>To-Be 做什麼</th><th>產生的事實（過去式）</th><th>原則</th></tr>
+<tr><td>14:02</td><td>閘門 + LPR</td><td>辨識 ABC-1234、開桿</td><td>車輛已辨識進場</td><td>P3（現場決定）</td></tr>
+<tr><td>14:04</td><td>樁</td><td>本機白名單授權 TAG-MONTHLY-77</td><td>充電已授權開始 → 老陳草稿 S-991</td><td>P3、P2</td></tr>
+<tr><td>14:31</td><td>樁</td><td>結束計量 12,400 Wh</td><td>充電已結束 → 草稿 12.4 度 × 8 = 99.2 元</td><td>P2</td></tr>
+<tr><td>14:33</td><td>阿忠（保留）</td><td>斷線，按人工放行；按下那一刻就是被記錄的事實</td><td>停車已人工放行 → 老陳事後對齊 P-441</td><td>P3、P2</td></tr>
+<tr><td>18:10:00</td><td>樁 / 總部</td><td>樁申告 GroundFailure；總部自動開 WO-2208、指派阿豪；看板讓阿忠看到</td><td>充電器已申告故障、工單已開立</td><td>P1、P2、P4</td></tr>
+<tr><td>18:10:08</td><td>樁 / 總部</td><td>再申告；同樁同碼工單開放中 → 只附加，不開第二張</td><td>重複申告已附加</td><td>P2</td></tr>
+<tr><td>18:12</td><td>broker / 總部</td><td>同一則事實重送；認得 eventId，什麼都不做</td><td>（無）</td><td>—</td></tr>
+<tr><td>18:18</td><td>阿豪（保留）/ 總部 / 樁</td><td>阿豪回報修復驗證（離線也能，回連同步）；關單；樁恢復可售</td><td>工單已關閉、充電器已恢復可售</td><td>P1、P3、P4</td></tr>
+<tr><td>之後</td><td>老陳</td><td>合併 P-441 + S-991 → INV-778（按顧客）</td><td>帳單已開立</td><td>P4</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day1/to-be.md <span class="chip">交付物 · 完整參考版</span></p><div class="body">
+<h4>To-Be 流程與 BPR 四原則</h4>
+<p>原則編號照 <code>workshop/day1/TEMPLATE.md</code>：P1 以結果為導向組織、P2 讓使用資訊的人自己產生資訊、P3 一次在源頭擷取、P4 決策點放在工作發生的地方。（<code>docs/references/bpr.md</code> 的四條編號不同——它的 P4 是「以事件連接平行活動」；我在每處改動同時標上兩邊。）只改流程與責任，不寫「上 Kafka」。</p>
+<h4>To-Be 旅程表（改動處標 P#）</h4>
+<div class="table-scroll"><table>
+<tr><th class="nowrap">時間</th><th>To-Be：顧客 / 現場</th><th>誰決定</th><th>產生的事實</th><th>改動 / 原則</th></tr>
+<tr><td class="nowrap">14:02</td><td>ABC-1234 到閘門，LPR 辨識，桿子開；停車會話 P-441</td><td>閘門（場站本機）</td><td>車輛已辨識進場</td><td>不改（As-Is 已在本機決定）；斷線時臨停車也要能開 → P4 決策在現場</td></tr>
+<tr><td class="nowrap">14:03</td><td>停進 3 號充電車位</td><td>車位感測器</td><td>充電車位已占用</td><td>改：占用是一個事實，不等於充電；看板同時顯示「占用 + 沒在充」→ 阿忠不用走出去看（#1b）· P2</td></tr>
+<tr><td class="nowrap">14:04</td><td>插槍、刷 TAG-MONTHLY-77；場站本機白名單授權；開始計量</td><td>樁 / 場站本機</td><td>連接器已插上、充電已授權開始</td><td>改：授權在場站本機決定（As-Is 走廠商後台線上）· P4；帳務同時收到事實開草稿 · P2</td></tr>
+<tr><td class="nowrap">14:05</td><td>另一位車主刷卡，被拒（連接器占用中）；阿忠看板直接看到「2 號槍充電中」，用對講機叫客人去 4 號位</td><td>樁（拒絕）、阿忠（引導客人）</td><td>充電開始被拒</td><td>改：#1 電話拿掉，資訊由用它的人自己看 · P2；阿忠留下來做的是「引導客人」，不是「查資料」</td></tr>
+<tr><td class="nowrap">14:13 / 14:22</td><td>計量 4,000 / 8,000 Wh（帶時間戳）</td><td>樁</td><td>電量已計量</td><td>改：每筆帶時間，讓小美的跨時段計價可行 · P3（源頭一次擷取）；帳務此時什麼都不做</td></tr>
+<tr><td class="nowrap">14:31</td><td>App 按停止；12,400 Wh 整數、結束原因「車主自己停」</td><td>樁</td><td>充電已結束</td><td>改：度數用 Wh 整數、結束原因分類保存 · P3；帳務更新草稿 99.2 元</td></tr>
+<tr><td class="nowrap">14:33</td><td>總部斷線；阿忠按「人工放行」，桿子開；按下那一刻就是被記錄的事實</td><td><b>阿忠（保留）</b></td><td>停車已人工放行（含放行方式 = 人工）</td><td>改的是記錄方式，不是決定：#2 的日誌本 / email 拿掉 · P3；決策仍在現場 · P4</td></tr>
+<tr><td class="nowrap">連線恢復後</td><td>場站把斷線期間的事實補送總部；帳務對齊 P-441（月票 0 元）</td><td>—</td><td>（同上事實，延後送達）</td><td>改：「可以晚，不能漏」變成設計，不是靠阿忠記得拍照 · P3</td></tr>
+<tr><td class="nowrap">18:10:00</td><td>CP-A12 申告 GroundFailure；總部<b>自動</b>開 WO-2208、指派 TECH-HAO；場站看板顯示「WO-2208 / 阿豪 / 處理中」；SLA 從 18:10:00 起算</td><td>總部（自動）</td><td>充電器已申告故障、工單已開立、技術員已指派</td><td>改：#4 電話、#5 手 key 拿掉，樁自己申告 · P3；「故障 → 恢復可售」由一個結果擁有 · P1；阿忠從打電話的人變成看看板的人 · P2</td></tr>
+<tr><td class="nowrap">18:10:08</td><td>樁再申告同一故障；工單開放中 → 附加「重複申告」，不開第二張</td><td>總部（自動）</td><td>重複申告已附加</td><td>改：20 張變 1 張 · P3；Vicky 不用挑</td></tr>
+<tr><td class="nowrap">18:12</td><td>同一則申告被重送；認得是同一則，什麼都不做</td><td>總部（自動）</td><td>（無）</td><td>改：重送不是申告；老陳的「同一會話兩張帳」也是同一種病 · P3</td></tr>
+<tr><td class="nowrap">18:18（實際是隔天）</td><td>阿豪到場：工單帶三套編號對照 + 建議備品；他在地下室離線完成、回到地面同步；回報「修復驗證」</td><td><b>阿豪（保留）</b></td><td>修復已驗證</td><td>改：#6 LINE 變成工單本身帶齊資訊 · P3；#7 電話變成工單附故障前 10 分鐘的計量與狀態 · P2；離線回報是設計 · P4</td></tr>
+<tr><td class="nowrap">18:18</td><td>關單（結果：已修復）；樁恢復可售；場站看板更新</td><td>總部，依阿豪的驗證</td><td>工單已關閉、充電器已恢復可售</td><td>改：關單不再等 Vicky 看到 LINE · P1；「30 分鐘沒再跳才算」變成關單政策而不是 Vicky 的記憶</td></tr>
+<tr><td class="nowrap">之後</td><td>帳務按顧客合併 P-441 + S-991 → INV-778；開立後不可改，更正走更正單</td><td>老陳（保留：爭議與更正）</td><td>帳單已開立（、帳單已更正）</td><td>改：#3 車牌 VLOOKUP 拿掉，邊收事實邊合併 · bpr.md P4（以事件連接平行活動）；「改要留痕」變成規則</td></tr>
+</table></div>
+
+<h4>BPR 四原則檢核（每個交接點：改 / 不改 + 理由）</h4>
+<h5>P1 以結果為導向組織（不是以任務）</h5>
+<ul>
+<li><b>#4 + #5 + #6（故障申告 → 開單 → 派工 → 關單）</b>：改。As-Is 是四個部門各管一段（阿忠申告、客服開單、Vicky 派工、阿豪修、Vicky 關），沒有人擁有「樁恢復可售」這個結果。To-Be 由一個結果「故障 → 恢復可售」擁有整條線，SLA 從設備申告時間起算、到恢復可售為止。</li>
+<li><b>#3（月底合併出帳）</b>：改。「顧客拿到一張對的帳單」是結果；老陳擁有它，但不再靠他月底用車牌對。</li>
+</ul>
+<h5>P2 讓使用資訊的人自己產生資訊</h5>
+<ul>
+<li><b>#1（阿忠問小美這把槍在不在充）</b>：改。用這個資訊的人是阿忠（他要引導客人），所以看板直接顯示「這把槍現在能不能賣」；小美不再是人肉查詢介面。斷線時仍成立——看板資料來自場站本機的樁，不經總部。</li>
+<li><b>#1b（阿忠走出去看有沒有插槍）</b>：改。占用與充電兩個事實在同一個看板並排，「占著沒在充」自己跳出來。</li>
+<li><b>#7（阿豪打電話問小美故障前的數據）</b>：改。用資料的人是阿豪，工單開立時就附上故障前 10 分鐘的計量與狀態序列。<b>不在 MVP1</b>，列進待驗證假設。</li>
+<li><b>老陳要知道樁停售了幾天</b>：改。他訂閱「工單已關閉」（帶結果與時長）就夠了，不需要「技術員已出發」（Vicky 說那讓帳務被淹沒）。</li>
+</ul>
+<h5>P3 一次擷取資訊、在源頭擷取</h5>
+<ul>
+<li><b>#4（阿忠唸故障碼給客服）+ #5（客服手 key）</b>：改。故障碼在樁說出來的那一刻就是事實，不由人抄兩次。「A12」對不到 CP-A12 的問題也在這裡消失——源頭就是資產編號。</li>
+<li><b>#2（日誌本 → 拍照 → email）</b>：改。放行在按下去的那一刻就被記錄，帶「人工」這個放行方式；連線恢復後補送。阿忠不再是資料搬運工，但<b>放行的決定仍然是他的</b>（見 P4）。</li>
+<li><b>14:13 / 14:22 計量帶時間戳、14:31 度數用 Wh 整數、結束原因分類</b>：改。小美的跨時段計價、老陳的精度、小美的異常統計，三個痛都是「源頭沒擷取夠」。</li>
+<li><b>18:10:08 重複申告、18:12 重送</b>：改。同一件事只記一次；第二次申告附加、重送忽略。</li>
+</ul>
+<h5>P4 把決策點放到工作發生的地方</h5>
+<ul>
+<li><b>14:33 人工放行</b>：<b>不改決策，只改記錄</b>。斷線時誰有權放車出去？阿忠。他不需要總部同意——As-Is 就是這樣，而且它是唯一斷線時一定走得通的步驟。To-Be 保留它，理由見下一節。</li>
+<li><b>14:04 授權</b>：改。授權由場站本機白名單決定（月票卡 24 小時快取），總部只訂閱結果。斷線時月票車照充；車隊卡與 App 被拒是<b>正確的</b>（停權名單不在本機），不是 bug。</li>
+<li><b>18:18 阿豪離線回報</b>：改。他在地下室完成就算完成，回到地面同步；不再因為沒訊號被判逾時。</li>
+<li><b>Vicky 關單</b>：改。「30 分鐘沒再故障」變成關單的政策，不是 Vicky 看到 LINE 的時間。但<b>修復驗證仍由阿豪做</b>（保留）。</li>
+</ul>
+
+<h4>保留的人工步驟（以及為什麼保留）</h4>
+<div class="table-scroll"><table>
+<tr><th>步驟</th><th>誰</th><th>為什麼保留</th><th>To-Be 改了什麼</th></tr>
+<tr><td>人工放行（14:33）</td><td>阿忠</td><td>curriculum §1.1：斷線時仍要能人工放行。全自動的閘門在總部掛掉時會把顧客關在場內；阿忠是這條流程的備援，也是唯一有權在斷線時做決定的人</td><td>只改記錄：按下去就是被記錄的事實，帶「人工」這個方式，帳務事後對齊，不靠紙條</td></tr>
+<tr><td>引導客人換槍（14:05）</td><td>阿忠</td><td>客人在對講機那頭需要一個人</td><td>他不再打電話查，看板告訴他</td></tr>
+<tr><td>到場換模組（隔天 13:00）</td><td>阿豪</td><td>GroundFailure 一定要到場（Vicky）；物理工作沒有人可以自動化</td><td>工單帶齊三套編號對照與備品建議</td></tr>
+<tr><td>修復驗證（18:18）</td><td>阿豪</td><td>「樁回 Available」不等於修好（阿豪 vs Vicky 的矛盾）；需要一個人說「我驗過了」</td><td>驗證是一個被記錄的事實；關單政策（30 分鐘無再故障）由系統套用</td></tr>
+<tr><td>費率改版核准</td><td>小美</td><td>費率是商業決策</td><td>改一次、三個系統同時生效（源頭一次）</td></tr>
+<tr><td>爭議與更正單</td><td>老陳</td><td>金額爭議需要人判斷</td><td>更正一律留痕；不再有人「直接改」</td></tr>
+</table></div>
+
+<h4>產生的事實清單（過去式，Day 2 的第一批黃貼）</h4>
+<ol>
+<li>車輛已辨識進場（14:02，ABC-1234，P-441）</li>
+<li>充電車位已占用（14:03，3 號位）</li>
+<li>連接器已插上（14:04，CP-A12-2）</li>
+<li>充電已授權開始（14:04，S-991，TAG-MONTHLY-77）</li>
+<li>充電開始被拒（14:05，連接器占用中）</li>
+<li>電量已計量（14:13 4,000 Wh、14:22 8,000 Wh）</li>
+<li>充電已結束（14:31，12,400 Wh，車主自己停）</li>
+<li>停車已人工放行（14:33，方式 = 人工，斷線）</li>
+<li>車輛已離場（14:33）</li>
+<li>充電器已申告故障（18:10:00，CP-A12，GroundFailure）</li>
+<li>工單已開立（18:10:00，WO-2208）</li>
+<li>技術員已指派（18:10:00，TECH-HAO）</li>
+<li>重複申告已附加（18:10:08）</li>
+<li>修復已驗證（18:18，阿豪）</li>
+<li>工單已關閉（18:18，已修復）</li>
+<li>充電器已恢復可售（18:18）</li>
+<li>帳單已開立（之後，INV-778 = P-441 + S-991）</li>
+</ol>
+
+<h4>To-Be 裡故意沒有的東西</h4>
+<ul>
+<li>沒有「客服確認故障」——樁的申告就是事實（P3）。客服變成處理「App 連不上」這類非故障客訴的人。</li>
+<li>沒有「總部核准放行」——放行是場站的事（P4）。</li>
+<li>沒有「帳務收到技術員已出發」——Vicky 說過那讓他們被淹沒；老陳要的是停售時長，訂閱「工單已關閉」就夠。</li>
+<li>沒有「帳務回頭叫充電暫停」——帳務只收事實，不回呼。</li>
+<li>沒有「一個看板系統」「一支 API」「上 Kafka」——那是解法，Day 3 以後的事；這裡只寫誰決定、誰產生、產生了什麼事實。</li>
+<li>沒有「把阿忠拿掉」——他從搬運工變成例外處理者：放行、引導客人、看看板。</li>
+</ul>
+
+<h4>待驗證的假設（帶去 Day 2）</h4>
+<ol>
+<li>場站本機的月票白名單 24 小時快取「夠用」——斷線超過 24 小時會怎樣？誰決定過期後放不放？</li>
+<li>「插槍」與「授權開始」是兩個事實（小美 vs 老陳）——那插了槍沒授權的車，占的位子算誰的？</li>
+<li>同樁同故障碼「在工單開放期間」只保留一張——「開放期間」的邊界是關單那一刻嗎？關單後 5 分鐘再申告算新的？</li>
+<li>「30 分鐘沒再故障才算修好」是 Vicky 的習慣還是 SLA 條款？誰擁有「恢復可售」的定義？</li>
+<li>帳務的「顧客」在停車與充電那邊都不存在——合併 P-441 與 S-991 的鍵到底是什麼？車牌？憑證？合約？</li>
+<li>阿豪要的「故障前 10 分鐘計量與狀態」——這些資料誰保存、保存多久？不在 MVP1，但事實得先留著。</li>
+<li>連線恢復後補送的事實，如果總部那邊已經有人手動處理過（例如客服還是開了單），誰贏？</li>
+<li>老陳的「可以晚，不能漏」——晚多久算晚？月底前到就好，還是 24 小時？</li>
+</ol>
+</div></div>
+
+<h3>助教對話重播：<code>/bpr-review</code> 第一次與第二次</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /bpr-review</p><p>這是我的 workshop/day1/as-is.md 與 to-be.md（請直接讀檔）。請不要重寫它們。1. 逐一檢查我圈的「人當 API」交接點，每個問我一個問題確認它真的是「人在兩個系統之間搬資訊」。2. 你認為我漏掉的交接點，只告訴我在時間線的哪一段。3. To-Be 四原則挑一條你覺得站不住的，問我「如果連線中斷這條還成立嗎」。4. 給我下一個最小步驟。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀了兩份。先問你：你覺得 As-Is 裡最痛的一次交接是哪個？不是最多次的，是最痛的。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>#2。金額最小，但漏了沒有人知道，老陳說他在乎的是「查不到」。而且它是唯一在斷線時一定會發生的交接。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>同意，而且你把「放行的決定」和「放行的記錄」分開圈了——這是今天最重要的區分，很多人會把整段 14:33 圈成一個交接然後在 To-Be 把阿忠自動化掉。</p><p>逐一確認（每個一題）：<br>#1 阿忠問小美——如果小美的後台畫面直接在阿忠螢幕上，阿忠還需要做什麼？（答不出來就是純搬運，圈對了）<br>#3 老陳車牌對帳——他對的是「車牌」，但他跟你說合併是按「顧客」。那 VLOOKUP 之後他還做了什麼人的判斷？那一部分不是交接。<br>#4 阿忠打客服——樁 18:10 就說了，阿忠 18:25 才看到。你圈的是「打電話」那 5 分鐘，還是「沒人看」那 15 分鐘？後者不是交接，是沒有 sensor。<br>#5 客服手 key——20 張單是交接的代價，還是另一個問題？（提示：第 2 張到第 20 張，客服在搬誰的資訊？）<br>#6、#7 沒問題。</p><p>漏掉的交接點：<b>時間線 14:03 到 14:05 之間</b>，看你 interviews.md 阿忠那段「每天約 5 台」。</p><p>四原則裡站不住的一條：to-be.md 的 P2「阿忠看看板就知道這把槍能不能賣」——<b>如果連線中斷，看板的資料從哪裡來？</b>如果答案是「總部」，這條在斷線時就死了，你等於用一個會下班的人換了一個會斷線的系統。</p><p><b>下一個最小步驟：</b>回 interviews.md 阿忠那段找「貼紙條」，補成 #1b，寫 sensor / transport / deserializer 與每天 5 台的代價，10 分鐘。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>補了 #1b：阿忠走出去看有沒有插槍、貼紙條——sensor 是他的眼睛、transport 是走路、deserializer 是紙條（沒人看）。看板那題：資料來自場站本機的樁，樁在場站、看板在場站，不經總部；斷線時看板還活著，只是總部看不到。我把這句補進 P2 那條。#4 我改成只圈「打電話」，「沒人看 15 分」寫成代價。#5 我改成：第 1 張是交接（搬阿忠的話），第 2–20 張是同一根樁在重複講話、沒人去重——那是另一個問題，先記在待驗證假設。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>第二次審：</p>
+<div class="table-scroll"><table>
+<tr><th>檢查項</th><th>狀態</th><th>備註</th></tr>
+<tr><td>顧客旅程完整（14:02 → 14:33 + 18:10 支線）</td><td>✅</td><td>支線寫到「樁重新上架」與月底，好</td></tr>
+<tr><td>人當 API 交接 ≥ 3</td><td>✅</td><td>7 + #1b = 8 處，每處有 sensor / transport / deserializer</td></tr>
+<tr><td>交接標等待時間 / 失敗模式 / 請假</td><td>✅</td><td>#4 的「沒人看 15 分」改列代價，對</td></tr>
+<tr><td>可追溯到訪談原話</td><td>✅</td><td>每處有引號</td></tr>
+<tr><td>斷線情境</td><td>✅</td><td>「全靠阿忠」那句是這份檔案最好的一句</td></tr>
+<tr><td>To-Be 每個交接有改法 + 原則</td><td>✅</td><td>P1–P4 各至少一次；有標 bpr.md 的編號差異</td></tr>
+<tr><td>流程解而非技術解</td><td>✅</td><td>「故意沒有的東西」擋住了「上 Kafka」</td></tr>
+<tr><td>斷線仍可進場 / 充電 / 人工放行</td><td>✅</td><td>放行保留，理由引 §1.1；車隊卡被拒寫成正確設計</td></tr>
+<tr><td>三種錢沒混成一筆</td><td>✅</td><td>P-441 0 元 + S-991 99.2 元分開再合併</td></tr>
+<tr><td>To-Be 仍然要人做的地方</td><td>✅</td><td>六項，每項有理由</td></tr>
+</table></div>
+<p>判定：<b>通過</b>。沒有新的漏掉的交接點。最需要再想的一件事（不用今天）：待驗證假設第 3 條「開放期間」的邊界，明天會變成一條規則。</p><p><b>下一個最小步驟：</b>commit 三個檔案到 <code>workshop/xiaolin</code>，然後 <code>/checkout day1</code>。</p></div>
+</div>
+
+<div class="teach"><p class="head">講師註 · Block 3</p>
+<p><b>驗收看哪一行：</b>(1) as-is.md 旅程表 14:33 那一行的「人當 API？」欄——寫「否（決策）」而把記錄拆到隔天那行的，是真的懂了；整行圈「是」的要問「他在搬什麼資訊」；(2) 交接點表有沒有 #4「阿忠打電話」與 #5「客服開單」兩處（rubric 明說看這裡）；(3) to-be.md「保留的人工步驟」第一列是不是人工放行，理由有沒有引 §1.1；(4) 「故意沒有的東西」有沒有出現「看板系統」「API」這種功能需求（rubric：偷渡）。</p>
+<p><b>常見失真：</b>To-Be 表寫成「系統會自動……」而沒有主詞——問「那句話背後是誰負責？」。第二個是四原則四條全部套在每個交接點上，寫成 28 格的矩陣——沒必要，一個交接套一條就夠，講師 kickoff 要先說。第三個：學員把 bpr.md 的 P1–P4 和 TEMPLATE 的四條混用而不自知——兩份文件的第 2 與第 4 條不同（見講師手記），驗收時不要扣分，但要他標清楚用哪一份。</p>
+<p><b>時間：</b>As-Is 40 分鐘只夠寫正常午後 + 故障到開單；故障支線寫到月底的人通常要 55 分鐘。To-Be 30 分鐘一定不夠寫完整份，可接受的最小版本是：每個交接一行「改 / 不改 + 原則」+ 保留人工放行 + 5 條假設。「產生的事實清單」與「故意沒有的東西」可以在 check-out 後補，不影響明天。</p>
+</div>
+</section>
+
+<section>
+<p class="eyebrow">CHECK-OUT · 30 分</p>
+<h2><code>/checkout day1</code> 與五題參考答案</h2>
+<h3>助教對話重播</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /checkout day1</p><p>今天是 Day 1。請對照 docs/rubric.md 的 Day 1 DoD 檢查 workshop/day1/ 裡的三個檔案。對每一項只回「過 / 不過 + 一句理由」，不要幫我補內容。不過的項目，各給我一個問題讓我自己補。最後給「下一個最小步驟」，以及一句話：明天 Day 2 我應該先重讀今天哪個檔案的哪一段。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問兩題 quiz，答完我再看檔案：(1) 阿忠說「插槍了」和小美說「開始充電了」，在你的 As-Is 裡是同一個時間點嗎？(2) 連線中斷時，阿忠現在怎麼放車出場？你的 To-Be 保留了這條嗎？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>(1) 不是。14:04 插槍是一行，授權成功是同一分鐘但另一件事；14:05 那個被拒的人插了槍也刷了卡，可是沒開始。(2) 鑰匙抬桿、寫日誌本、隔天 email。保留了放行本身，因為那是斷線時唯一一定走得通的步驟；改的是記錄方式，按下去就是事實，帳務事後對齊。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>兩題都對。看檔案：</p>
+<div class="table-scroll"><table>
+<tr><th>交付物</th><th>DoD</th><th>狀態</th><th>一句理由</th></tr>
+<tr><td rowspan="6">interviews.md</td><td>五位各四小節</td><td>✅ 過</td><td>五位都有一天 / 三痛 / 隱藏 / 原話，另加交接表</td></tr>
+<tr><td>每位 ≥ 1 隱藏事實，合計 ≥ 5</td><td>✅ 過</td><td>18/25（阿忠 4、小美 3、老陳 4、Vicky 4、阿豪 3），≥ 10 優秀</td></tr>
+<tr><td>每位「沒問到的數」</td><td>✅ 過</td><td>五位都有「Claude 出戲時說」那行，與 ❌ 數一致</td></tr>
+<tr><td>跨角色矛盾 ≥ 3</td><td>✅ 過</td><td>6 條，每條都是「同一個詞兩種說法」，不是需求差異</td></tr>
+<tr><td>「我引導了他嗎」≥ 1</td><td>✅ 過</td><td>3 條，含 offline mode 那次</td></tr>
+<tr><td>原話逐字</td><td>✅ 過</td><td>有引號、有土話（「桿子」「跳」）；沒有出現 ChargingSession 這類詞</td></tr>
+<tr><td rowspan="4">as-is.md</td><td>14:02 → 18:10 時間線，每步誰 / 工具 / 耗時</td><td>✅ 過</td><td>17 行，寫到月底；工具欄齊</td></tr>
+<tr><td>≥ 4 交接點 + 代價 + 請假</td><td>✅ 過</td><td>8 處（#1–#7 + #1b），代價表含「請假」欄</td></tr>
+<tr><td>斷線情境</td><td>✅ 過</td><td>進場 / 充電 / 放行 / 故障 / 對帳五行</td></tr>
+<tr><td>增值時間與總時長</td><td>⚠️ 部分</td><td>故障流程的增值時間 40 分是估的，訪談裡阿豪沒說換模組要多久（L「增值時間與總時長」表第 3 列）</td></tr>
+<tr><td rowspan="4">to-be.md</td><td>每處改動標 P1–P4</td><td>✅ 過</td><td>每列有原則；有註明 TEMPLATE 與 bpr.md 編號差異</td></tr>
+<tr><td>事實清單 ≥ 8（過去式）</td><td>✅ 過</td><td>17 個，全部過去式</td></tr>
+<tr><td>「故意沒有的東西」</td><td>✅ 過</td><td>6 條，含「沒有把阿忠拿掉」</td></tr>
+<tr><td>/bpr-review 通過</td><td>✅ 過</td><td>第二次無新漏</td></tr>
+<tr><td>環境</td><td>.config + starter 紅燈 + commit</td><td>✅ 過</td><td>LANG=node；輸出 1 failed / 1 passed / 4 skipped；<code>git log --oneline -- workshop/day1</code> 三個 commit 在 workshop/xiaolin</td></tr>
+</table></div>
+<p>判定：<b>通過</b>（一項 ⚠️）。那個 ⚠️ 給你一個問題：如果明天 <code>/interview 阿豪</code> 再問他一題，你會問什麼才能把 40 分鐘變成他說的數字？</p>
+<p>明天預告：Day 2 事件風暴與通用語言——你今天的「產生的事實清單」17 條就是第一批黃貼，「原話」小節就是 glossary 的原料，「待驗證假設」第 3 條會變成規則。今晚可讀 <code>docs/references/event-storming.md</code>。</p>
+<p><b>下一個最小步驟：</b>明天開工前先重讀 <code>interviews.md</code> 每一位的「原話」小節（不是隱藏事實），把裡面每一個名詞圈起來——「桿子」「槍」「會話」「單」「跳」——那是明天 <code>/storm</code> 要你翻成事實的字。</p></div>
+</div>
+
+<h3>Quiz 參考答案</h3>
+<p><b>1. 「連接器（Connector）」和「一根樁」是同一個東西嗎？<code>CP-A12-2</code> 的 <code>-2</code> 是什麼？</b></p>
+<div class="answer"><p class="head">參考答案</p><p>不是。樁（Charger，<code>CP-A12</code>）是一台有韌體、有連線、會壞掉的設備，可以有 1–2 把槍；連接器（<code>CP-A12-2</code>）是第 2 把槍的<b>業務身份</b>，能獨立插車、獨立計量。<code>-2</code> 就是「這根樁上的第 2 把槍」。阿豪說的三套編號（總部 <code>CP-A12</code>、廠商序號、現場「B 槍」）都指同一把，之後只准用一個名字。今天只要分得清「會話掛在槍上、故障掛在樁上」——14:04 是 <code>CP-A12-2</code> 在充，18:10 是 <code>CP-A12</code> 壞。</p></div>
+<p><b>2. 阿忠說「插槍了」和小美說「開始充電了」，在 As-Is 裡是同一個時間點嗎？</b></p>
+<div class="answer"><p class="head">參考答案</p><p>不是。插槍是一個物理事實，開始充電要先過授權（<code>TAG-MONTHLY-77</code> 有沒有效）。14:05 那位車主插了槍、刷了卡、被拒——他插了槍但沒開始。小美自己說「插槍就算開始，車主是這樣認為的」，老陳說「沒授權的不算，不能收錢」；這是 interviews.md 矛盾第 1 條。把兩者混為一談就是 curriculum §1.7 T2 列的「插槍等同已授權扣款」耦合。</p></div>
+<p><b>3. 舉一個你今天圈出的「人當 API」交接點，用一句話說它為什麼是（sensor / transport / deserializer 分別是誰）。</b></p>
+<div class="answer"><p class="head">參考答案</p><p>例：#4——18:10 樁螢幕閃紅 → 阿忠 18:25 看到（sensor）→ 打市話（transport）→ 客服聽完手 key 工單（deserializer）。代價：從看到到工單存在 20 分鐘、唸錯樁號、22:00 後沒人接、SLA 從電話起算晚了 25 分鐘。判準：如果阿忠今天請假，資料傳不過去——樁說了也沒人開單。任何一個 #1–#7 都可以，重點是三個角色分得出來、代價有數字。</p></div>
+<p><b>4. 連線中斷時，阿忠現在（As-Is）怎麼放車出場？你的 To-Be 保留了這條嗎？為什麼？</b></p>
+<div class="answer"><p class="head">參考答案</p><p>As-Is：拿鑰匙手動抬桿，在日誌本寫車牌與時間，隔天拍照 email 給老陳補停車費；每月 3–4 次、漏過 ≥ 2 次。To-Be <b>保留</b>人工放行——curriculum §1.1 明說斷線時仍要能人工放行，全自動的閘門會把顧客關在場內，而且斷線時阿忠是唯一有權決定的人。改的只有記錄方式：按下去的那一刻就是一個被記錄的事實（帶「人工」這個放行方式），連線恢復後補送，帳務事後對齊——不靠他記得拍照。</p></div>
+<p><b>5. BPR 四原則裡的「讓使用資訊的人自己產生資訊」套在故障申告上，會把哪個人從流程裡拿掉？拿掉後誰知道樁壞了？</b></p>
+<div class="answer"><p class="head">參考答案</p><p>拿掉「打電話的阿忠」（#4）與「手 key 的客服」（#5）：樁自己申告，總部系統自己開單 <code>WO-2208</code>，SLA 從 18:10:00 起算。阿忠仍然會知道——他看場站看板（WO-2208 / 阿豪 / 處理中），而且看板資料來自場站本機，斷線時也在；他不再是傳輸層，是訂閱者。Vicky 也還在：她從「挑 20 張單、LINE 派工」變成處理例外（備品不在車上、SLA 快到）。沒有人被裁掉，被拿掉的是「人當 API」那一段。</p></div>
+</section>
+
+<section>
+<p class="eyebrow">講師手記</p>
+<h2>這一天的教材夠不夠</h2>
+<h3>夠的地方</h3>
+<ul>
+<li><b>訪談腳本很扎實。</b><code>stakeholders.md</code> 五位各 5 條隱藏事實、每條都對到後面的規則或邊界（§6 那張表），加上好 / 壞問題對照，<code>/interview</code> 扮起來有東西可守。學員只要問得對，10 分鐘真的挖得到 3–4 條。</li>
+<li><b>三份交付物的範本、DoD、skill 三邊對得上。</b>TEMPLATE、rubric、<code>/bpr-review</code> 的檢查表講的是同一組東西，學員不會被三份文件拉三個方向——除了下面那個編號問題。</li>
+<li><b>「人當 API」這個啟發式教得起來。</b>bpr.md §2.3 的判準（「如果他請假什麼會停」）一句話就能用；§5 的故障流程範例是很好的對照——但要注意學員會直接抄它，驗收時看正常午後（14:02–14:33）那段有沒有自己的交接點（#1、#1b、#2），抄的人那段會是空的。</li>
+<li><b>Day 1 的產出真的接得上 Day 2–3。</b>「產生的事實清單」= 黃貼、「原話」= glossary、「矛盾」= 邊界證據、「待驗證假設」= hotspot。這條線在教材裡是明寫的，講師 kickoff 只要重複一次。</li>
+</ul>
+<h3>不夠的地方（講師要自己補）</h3>
+<ul>
+<li><b>四原則有兩個版本，編號不一致。</b><code>workshop/day1/TEMPLATE.md</code> 與 <code>docs/days/day1.md</code> 用的是「結果導向 / 使用資訊的人自己產生 / 一次在源頭擷取 / 決策點放在工作處」；<code>docs/references/bpr.md</code>（<code>/bpr-review</code> 說「以此為準」）用的是「結果導向 / 源頭一次捕獲 / 決策點在工作處 / 以事件連接平行活動」。第 2 條與第 4 條不同，rubric 又寫「每處改動標 P1–P4」。學員會混用而不自知。<b>kickoff 時講一句：「用 TEMPLATE 那四條，標 P1–P4；bpr.md 的第四條『以事件連接平行活動』當加分項。」</b>並回報維護者對齊。</li>
+<li><b>rubric 的 as-is / to-be DoD 比 day1.md 多了幾項。</b>rubric 要「增值時間與總時長」「如果他請假」「產生的事實清單 ≥ 8」「故意沒有的東西」；day1.md 的步驟與 TEMPLATE 沒提這四樣。<code>/checkout</code> 讀 rubric，所以學員會在最後 30 分鐘才發現要補。kickoff 時把 rubric Day 1 段落投影一次，或請學員 B3 開始前先讀。</li>
+<li><b>正常午後的交接點教材給得少。</b>bpr.md §5 只示範故障流程，學員在 14:02–14:33 那段常圈不到東西；本頁的 #1（問小美）、#1b（貼紙條）、#2（放行記錄）要講師口頭點。最重要的區分——「14:33 放行是決策、隔天 email 是交接」——教材沒有明寫，是 <code>/bpr-review</code> 的提問庫裡有一題（「誰有權決定人工放行？」）間接帶到。建議 kickoff 用這個例子講「決策 vs 搬運」。</li>
+<li><b>「跨角色矛盾」的形式沒有教。</b>rubric 只給一個例子（插槍 vs 授權）。學員常寫成「阿忠要按鈕、Vicky 要去重」——那是需求差異。要在 B2 開始前講清楚：矛盾 = 同一個詞或同一件事、兩個人說法不同。本頁 6 條可以投影。</li>
+<li><b>Claude 扮演的角色會「太合作」。</b>實測時如果學員的提示沒有「一次只答一題」，角色會把一天講完並順便帶出兩條隱藏事實；如果學員問「你有沒有什麼沒告訴我的」，有時會直接吐。講師開場示範時要故意示範這種爛提示，讓大家看它多好騙，然後要求用教材裡的提示原文。</li>
+<li><b>site-sketch 沒有驗收標準。</b>day1.md 說「拍照放進 workshop/day1/」，rubric 沒列。本頁 SVG 給了三個常缺的東西（槍與樁分開、值班室、會斷的線）當講師口頭驗收點；不建議計分。</li>
+</ul>
+<h3>時間會不會爆</h3>
+<ul>
+<li><b>B1 剛好，沒有餘裕。</b>環境問題平均吃 25 分鐘（Node 版本、在錯的目錄開 Claude Code）。Node 22 以下的人 Day 1 只需要測試能跑，<code>node src/app.ts</code> 是 Day 6 的事，不要現在升。</li>
+<li><b>B2 會爆 15–20 分鐘。</b>五位 × 10 分鐘 + 五次整理 5 分鐘 = 75 分鐘，前兩位一定超時。可接受的取捨：老陳與 Vicky 各縮到 7 分鐘（他們的隱藏事實用 B1 的問題清單直接問得到），阿豪保留 10 分鐘（三套編號那條要追問兩次才出來）。矛盾與「我引導了他嗎」可以在 check-out 後寫。</li>
+<li><b>B3 的 To-Be 一定寫不完整份。</b>30 分鐘的可接受最小版本：每個交接一行「改 / 不改 + 原則」+ 保留人工放行的理由 + 5 條假設。「產生的事實清單」與「故意沒有的東西」讓學員當晚補，明天 <code>/storm</code> 開始前 15 分鐘檢查——反正那份清單就是明天的第一批黃貼，晚補等於預習。</li>
+<li><b>Check-out 30 分鐘夠</b>，前提是學員在 B3 結束前已經 commit。沒 commit 的人 <code>/checkout</code> 會先卡在 <code>git log</code> 那項，講師走動時提醒一次。</li>
+<li>整天算下來，紀律好的學員 17:30 交齊；一般學員 to-be.md 的後兩節與矛盾當晚補。「如果你落後了」那段（訪談 3 位、As-Is 只做故障段）是真的可行的 2.5 小時版本，但代價是 Day 2 正常午後那段黃貼會少一半——講師 Day 2 kickoff 要補講 14:02–14:33。</li>
+</ul>
+</section>

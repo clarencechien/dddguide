@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="imitator-style" content="v3">
+<meta name="imitator-register" content="教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況">
+<meta name="imitator-reference" content="1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙、灰底參考答案框、頁緣批註欄">
+<meta name="imitator-paper" content="hsl(350 22% 95%)">
+<meta name="imitator-accent" content="hsl(176 52% 26%)">
+<title>教師版 D3 · 戰略設計</title>
+<meta name="description" content="Day 3 全程跑完會留下的 context-map.md、c4.md、ADR-0001 / 0002 的完整參考版本，加上找邊界的五步實況、助教對話重播與驗收點。">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* imitator report chassis — v3
+ *
+ * Source: https://github.com/clarencechien/imitator/blob/main/style/report.css
+ * How to use it: https://github.com/clarencechien/imitator/blob/main/style/STYLE.md
+ *
+ * This is NOT a house style. A report here is an essay with a point of view —
+ * it should look like someone made it, not like it came off a line. So this
+ * file fixes only what every report must get right no matter its voice:
+ * readability, structure, responsiveness, dark mode, motion hygiene, print.
+ *
+ * Everything that carries voice — paper and ink colours, the accent, which
+ * typefaces do which job, how big the headline is, how sections are signposted
+ * — is yours to choose per report. The tokens in §1 are the seams: override
+ * them in a <style> block AFTER this one and the whole chassis follows.
+ *
+ * Paste this file verbatim. Do not link it at runtime.
+ */
+
+/* ── §1 Tokens ───────────────────────────────────────────────────────────
+ *
+ * Override any of these per report. The defaults are a plain warm neutral —
+ * deliberately unremarkable, so a report that overrides nothing is readable
+ * but obviously unfinished. Redefine BOTH modes: dark is chosen, never an
+ * automatic flip.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- voice: expect to override every one of these --- */
+  --paper: #fbfbfa;        /* page */
+  --card: #ffffff;         /* raised surface */
+  --ink: #1a1a19;          /* primary text */
+  --ink-2: #4a4a46;        /* secondary text */
+  --mist: #6b6b68;         /* labels, captions, axis ticks */
+  --rule: #e6e6e3;         /* hairlines */
+  --rule-hard: #d3d3ce;    /* the one heavy rule per section */
+  --accent: #b0552b;       /* links, the coloured word, section numbers */
+  --accent-soft: #efe7df;  /* accent at wash strength — chips, marks */
+
+  /* --- faces: four jobs. Give them real families; --disp and --serif may be
+         the same as --sans if the report's voice is plain. --- */
+  --sans:  ui-sans-serif, system-ui, -apple-system, "Noto Sans TC",
+           "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "Noto Serif TC", "Songti TC", "PMingLiU", Georgia, serif;
+  --disp:  var(--sans);    /* headlines */
+  --mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* --- type scale ---
+     Body is deliberately large: this is long-form prose in Chinese, read on a
+     phone as often as a laptop. 17px is the floor, not the target. */
+  --fs-body: clamp(1.0625rem, 1.01rem + .28vw, 1.1875rem);   /* 17 → 19 */
+  --fs-sm:   clamp(.875rem, .85rem + .12vw, .9375rem);       /* 14 → 15 */
+  --fs-xs:   .8125rem;                                        /* 13 — labels only */
+  --lh-body: 1.85;         /* CJK needs more leading than Latin */
+
+  --fs-display: clamp(2.6rem, 1.4rem + 5.4vw, 5.25rem);      /* the one big headline */
+  --fs-1: clamp(1.85rem, 1.45rem + 1.9vw, 2.75rem);
+  --fs-2: clamp(1.4rem, 1.24rem + .78vw, 1.85rem);
+  --fs-3: clamp(1.14rem, 1.08rem + .3vw, 1.32rem);
+
+  /* --- spacing --- */
+  --sp-1: .25rem; --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1.15rem;
+  --sp-5: 1.75rem; --sp-6: 2.75rem; --sp-7: 4.5rem;
+
+  --radius: 10px;
+  --measure: 34em;         /* prose column ≈ 34 CJK characters */
+  --page: 46rem;           /* text column */
+  --page-wide: 66rem;      /* wide devices: tables, figures, tile rows */
+
+  /* How far a wide device spills into the gutter on each side. Bounded by the
+     gutter that actually exists, so it can never push the page sideways. */
+  --bleed: min((var(--page-wide) - var(--page)) / 2, max(0px, (100vw - var(--page)) / 2));
+
+  /* --- motion ---
+     Strong curves only. The built-in CSS easings are too weak to read as
+     intentional, and ease-in on anything a reader is watching feels sluggish. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;       /* entrances only — never a UI response */
+}
+
+/* Dark is a second set of choices, not an inversion. Declared under both
+   scopes so an in-page toggle wins either way. A report that overrides the
+   light tokens MUST override these too. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: #191917; --card: #222220;
+    --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+    --rule: #333331; --rule-hard: #454542;
+    --accent: #e08a5c; --accent-soft: #3a2f28;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #191917; --card: #222220;
+  --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+  --rule: #333331; --rule-hard: #454542;
+  --accent: #e08a5c; --accent-soft: #3a2f28;
+}
+
+/* Chart series colours are NOT part of the voice. They are the one palette a
+   report must not re-pick: the order is what keeps adjacent series apart under
+   colour blindness, and it was validated with a tool rather than an eye. Use
+   them in order, never cycle past --c6. */
+:root {
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a;
+  --c4: #eda100; --c5: #e87ba4; --c6: #008300;
+  --good: #0ca30c; --warn: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+    --c4: #c98500; --c5: #d55181; --c6: #008300;
+  }
+}
+:root[data-theme="dark"] {
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+  --c4: #c98500; --c5: #d55181; --c6: #008300;
+}
+
+/* ── §2 Base & readability ───────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--fs-body)/var(--lh-body) var(--sans);
+  overflow-wrap: break-word;
+  line-break: strict;
+  -webkit-text-size-adjust: 100%;
+  /* Progressive: tightens CJK punctuation where the browser supports it. */
+  text-spacing-trim: trim-start;
+}
+
+p { text-wrap: pretty; }
+h1, h2, h3, h4, .display { text-wrap: balance; }
+
+img, svg, video, canvas { max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: .2em; text-decoration-thickness: from-font; }
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px;
+}
+::selection { background: var(--accent-soft); }
+
+/* ── §3 Layout ───────────────────────────────────────────────────────────── */
+
+.report {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: clamp(2rem, 1.2rem + 3.5vw, 5rem) clamp(1.15rem, .7rem + 2.4vw, 2.5rem) 6rem;
+}
+.report > * { max-width: var(--measure); }
+/* Figures, tables and full-width devices opt out of the prose measure. A
+   <section> or <article> is a pass-through: it must not inherit the measure,
+   or every table inside it is trapped at 34em — so the prose cap is re-applied
+   to its children instead. */
+.report :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+.report > :is(section, article) { max-width: none; }
+.report > :is(section, article) > * { max-width: var(--measure); }
+.report > :is(section, article) > :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+/* Grid items get min-width: 0 so one unbreakable string cannot widen the track.
+   Any grid you write yourself needs the same — see STYLE.md. */
+.cols > *, .tiles > * { min-width: 0; }
+.cols  { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.tiles { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin-block: var(--sp-5); }
+.card  { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-5); }
+
+/* The text column stays narrow; the wide devices breathe out into the gutter.
+   Tables get this by default — a table trapped at the prose measure is the
+   single most common way a report becomes unusable on a desktop. .wide opts
+   anything else in (a tile row, a chart, a figure).
+
+   It widens by whatever gutter actually exists and no more, so it can never
+   push the page sideways — which the obvious `width + 50% margin` breakout
+   does the moment its percentage resolves against the wrong box.
+   Declared last on purpose: any component using the `margin` shorthand would
+   otherwise zero out the inline margins this depends on. */
+.wide, .table-scroll { margin-inline: calc(-1 * var(--bleed)); }
+
+/* ── §4 Structure & editorial devices ────────────────────────────────────── */
+
+/* The headline. .display is the one oversized thing in the document; a
+   coloured <em> inside it is the report's signature — use it once. */
+.display {
+  font-family: var(--disp);
+  font-size: var(--fs-display);
+  line-height: 1.04;
+  letter-spacing: -.025em;
+  font-weight: 700;
+  margin: 0 0 var(--sp-4);
+}
+.display em { font-style: normal; color: var(--accent); }
+
+h1, h2, h3 { font-family: var(--disp); line-height: 1.25; letter-spacing: -.012em; margin: 0; font-weight: 680; }
+h1 { font-size: var(--fs-1); }
+h2 { font-size: var(--fs-2); margin: var(--sp-7) 0 var(--sp-4); }
+h3 { font-size: var(--fs-3); margin: var(--sp-5) 0 var(--sp-2); }
+h2 + h3 { margin-top: var(--sp-4); }
+p, ul, ol { margin: 0 0 var(--sp-4); }
+li + li { margin-top: var(--sp-2); }
+
+/* The signpost. Mono, letterspaced, small — it gives a document a spine:
+   序幕 · PROLOGUE / 01 · VOCABULARY / 第一幕 · 1973 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin: var(--sp-7) 0 var(--sp-2);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.eyebrow + h2 { margin-top: 0; }
+
+.lede { font-size: 1.15em; line-height: 1.7; color: var(--ink-2); }
+.byline { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); }
+
+/* A sentence worth stopping on. Not a highlighter pen on a whole paragraph. */
+.mark { background: var(--accent-soft); box-shadow: 0 0 0 .18em var(--accent-soft); border-radius: 2px; }
+
+/* An inverted label that interrupts the column: 接回 VOL.1 */
+.chip {
+  display: inline-block; background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em;
+  padding: .2em .55em; border-radius: 3px; vertical-align: .08em;
+}
+.chip.soft { background: var(--accent-soft); color: var(--ink-2); }
+
+/* A line pulled out of the argument, set large. Never a repeat of the lede. */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.9rem);
+  line-height: 1.5; color: var(--ink);
+  border-left: 3px solid var(--accent);
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-5);
+  margin-block: var(--sp-6);
+}
+
+blockquote { margin-block: var(--sp-5); padding-left: var(--sp-5); border-left: 2px solid var(--rule-hard); color: var(--ink-2); }
+.note { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-5); margin-block: var(--sp-6); }
+.note > :last-child { margin-bottom: 0; }
+.note .head { font-weight: 680; margin-bottom: var(--sp-2); }
+.note.good { border-left-color: var(--good); }
+.note.warn { border-left-color: var(--warn); }
+.note.critical { border-left-color: var(--critical); }
+
+code, kbd, samp { font-family: var(--mono); font-size: .88em; }
+/* A URL or a scope string inside <code> has no break opportunity, so it becomes
+   the min-content width of everything containing it. Inside a grid track — whose
+   default min-width is auto, i.e. min-content — that one string widens the track
+   past the viewport and the whole page scrolls sideways. Breaking it here fixes
+   the cause; see also the note on custom grids in STYLE.md. */
+:not(pre) > code {
+  background: var(--accent-soft); padding: .12em .4em; border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+pre {
+  background: var(--card); border: 1px solid var(--rule);
+  border-top: 3px solid var(--accent); border-radius: var(--radius);
+  padding: var(--sp-5); overflow-x: auto;
+  font-size: var(--fs-sm); line-height: 1.7;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin-block: var(--sp-7); }
+
+/* ── §5 Figures, charts, tables ──────────────────────────────────────────── */
+
+.stat { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); }
+.stat .label { font-size: var(--fs-xs); color: var(--mist); margin: 0 0 var(--sp-1); }
+.stat .value { font-family: var(--disp); font-size: 1.75rem; font-weight: 680; line-height: 1.15; letter-spacing: -.02em; }
+.stat .delta { font-size: var(--fs-xs); color: var(--ink-2); margin-top: var(--sp-1); display: flex; align-items: center; gap: .3em; }
+.delta.up::before   { content: "▲"; font-size: .8em; color: var(--good); }
+.delta.down::before { content: "▼"; font-size: .8em; color: var(--critical); }
+
+/* At most one per report. */
+.hero { font-family: var(--disp); font-size: clamp(3rem, 2rem + 4vw, 5rem); font-weight: 700; line-height: 1; letter-spacing: -.03em; margin: var(--sp-2) 0; }
+
+figure { margin-block: var(--sp-6); }
+figure > .title { font-family: var(--disp); font-size: var(--fs-3); font-weight: 680; margin: 0 0 var(--sp-1); }
+figure > .subtitle, figure > figcaption { font-size: var(--fs-sm); color: var(--mist); }
+figure > .subtitle { margin: 0 0 var(--sp-4); }
+figure > figcaption { margin-top: var(--sp-3); }
+
+/* A viewBox scales the TEXT too: let a chart shrink freely to a 375px screen
+   and its 12px labels render at 6px. So the rendered width is bounded and the
+   chart scrolls in its own box below the floor, like a wide table.
+   Author charts on a 640-unit viewBox with font-size 12. */
+.chart { width: 100%; overflow-x: auto; }
+.chart svg { display: block; height: auto; width: 100%; min-width: 34rem; max-width: 44rem; overflow: visible; }
+.chart .grid  { stroke: var(--rule); stroke-width: 1; }
+.chart .axis  { fill: var(--mist); font-size: 12px; font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.chart .label { fill: var(--ink-2); font-size: 12px; font-family: var(--sans); }
+.chart .line  { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dot   { stroke: var(--card); stroke-width: 2; }
+.chart .bar   { rx: 4; }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-sm); color: var(--ink-2); margin-top: var(--sp-3); }
+.legend .key { display: inline-flex; align-items: center; gap: .45em; }
+.legend .swatch { width: .7em; height: .7em; border-radius: 2px; flex: none; }
+
+.datatable > summary {
+  cursor: pointer; font-size: var(--fs-sm); color: var(--mist);
+  padding: var(--sp-2) 0; min-height: 44px;
+  display: flex; align-items: center; gap: .4em; list-style: none;
+}
+.datatable > summary::-webkit-details-marker { display: none; }
+.datatable > summary::before { content: "▸"; transition: transform var(--dur-fast) var(--ease-out); }
+.datatable[open] > summary::before { transform: rotate(90deg); }
+
+/* Every table lives in this wrapper: it scrolls itself instead of widening
+   the page. On a desktop it should never need to — cells wrap and the wrapper
+   widens into the gutter. On a phone a table with real columns still has to
+   scroll, and that is the correct trade: a model number broken across three
+   lines is worse than a swipe. `overscroll-behavior-inline` keeps that swipe
+   inside the table instead of dragging the page or triggering back-navigation. */
+.table-scroll { overflow-x: auto; overscroll-behavior-inline: contain; margin-block: var(--sp-5); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); }
+
+/* Phone: the first column is the row's label — pin it, so what you are reading
+   the specs OF stays on screen while you swipe through them, and the shadow at
+   its edge says there is more to the right. Add .plain to opt a table out (a
+   two-column table, or one whose first column is not a label). Semantics are
+   untouched: nothing here changes `display`, so the table is still a table to
+   a screen reader. */
+@media (max-width: 40rem) {
+  .table-scroll:not(.plain) :is(th, td):first-child {
+    position: sticky; left: 0; z-index: 1; background: var(--card);
+    box-shadow: 1px 0 0 var(--rule), 7px 0 7px -7px rgb(0 0 0 / .22);
+  }
+  .table-scroll:not(.plain) th:first-child { z-index: 2; }
+}
+table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); }
+th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 620; color: var(--ink-2); background: var(--card); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Cells wrap by default: nowrap makes a table's min-content width the sum of
+   every cell's longest unbroken line, which is what forces the horizontal
+   scroll. Opt individual cells out — a model number, a date, a figure — with
+   .nowrap. (`.wrap` is the old opt-in, kept so it stays a no-op.) */
+.nowrap, td.nowrap, th.nowrap { white-space: nowrap; }
+td.wrap { white-space: normal; }
+/* A mono sub-label under a term, the way a glossary sets it. */
+td .sub { display: block; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); text-transform: uppercase; margin-top: .15em; }
+
+/* ── §6 Motion ───────────────────────────────────────────────────────────────
+ *
+ * A report is read, not operated, so motion here has exactly one job: mark
+ * arrival. Entrances only, on the reader's own scroll, and only for elements
+ * that carry a beat — a section opening, a figure, a pulled line. Never on
+ * body paragraphs, and never anything that has to finish before the reader
+ * can read.
+ *
+ * All of it is progressive: without scroll-driven animation support every
+ * element is simply already visible. Nothing is gated behind motion.
+ */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    /* Group entrance: 30–80ms between items reads as one gesture. Longer
+       feels slow, and it is decorative — nothing waits for it. */
+    .stagger > * { animation: reveal-in var(--dur-slow) var(--ease-out) both; }
+    .stagger > :nth-child(2) { animation-delay: 60ms; }
+    .stagger > :nth-child(3) { animation-delay: 120ms; }
+    .stagger > :nth-child(4) { animation-delay: 180ms; }
+    .stagger > :nth-child(n+5) { animation-delay: 240ms; }
+  }
+}
+
+/* The theme toggle: one fixed button that flips data-theme on <html>. It exists
+   because a reader whose every device is dark can otherwise never see the light
+   palette a report designed — and vice versa. State lives in a variable (storage
+   APIs throw in the sandbox), so it resets on reload; that is the correct trade.
+   Until the reader clicks, <html> stays un-stamped and the page follows the
+   system. Markup and the five-line script are in STYLE.md, floor item 5. */
+.theme-toggle {
+  position: fixed; top: 1rem; right: 1rem; z-index: 20;
+  min-height: 44px; padding: .4rem .85rem;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  font: var(--fs-xs)/1 var(--mono); letter-spacing: .06em; cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--ink); }
+@media (max-width: 40rem) { .theme-toggle { top: auto; bottom: 1rem; } }
+
+/* Reading progress, drawn by the scroll position itself — no JS, no listener. */
+.progress {
+  position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 10;
+  background: var(--accent); transform-origin: 0 50%; transform: scaleX(0);
+}
+@supports (animation-timeline: scroll()) {
+  .progress { animation: progress linear both; animation-timeline: scroll(root block); }
+  @keyframes progress { to { transform: scaleX(1); } }
+}
+@media (prefers-reduced-motion: reduce) { .progress { display: none; } }
+
+/* Pressable things acknowledge the press. Hover motion is gated — a touch
+   device fires :hover on tap and the animation reads as a glitch. */
+@media (hover: hover) and (pointer: fine) {
+  a[href], .chip, summary { transition: color var(--dur-fast) var(--ease-out); }
+}
+button:active, summary:active { transform: scale(.98); }
+button, summary { transition: transform var(--dur-fast) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Gentler, not zero: colour and opacity stay, movement goes. */
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ── §7 Print & forced colours ───────────────────────────────────────────── */
+
+@media print {
+  :root { --paper: #fff; --card: #fff; --ink: #000; --ink-2: #333; --mist: #555; --rule: #ccc; }
+  .report { max-width: none; padding: 0; }
+  .report > * { max-width: none; }
+  .progress, .theme-toggle, .datatable > summary { display: none; }
+  .datatable { display: block; }
+  /* A scroll-driven entrance never runs on paper — without this, everything
+     marked .reveal prints as blank space. Content is never gated behind
+     motion; this is the rule that keeps that true. */
+  .reveal, .stagger > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  figure, .card, .stat, .table-scroll, .note, pre { break-inside: avoid; }
+  h2, h3, .eyebrow { break-after: avoid; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #555; }
+}
+
+@media (forced-colors: active) {
+  .card, .stat, .table-scroll, .note, pre, .chip { border: 1px solid CanvasText; }
+  .mark { background: Mark; color: MarkText; box-shadow: none; }
+}
+
+
+/* REGISTER:  教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況，給講師與助教對照教材完整性。
+   REFERENCE: 1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙與學生課本區隔、每課固定的「教學目標／教學活動／評量」欄、灰底的「參考答案」框、頁緣的批註欄。
+   PAPER:     教師手冊的淡粉紅道林紙 — hsl(350 22% 95%)。粉紅是為了讓人一眼知道「這本不是給學生的」。
+   VOICE:     襯線體標題（Plex Serif 帶 Noto）、審核章的藍綠印泥只給裁決、單元編號與連結；參考答案一律放灰底框；批註走頁緣。
+   NOT:       主控台、儀表板、學員版的銅橙。沒有要學員按的按鈕，只有講師要看的實況重播。
+   RECENT:    paper 48° 152° 36° · accent 16° 292° 210° — 350° 與 176° 都離得夠遠。 */
+
+:root {
+  --paper: hsl(350 22% 95%);
+  --card: hsl(350 30% 98%);
+  --ink: hsl(340 12% 12%);
+  --ink-2: hsl(340 7% 32%);
+  --mist: hsl(340 5% 44%);
+  --rule: hsl(350 14% 86%);
+  --rule-hard: hsl(350 12% 72%);
+  --accent: hsl(176 52% 26%);      /* 審核章的藍綠印泥 */
+  --accent-soft: hsl(176 30% 90%);
+  --answer: hsl(350 8% 92%);       /* 參考答案的灰底 */
+  --disp: "IBM Plex Serif", "Noto Sans TC", "PingFang TC", serif;
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "IBM Plex Serif", "Noto Sans TC", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* 便利貼：Event Storming 的標準色。這組不是 voice，是 Brandolini 的慣例，深淺兩版都要辨得出來 */
+  --st-evt: hsl(42 95% 72%);   --st-cmd: hsl(210 80% 82%);  --st-pol: hsl(272 45% 84%);
+  --st-agg: hsl(48 60% 92%);   --st-act: hsl(48 90% 62%);   --st-hot: hsl(352 85% 78%);
+  --st-read: hsl(120 40% 84%); --st-ext: hsl(330 55% 86%);  --st-rej: hsl(352 30% 90%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+    --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+    --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+    --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+    --answer: hsl(345 8% 15%);
+    --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+    --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+    --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+  --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+  --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+  --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+  --answer: hsl(345 8% 15%);
+  --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+  --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+  --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+}
+
+/* ── 教師版元件 ─────────────────────────────────────────────── */
+
+/* 七天導覽列：頁首一條，每頁都有 */
+.tnav { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-6); }
+.tnav a { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; text-decoration: none; color: var(--ink-2);
+  border: 1px solid var(--rule); background: var(--card); padding: .35em .7em; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.tnav a:hover { border-color: var(--accent); color: var(--accent); }
+.tnav a.here { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* 課次資訊列 */
+.meta-strip { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); margin: var(--sp-3) 0 var(--sp-5); }
+.meta-strip b { color: var(--ink-2); font-weight: 500; }
+
+/* 頁緣批註：講師註 */
+.teach { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.teach > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--sp-2); }
+.teach > :last-child { margin-bottom: 0; }
+
+/* 參考答案：灰底框 — 教師手冊的核心裝置 */
+.answer { background: var(--answer); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.answer > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--mist); margin: 0 0 var(--sp-3); display: flex; gap: var(--sp-3); align-items: center; }
+.answer > .head::after { content: ""; flex: 1; height: 1px; background: var(--rule-hard); }
+.answer > :last-child { margin-bottom: 0; }
+
+/* 產出檔案卡：路徑 + 內容。這是「跑完會留下什麼」的主要載體 */
+.file { border: 1px solid var(--rule-hard); border-radius: var(--radius); background: var(--card); margin-block: var(--sp-5); overflow: hidden; }
+.file > .path { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-2) var(--sp-4); background: var(--answer); border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; color: var(--ink-2); }
+.file > .path .chip { margin-left: auto; }
+.file > .body { padding: var(--sp-4) var(--sp-5); }
+.file > .body > :last-child { margin-bottom: 0; }
+.file > .body > pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: 0; }
+.file > .body h4 { font-family: var(--disp); font-size: 1.05em; margin: var(--sp-4) 0 var(--sp-2); }
+.file > .body h4:first-child { margin-top: 0; }
+.file .table-scroll { margin-block: var(--sp-3); }
+
+/* 終端輸出 */
+.term { background: hsl(340 10% 10%); color: hsl(350 12% 90%); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); font: var(--fs-xs)/1.7 var(--mono); overflow-x: auto; margin-block: var(--sp-4); white-space: pre; }
+.term .red { color: hsl(4 80% 68%); } .term .green { color: hsl(140 55% 62%); } .term .dim { color: hsl(350 6% 55%); } .term .yel { color: hsl(45 90% 65%); }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .term { background: hsl(345 12% 5%); } }
+:root[data-theme="dark"] .term { background: hsl(345 12% 5%); }
+
+/* 全幅圖：diagram 用 .wide 破出文字欄，SVG 以 960 寬 viewBox 作圖、字級 13 */
+.diagram { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin: var(--sp-4) 0; }
+.diagram svg { display: block; width: 100%; min-width: 40rem; max-width: 66rem; height: auto; overflow: visible; font-family: var(--sans); margin: 0 auto; }
+.diagram .box { fill: var(--card); stroke: var(--rule-hard); stroke-width: 1.2; }
+.diagram .box.core { stroke: var(--accent); stroke-width: 2; }
+.diagram .box.ext { stroke-dasharray: 4 3; }
+.diagram .box.dim { fill: var(--answer); }
+.diagram .zone { fill: var(--accent-soft); fill-opacity: .5; stroke: none; }
+.diagram .zone.plain { fill: var(--answer); fill-opacity: .7; }
+.diagram .t { fill: var(--ink); font-size: 13px; }
+.diagram .t.b { font-weight: 700; font-size: 14px; }
+.diagram .t.s { fill: var(--mist); font-size: 11.5px; }
+.diagram .t.a { fill: var(--accent); font-size: 11.5px; font-family: var(--mono); }
+.diagram .t.m { font-family: var(--mono); font-size: 11.5px; }
+.diagram .ar { fill: none; stroke: var(--ink-2); stroke-width: 1.4; marker-end: url(#arr); }
+.diagram .ar.ev { stroke: var(--accent); stroke-dasharray: 5 3; marker-end: url(#arr-a); }
+.diagram .ar.bad { stroke: var(--critical); marker-end: url(#arr-x); }
+.diagram .ar.thin { stroke-width: 1; }
+.diagram .st { fill: var(--card); stroke: var(--ink-2); stroke-width: 1.2; }
+.diagram .st.hot { stroke: var(--critical); } .diagram .st.good { stroke: var(--good); }
+.diagram .life { stroke: var(--rule-hard); stroke-width: 1; stroke-dasharray: 3 3; }
+.diagram .sticky { stroke: none; }
+.diagram .sticky.evt { fill: var(--st-evt); } .diagram .sticky.cmd { fill: var(--st-cmd); } .diagram .sticky.pol { fill: var(--st-pol); }
+.diagram .sticky.agg { fill: var(--st-agg); stroke: var(--rule-hard); } .diagram .sticky.act { fill: var(--st-act); } .diagram .sticky.hot { fill: var(--st-hot); }
+figure.wide > .title { padding-inline: var(--bleed); }
+figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed); }
+@media (max-width: 40rem) { figure.wide > .title, figure.wide > .subtitle, figure.wide > figcaption { padding-inline: 0; } }
+
+/* Event Storming 牆：HTML 便利貼，逐步揭露 */
+.wall { --cols: 8; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; align-items: start; }
+.wall > * { min-width: 0; }
+.wall .lane { grid-column: 1 / -1; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); padding: var(--sp-2) 0 2px; border-bottom: 1px solid var(--rule); margin-top: var(--sp-2); }
+.sticky { border-radius: 2px; padding: .45em .55em; font-size: .78rem; line-height: 1.35; color: hsl(340 12% 12%); box-shadow: 1px 1px 0 rgb(0 0 0 / .12); min-height: 3.6em; position: relative; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); } }
+:root[data-theme="dark"] .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); }
+.sticky .k { display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; opacity: .7; margin-bottom: .15em; }
+.sticky.evt { background: var(--st-evt); } .sticky.cmd { background: var(--st-cmd); } .sticky.pol { background: var(--st-pol); }
+.sticky.agg { background: var(--st-agg); border: 1px solid var(--rule-hard); } .sticky.act { background: var(--st-act); border-radius: 50% / 40%; text-align: center; }
+.sticky.hot { background: var(--st-hot); transform: rotate(-2deg); } .sticky.read { background: var(--st-read); } .sticky.ext { background: var(--st-ext); }
+.sticky.rej { background: var(--st-rej); text-decoration: line-through; opacity: .8; }
+.sticky.pivot { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sticky .fix { display: block; margin-top: .3em; font-size: .7rem; color: var(--accent); text-decoration: none; }
+.wall-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: var(--sp-2); }
+.wall-scroll .wall { min-width: 56rem; }
+/* 逐步揭露：容器 data-step=N；便利貼 data-from / data-until */
+[data-step] [data-from] { transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+[data-step="1"] [data-from]:not([data-from="1"]), [data-step="2"] [data-from="3"], [data-step="2"] [data-from="4"], [data-step="2"] [data-from="5"], [data-step="2"] [data-from="6"], [data-step="2"] [data-from="7"],
+[data-step="3"] [data-from="4"], [data-step="3"] [data-from="5"], [data-step="3"] [data-from="6"], [data-step="3"] [data-from="7"],
+[data-step="4"] [data-from="5"], [data-step="4"] [data-from="6"], [data-step="4"] [data-from="7"],
+[data-step="5"] [data-from="6"], [data-step="5"] [data-from="7"],
+[data-step="6"] [data-from="7"] { opacity: 0; transform: scale(.96); pointer-events: none; }
+[data-step="2"] [data-until="1"], [data-step="3"] [data-until="1"], [data-step="3"] [data-until="2"], [data-step="4"] [data-until="1"], [data-step="4"] [data-until="2"], [data-step="4"] [data-until="3"],
+[data-step="5"] [data-until="1"], [data-step="5"] [data-until="2"], [data-step="5"] [data-until="3"], [data-step="5"] [data-until="4"],
+[data-step="6"] [data-until="1"], [data-step="6"] [data-until="2"], [data-step="6"] [data-until="3"], [data-step="6"] [data-until="4"], [data-step="6"] [data-until="5"],
+[data-step="7"] [data-until="1"], [data-step="7"] [data-until="2"], [data-step="7"] [data-until="3"], [data-step="7"] [data-until="4"], [data-step="7"] [data-until="5"], [data-step="7"] [data-until="6"] { display: none; }
+
+/* 步驟控制列 */
+.stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-3) 0; }
+.stepper button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.stepper button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper .cap { font-family: var(--mono); font-size: var(--fs-xs); color: var(--mist); }
+.steps { list-style: none; padding: 0; margin: var(--sp-3) 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.steps > * { min-width: 0; }
+.steps li { font-size: var(--fs-xs); font-family: var(--mono); letter-spacing: .03em; padding: .5em .6em; border: 1px solid var(--rule); border-radius: 3px; color: var(--mist); background: var(--card); }
+.steps li.on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.steps li.done { color: var(--ink-2); }
+.step-note { border-left: 3px solid var(--accent); padding: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0; background: var(--card); font-size: var(--fs-sm); }
+.step-note > p { margin: 0; }
+.step-note[hidden] { display: none; }
+
+/* 分頁 */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-3); }
+.tabs button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.tabs button.on { border-color: var(--accent); background: var(--accent-soft); }
+.pane { display: none; } .pane.on { display: block; }
+
+/* 交付物清單（靜態勾） */
+.dod { list-style: none; padding: 0; margin: var(--sp-3) 0; }
+.dod li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: .4em; padding: .4em 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.dod li::before { content: "✓"; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li.partial::before { content: "◐"; color: var(--warn); }
+.dod li.no::before { content: "✗"; color: var(--critical); }
+.dod li:last-child { border-bottom: 0; }
+
+/* 時間線 */
+.timeline { list-style: none; padding: 0; margin: var(--sp-4) 0; border-left: 2px solid var(--rule-hard); }
+.timeline li { position: relative; padding: 0 0 var(--sp-3) var(--sp-5); font-size: var(--fs-sm); }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--accent); }
+.timeline li .t { font-family: var(--mono); font-size: var(--fs-xs); color: var(--accent); letter-spacing: .06em; margin-right: .5em; }
+.timeline li.hot::before { border-color: var(--critical); }
+
+/* GWT */
+.gwt { font-family: var(--mono); font-size: var(--fs-xs); line-height: 1.7; background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: var(--sp-3) var(--sp-4); margin: var(--sp-3) 0; white-space: pre-wrap; }
+.gwt b { color: var(--accent); font-weight: 600; }
+
+/* 表格：severity 記號 */
+td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; margin-right: .3em; vertical-align: -1px; }
+.sev.crit { background: var(--critical); } .sev.warn { background: var(--warn); } .sev.ok { background: var(--good); } .sev.info { background: var(--mist); }
+
+/* 對話重播 */
+.chat { display: grid; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.chat > * { min-width: 0; }
+.msg { border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); background: var(--card); max-width: 44rem; }
+.msg.stu { border-left: 3px solid var(--ink); }
+.msg.ta { border-left: 3px solid var(--accent); margin-left: var(--sp-5); }
+.msg .who { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); margin: 0 0 .3em; text-transform: uppercase; }
+.msg p { margin: 0 0 .5em; } .msg p:last-child { margin: 0; }
+
+.end { margin-top: var(--sp-7); color: var(--mist); font-size: var(--fs-sm); }
+.kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--rule-hard); border-bottom-width: 2px; border-radius: 3px; padding: 0 .35em; }
+@media (hover: hover) and (pointer: fine) {
+  .tnav a, .tabs button, .stepper button { transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+}
+
+/* 讀的欄位維持 34em；工作物件（產出卡、終端、對話、牆、圖）用整個頁寬，牆與 .wide 再破出到 66rem */
+.report :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tnav, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > .pane > *, .report > .pane > * { max-width: none; }
+.wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
+.wall-scroll .wall { padding-inline: 2px; }
+
+</style>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">theme · auto</button>
+<main class="report">
+<nav class="tnav" aria-label="七天導覽">
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher" data-day="0">教師版 · 總覽</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day1" data-day="1">D1 進場</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day2" data-day="2">D2 風暴</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day3" data-day="3" class="here" aria-current="page">D3 戰略</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day4" data-day="4">D4 TDD</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day5" data-day="5">D5 事件</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day6" data-day="6">D6 MVP</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day7" data-day="7">D7 收尾</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">學員主控台 ↗</a>
+</nav>
+
+<!-- title: 教師版 D3 · 戰略設計 -->
+<!-- description: Day 3 全程跑完會留下的 context-map.md、c4.md、ADR-0001 / 0002 的完整參考版本，加上找邊界的五步實況、助教對話重播與驗收點。 -->
+<p class="eyebrow">DAY 3 · STRATEGIC DESIGN</p>
+<h1 class="display">從便利貼<br>切出<em>邊界</em></h1>
+<p class="lede">Day 2 的牆上有 12 張事實、3 個樞紐、8 條規則。Day 3 要回答的只有一個問題：這些東西「誰擁有」？學員用四種線索（語言衝突、生命週期、一致性、獨立存活）把牆切成 3–7 個 Bounded Context，替每一對關係標上模式（ACL、Partnership、Customer–Supplier、Conformist），畫出 C4 前兩層，再用兩份 ADR 把「為什麼這樣切」與「MVP1 只做哪三塊」寫成三個月後還能被挑戰的決策。今天決定的邊界，明天起就是 <code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code> 三個目錄，改不回來。</p>
+<div class="meta-strip"><span><b>方法論</b> Bounded Context · Context Map · Core/Supporting/Generic · C4 L1/L2 · ADR</span><span><b>時長</b> kickoff 15 分 + 先讀 30 分 + 3 × 90 分 + check-out 30 分</span><span><b>交付物</b> context-map.md · c4.md · adr/0001 · adr/0002</span><span><b>skills</b> /context-map · /c4 · /adr · /checkout</span></div>
+
+<p class="eyebrow">00 · 跑完會留下什麼</p>
+<h2>四個檔案，一個子目錄</h2>
+<ul class="dod">
+  <li><code>workshop/day3/context-map.md</code> — 邊界推導紀錄（四小節、每節 ≥ 2 條證據，引用 Day 1–2 檔案）、5 個 context 四欄齊全、R1–R8 擁有者表、Mermaid context map、關係表（模式 + 理由 + 反例）、「不准出現的關係」、推翻過的切法 ≥ 1、與課綱 §1.4 的差異與理由。</li>
+  <li><code>workshop/day3/c4.md</code> — C4Context（6 位角色、1 個系統、3 個外部系統、每條線有動詞）與 C4Container（只畫 MVP1；site / HQ 兩個邊界；OCPP ACL、Outbox relay、in-memory bus、DB 都在；Parking / Dispatch 虛線 stub）；每個箭頭對到 §1.8 的事件或一個命令；「MVP1 不包含」清單。</li>
+  <li><code>workshop/day3/adr/0001-bounded-contexts.md</code> — 決策 = 五個 context 的切法；替代方案 ≥ 2（含「單一 Session」與「AssetOps + Dispatch 合併」）；後果有壞的 ≥ 2；狀態 Accepted；<code>/adr review</code> 過。</li>
+  <li><code>workshop/day3/adr/0002-mvp1-scope.md</code> — 決策 = MVP1 只做 Charging + AssetOps 工單開立 + Billing 草稿；明列不做什麼（Dispatch 真派工、Parking 真整合、Billing 合併出帳、發票）與何時做（Sprint 2）。</li>
+  <li>全部 commit 到 <code>workshop/&lt;name&gt;</code> 分支；context 名稱已與明天的 starter 目錄對上。</li>
+</ul>
+<p>講師視角：這一天最容易失真的地方不是「切錯」，而是「沒切」。三種典型：（1）只切出「場站」與「總部」——那是部署位置，不是語言邊界；（2）切出十塊——「連接器」「計量」「憑證」各一塊，把聚合當 context；（3）所有關係都畫 Partnership、ADR 後果只寫好處——代表沒想過誰是上游、也沒想過代價。另一種更隱蔽的失真：學員在 B1 就偷看 <code>docs/curriculum.md</code> §1.4，交出來的五個 context 名字一模一樣，但「邊界推導紀錄」四小節是空的或是事後補的。驗收時先看推導紀錄有沒有引用 <code>workshop/day1/interviews.md</code> 的原話與 <code>workshop/day2/rules.md</code> 的規則編號——沒有引用，就是抄的。</p>
+
+<p class="eyebrow">BLOCK 1 · 找邊界（90 分）</p>
+<h2>用四種線索把牆切開</h2>
+<h3>實況</h3>
+<p>前 25 分鐘不開 Claude。學員打開 <code>workshop/day3/TEMPLATE.md</code> 的第一個檔案骨架，對著自己的 <code>storm-board.md</code>、<code>glossary.md</code>、<code>rules.md</code>、<code>interviews.md</code>，替四種線索各找兩條證據。做得好的學員這時桌上會攤開三個檔案，一邊翻一邊在「語言衝突」下面寫「會話：阿忠 = P-441，小美 = S-991」。做得不好的學員第 5 分鐘就開 Claude 問「應該切幾個」。</p>
+<p>第 25–70 分鐘貼 <code>/context-map 挑戰</code>。助教不給名單，只針對每個 context 問「為什麼它不能併進隔壁那個」、針對每條不變條件問「這條規則在哪個時刻必須成立」、針對獨立存活問「總部斷線 30 分鐘時哪些命令還能執行」。一輪通常 3–4 個回合，學員會在這裡把「場站」拆成停車與充電、把「維運」拆成工單與派工。最後 20 分鐘寫「我推翻過的切法」——推翻前後都要留在檔案裡。</p>
+
+<section data-stepper data-step="1" data-max="5">
+  <ol class="steps">
+    <li data-goto="1">1 攤開事實</li><li data-goto="2">2 樞紐當剪刀</li><li data-goto="3">3 語言衝突</li><li data-goto="4">4 生命週期與斷線</li><li data-goto="5">5 五個邊界</li>
+  </ol>
+  <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="step-note" data-note="1"><p><b>攤開 Day 2 的事實。</b>學員把 storm board 主線（T0–T6）與故障支線（F、工單開立、工單關閉）攤成一排，只留過去式事實，命令、政策先收起來。助教問：「這 10 張裡，哪幾張是你昨天標成樞紐的？」學員答：「充電已開始、充電已結束、樁申告故障——因為它左右兩邊的人不一樣。」助教：「好，那就先只用這三張。」</p></div>
+  <div class="step-note" data-note="2"><p><b>樞紐當剪刀。</b>在三個樞紐事件畫垂直線，替每張事實寫「誰在乎」。助教問：「T3 左邊是阿忠，右邊變成小美與老陳——同一個人跨過這條線了嗎？」學員：「阿忠沒跨，他只管 T0、T1、T6。」助教：「那 T6 的阿忠跟 T0 的阿忠是同一群人、同一套詞？」學員：「是，都是進場放行。所以 T0–T1 和 T6 應該在同一堆，中間夾著充電。」助教：「你剛剛推出了一個不連續的邊界——記下來。」</p></div>
+  <div class="step-note" data-note="3"><p><b>同一個字、不同意思。</b>助教問：「阿忠說『一個會話』和小美說『一個會話』，指同一段時間嗎？」學員翻 <code>interviews.md</code>：P-441 是 14:02–14:33，S-991 是 14:04–14:31，「而且拔了再插會有第二個 S-991，但 P-441 還是同一個」。助教再問「狀態」：OCPP 的 Faulted、小美的異常中止、Vicky 的維修中、老陳的草稿——「你的程式碼裡打算用幾個欄位裝？」學員：「四個。」助教問「開單」：Vicky 開的是 WO-2208，老陳開的是 INV-778——「同一個動詞嗎？」學員：「一個 open 一個 issue。」三組衝突 → 三條候選邊界。</p></div>
+  <div class="step-note" data-note="4"><p><b>生命週期與斷線存活。</b>助教問：「S-991 結束時 P-441 一定結束嗎？WO-2208 關單時 INV-778 呢？」學員：「都不一定。充電活 27 分鐘、停車 31 分鐘、工單可以跨日、帳單月底才開還要留五年。」助教換線索：「總部斷線 30 分鐘，哪些命令還要能執行？」學員回去翻阿忠訪談：「開閘、人工放行、充電授權（月票白名單 24 小時快取）——這些在場站。出帳可以晚、開工單在總部、派工阿豪在地下室本來就離線回報。」助教：「你剛剛把『必須自己活』和『可以晚一點』分成兩堆——這兩堆能放同一個交易嗎？」學員：「不能。」</p></div>
+  <div class="step-note" data-note="5"><p><b>五個邊界。</b>學員把四種線索疊起來：停車（阿忠、P-441、斷線開閘）、充電（小美、S-991、OCPP 在場站、R1–R4 立即守）、帳務（老陳、INV-778、R7、可延遲不可丟）、資產維運（Vicky、WO-2208、R5 立即守）、派工（阿豪、TECH-HAO、離線後對齊）。助教最後問：「如果只有錢做一塊，做哪塊？為什麼是它讓公司贏或輸？」學員：「充電。停車系統本來就有、工單能用電話撐、帳單可以月底手工——但充電順不順、斷線能不能賣，就是這家公司跟隔壁停車場的差別。」核心域定了。助教：「現在可以把這五堆寫進 context 清單，每堆四欄。」</p></div>
+
+  <figure class="wide">
+    <p class="title">找邊界的五步</p>
+    <p class="subtitle">同一張牆逐步疊上剪刀線、語言衝突、生命週期與斷線存活，最後長出五個區域。按「下一步」看每一層。</p>
+    <div class="diagram" data-step-target>
+      <svg viewBox="0 0 960 520" role="img" aria-label="從 Day 2 事實牆推導五個 Bounded Context 的五個步驟">
+        <!-- 第 5 步：便利貼背後的區域（先畫在底層，第 5 步才出現） -->
+        <g data-from="5">
+          <rect class="zone plain" x="14" y="22" width="186" height="68" rx="6"/>
+          <rect class="zone" x="200" y="22" width="368" height="68" rx="6"/>
+          <rect class="zone plain" x="568" y="22" width="92" height="68" rx="6"/>
+          <rect class="zone" x="660" y="22" width="92" height="68" rx="6"/>
+          <rect class="zone plain" x="752" y="22" width="188" height="68" rx="6"/>
+          <text class="t a" x="107" y="140" text-anchor="middle">Parking</text>
+          <text class="t a" x="384" y="140" text-anchor="middle">Charging</text>
+          <text class="t a" x="614" y="140" text-anchor="middle">Parking</text>
+          <text class="t a" x="706" y="140" text-anchor="middle">Charging→AssetOps</text>
+          <text class="t a" x="846" y="140" text-anchor="middle">AssetOps</text>
+        </g>
+        <!-- 第 1 步：Day 2 的事實一排 -->
+        <g data-from="1">
+          <rect class="sticky evt" x="20" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="63" y="46" text-anchor="middle">T0 14:02</text>
+          <text class="t" x="63" y="68" text-anchor="middle">車輛已進場</text>
+          <rect class="sticky evt" x="112" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="155" y="46" text-anchor="middle">T1 14:03</text>
+          <text class="t" x="155" y="68" text-anchor="middle">車位已占用</text>
+          <rect class="sticky evt" x="204" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="247" y="46" text-anchor="middle">T2 14:04</text>
+          <text class="t" x="247" y="68" text-anchor="middle">連接器插上</text>
+          <rect class="sticky evt" x="296" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="339" y="46" text-anchor="middle">T3 14:04</text>
+          <text class="t" x="339" y="68" text-anchor="middle">充電已開始</text>
+          <rect class="sticky evt" x="388" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="431" y="46" text-anchor="middle">T4 14:13</text>
+          <text class="t" x="431" y="68" text-anchor="middle">電量已計量</text>
+          <rect class="sticky evt" x="480" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="523" y="46" text-anchor="middle">T5 14:31</text>
+          <text class="t" x="523" y="68" text-anchor="middle">充電已結束</text>
+          <rect class="sticky evt" x="572" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="615" y="46" text-anchor="middle">T6 14:33</text>
+          <text class="t" x="615" y="68" text-anchor="middle">車輛已離場</text>
+          <rect class="sticky evt" x="664" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="707" y="46" text-anchor="middle">F 18:10</text>
+          <text class="t" x="707" y="68" text-anchor="middle">樁申告故障</text>
+          <rect class="sticky evt" x="756" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="799" y="46" text-anchor="middle">F+1 18:10</text>
+          <text class="t" x="799" y="68" text-anchor="middle">工單已開立</text>
+          <rect class="sticky evt" x="848" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="891" y="46" text-anchor="middle">F+2 18:18</text>
+          <text class="t" x="891" y="68" text-anchor="middle">工單已關閉</text>
+        </g>
+        <!-- 第 2 步：樞紐剪刀線 + 誰在乎 -->
+        <g data-from="2">
+          <rect x="296" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <rect x="480" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <rect x="664" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <path class="life" d="M293 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <path class="life" d="M477 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <path class="life" d="M661 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <text class="t a" x="293" y="14" text-anchor="middle">樞紐 ChargingStarted</text>
+          <text class="t a" x="477" y="14" text-anchor="middle">樞紐 ChargingCompleted</text>
+          <text class="t a" x="661" y="14" text-anchor="middle">樞紐 ChargerFaulted</text>
+          <text class="t s" x="63" y="110" text-anchor="middle">阿忠</text>
+          <text class="t s" x="155" y="110" text-anchor="middle">阿忠·小美</text>
+          <text class="t s" x="247" y="110" text-anchor="middle">小美</text>
+          <text class="t s" x="339" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="431" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="523" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="615" y="110" text-anchor="middle">阿忠·老陳</text>
+          <text class="t s" x="707" y="110" text-anchor="middle">Vicky·阿豪</text>
+          <text class="t s" x="799" y="110" text-anchor="middle">Vicky·阿豪</text>
+          <text class="t s" x="891" y="110" text-anchor="middle">Vicky·小美</text>
+          <text class="t s" x="63" y="126" text-anchor="middle">↑ 誰在乎</text>
+        </g>
+        <!-- 第 3 步：語言衝突 -->
+        <g data-from="3">
+          <rect class="st hot" x="20" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="32" y="174">「會話」同字不同義</text>
+          <text class="t s" x="32" y="193">阿忠：P-441 14:02–14:33，進場 → 放行</text>
+          <text class="t s" x="32" y="210">小美：S-991 14:04–14:31，授權 → 結束計量</text>
+          <text class="t s" x="32" y="227">韌體：transactionId 5567（不進通用語言）</text>
+          <text class="t a" x="32" y="246">→ 一個 P-441 有 0..n 個 S-991：兩個 context</text>
+          <rect class="st hot" x="330" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="342" y="174">「狀態」四個狀態機</text>
+          <text class="t s" x="342" y="193">OCPP：Available / Charging / Faulted</text>
+          <text class="t s" x="342" y="210">小美：進行中 / 已結束 / 異常中止（會話）</text>
+          <text class="t s" x="342" y="227">Vicky：正常 / 故障 / 維修中（樁健康）</text>
+          <text class="t a" x="342" y="246">→ 不准一個 status 欄吃四種值</text>
+          <rect class="st hot" x="640" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="652" y="174">「開單」工單還是帳單</text>
+          <text class="t s" x="652" y="193">Vicky：開工單 WO-2208（WorkOrder.open）</text>
+          <text class="t s" x="652" y="210">老陳：開帳單 INV-778（Invoice.issue）</text>
+          <text class="t s" x="652" y="227">阿忠：「開單」= 打電話給客服（人當 API）</text>
+          <text class="t a" x="652" y="246">→ 工單 ≠ 帳單：AssetOps 與 Billing 分家</text>
+        </g>
+        <!-- 第 4 步：生命週期 + 斷線存活 -->
+        <g data-from="4">
+          <rect class="box dim" x="20" y="268" width="450" height="130" rx="8"/>
+          <text class="t b" x="32" y="288">生命週期不同步（長度非等比）</text>
+          <text class="t m" x="32" y="319">S-991 充電會話</text>
+          <rect class="zone" x="150" y="306" width="46" height="18" rx="3"/>
+          <text class="t s" x="202" y="319">14:04–14:31 · 27 分</text>
+          <text class="t m" x="32" y="341">P-441 停車會話</text>
+          <rect class="zone" x="150" y="328" width="58" height="18" rx="3"/>
+          <text class="t s" x="214" y="341">14:02–14:33 · 31 分，可含多個 S-991</text>
+          <text class="t m" x="32" y="363">WO-2208 工單</text>
+          <rect class="zone" x="150" y="350" width="150" height="18" rx="3"/>
+          <text class="t s" x="306" y="363">18:10 開立 → 18:18 關單，可跨日</text>
+          <text class="t m" x="32" y="385">INV-778 帳單</text>
+          <rect class="zone" x="150" y="372" width="306" height="18" rx="3"/>
+          <text class="t s" x="156" y="385">月底開立 → 更正走 InvoiceAdjusted → 保存 5 年</text>
+          <rect class="box dim" x="490" y="268" width="450" height="130" rx="8"/>
+          <text class="t b" x="502" y="288">總部斷線 30 分鐘，誰要活著？（§1.1）</text>
+          <text class="t a" x="502" y="308">必須自己活（場站）</text>
+          <text class="t a" x="722" y="308">可以晚一點對齊（總部）</text>
+          <rect class="st good" x="502" y="316" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="331">開關閘、人工放行 R6 · 阿忠鑰匙</text>
+          <rect class="st good" x="502" y="342" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="357">授權 R2 · 月票白名單快取 24h</text>
+          <rect class="st good" x="502" y="368" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="383">計量與結束 R3 R4 · OCPP 在場站</text>
+          <rect class="st" x="722" y="316" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="331">出帳 · 可延遲、不可丟事件</text>
+          <rect class="st" x="722" y="342" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="357">開工單 · 總部主系統，場站上報</text>
+          <rect class="st" x="722" y="368" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="383">派工回報 · 離線後再對齊</text>
+        </g>
+        <!-- 第 5 步：五個區域 -->
+        <g data-from="5">
+          <text class="t a" x="210" y="414" text-anchor="middle">場站節點 SITE-TPE-01（斷線可獨立）</text>
+          <text class="t a" x="675" y="414" text-anchor="middle">總部節點 HQ</text>
+          <path class="life" d="M20 418 H400"/>
+          <path class="life" d="M410 418 H940"/>
+          <rect class="zone plain" x="20" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="30" y="446">Parking 場站停車</text>
+          <text class="t s" x="30" y="464">進場、車位、停車會話、放行</text>
+          <text class="t s" x="30" y="480">一輛車一個進行中停車會話</text>
+          <text class="t a" x="30" y="497">Supporting · 斷線開關閘</text>
+          <rect class="zone" x="200" y="424" width="200" height="84" rx="8"/>
+          <rect x="200" y="424" width="200" height="84" rx="8" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <text class="t b" x="210" y="446">Charging 充電會話 · 核心</text>
+          <text class="t s" x="210" y="464">連接器、授權、計量、中止原因</text>
+          <text class="t s" x="210" y="480">一個連接器一個進行中會話</text>
+          <text class="t a" x="210" y="497">Core · OCPP 在場站，總部只訂閱</text>
+          <rect class="zone plain" x="410" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="420" y="446">Billing 計費帳務</text>
+          <text class="t s" x="420" y="464">費率、帳單、發票、爭議</text>
+          <text class="t s" x="420" y="480">帳單開立後金額不可默默改</text>
+          <text class="t a" x="420" y="497">Generic · 可延遲不可丟</text>
+          <rect class="zone plain" x="590" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="600" y="446">AssetOps 資產維運</text>
+          <text class="t s" x="600" y="464">樁、槍、韌體、健康、工單</text>
+          <text class="t s" x="600" y="480">一座樁一張進行中根因工單</text>
+          <text class="t a" x="600" y="497">Supporting · 總部主系統</text>
+          <rect class="zone plain" x="770" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="780" y="446">Dispatch 調度派工</text>
+          <text class="t s" x="780" y="464">技術員、路線、SLA、備品</text>
+          <text class="t s" x="780" y="480">一張工單一個主責技術員</text>
+          <text class="t a" x="780" y="497">Supporting · 離線後對齊</text>
+        </g>
+      </svg>
+    </div>
+    <details class="datatable"><summary>圖中資料</summary><div class="table-scroll" style="margin-inline:0"><table>
+      <thead><tr><th>步驟</th><th>圖上出現什麼</th><th>資料</th></tr></thead>
+      <tbody>
+        <tr><td>1 攤開事實</td><td>10 張黃貼</td><td>T0 14:02 VehicleEntered · T1 14:03 ChargingBayOccupied · T2 14:04 ConnectorPluggedIn · T3 14:04 ChargingStarted · T4 14:13 EnergyMetered · T5 14:31 ChargingCompleted · T6 14:33 VehicleExited · F 18:10 ChargerFaulted · F+1 18:10 WorkOrderOpened · F+2 18:18 WorkOrderClosed</td></tr>
+        <tr><td>2 樞紐當剪刀</td><td>三條垂直線、每張貼的「誰在乎」</td><td>樞紐：ChargingStarted、ChargingCompleted、ChargerFaulted。在乎的人：T0 阿忠；T1 阿忠·小美；T2 小美；T3–T5 小美·老陳；T6 阿忠·老陳；F、F+1 Vicky·阿豪；F+2 Vicky·小美</td></tr>
+        <tr><td>3 語言衝突</td><td>三個紅框</td><td>「會話」：阿忠 P-441 14:02–14:33 vs 小美 S-991 14:04–14:31 vs 韌體 transactionId 5567 → Parking / Charging。「狀態」：OCPP 連接器狀態機 vs 小美會話狀態 vs Vicky 樁健康 vs 老陳帳單狀態 → 四個狀態機。「開單」：Vicky WorkOrder.open（WO-2208）vs 老陳 Invoice.issue（INV-778）→ AssetOps / Billing</td></tr>
+        <tr><td>4 生命週期與斷線</td><td>左：四條生命週期；右：兩欄存活清單</td><td>S-991 27 分；P-441 31 分（可含多個 S-991）；WO-2208 18:10 → 18:18 可跨日；INV-778 月底開立、更正走 InvoiceAdjusted、保存 5 年。必須自己活：開關閘與人工放行 R6、授權 R2（月票白名單 24h 快取）、計量與結束 R3/R4。可以晚一點：出帳、開工單、派工回報</td></tr>
+        <tr><td>5 五個邊界</td><td>便利貼背後的區域 + 底部五個框</td><td>Parking（Supporting，斷線開關閘）、Charging（Core，OCPP 在場站）、Billing（Generic，可延遲不可丟）、AssetOps（Supporting，總部主系統）、Dispatch（Supporting，離線後對齊）。場站節點 = Parking + Charging；總部節點 = Billing + AssetOps + Dispatch。F 這張貼由 Charging 產生、AssetOps 消費</td></tr>
+      </tbody>
+    </table></div></details>
+    <figcaption>五步的順序就是四種線索的順序：先用樞紐找候選切點（步驟 2），再用語言（3）、生命週期與一致性、斷線存活（4）逐一驗證，最後才命名（5）。學員的圖不會長這樣——他們交的是 markdown；這張圖是講師用來對照「推導紀錄」四小節有沒有真的走過這五步。</figcaption>
+  </figure>
+</section>
+
+<h3>助教對話重播：<code>/context-map 挑戰</code></h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /context-map 挑戰</p><p>Day 3 Block 1。我從 storm board 切出三堆：</p><p>1. <b>場站 Site</b>：進場、車位、插槍、授權、計量、放行。不變條件：一個車位一次一輛車。斷線要活。<br>2. <b>維運 Ops</b>：故障、工單、派工、技術員、備品。不變條件：一根樁一張工單。總部的事。<br>3. <b>帳務 Billing</b>：停車費、電費、發票。不變條件：帳單開了不能改（R7）。可以晚。</p><p>請只提問，不要說官方答案是幾個。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>可以，先記下這三堆。戳第一堆兩個問題：</p><p>1. 你的 <code>interviews.md</code> 裡阿忠說「一個會話」、小美說「一個會話」——指的是同一段時間嗎？把 P-441 和 S-991 的起訖時間抄出來對一下。<br>2. 「一個車位一次一輛車」守住了 T1；那 R1「連接器占用時拒絕第二次 Start」是誰在守？車位和連接器是同一個東西嗎（阿忠隱藏事實 4：每天約 5 台車占位不充電）？</p><p><b>下一個最小步驟：</b>在 context-map.md「語言衝突」小節寫下 P-441 與 S-991 的起訖時間，再回答第 2 題。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>P-441 是 14:02–14:33，S-991 是 14:04–14:31。而且拔了再插會有第二個 S-991，P-441 還是同一個。R1 是連接器 CP-A12-2 的規則，跟車位無關——車可以停著不充。所以「場站」裡其實有兩條不變條件、兩種會話。我把它拆成停車和充電。</p><p>第二堆的問題是什麼？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>第二堆：阿豪在地下室修好樁的時候沒訊號（阿豪隱藏事實 3），他回到地面才回報。這 40 分鐘裡，Vicky 那邊「一根樁一張根因工單」（R5）還要不要立即守？如果要，工單與派工的一致性節奏是一樣的嗎？另外，費率改動是小美決定、韌體改動是誰決定？同一組人嗎？</p><p>提醒一件事：你的三堆裡沒有 OCPP。你打算把 <code>StatusNotification</code> 放進哪一堆？它有自己的一群業務人員嗎？</p><p><b>下一個最小步驟：</b>替「維運」寫兩條不變條件（一條關於工單、一條關於技術員），看它們能不能在同一筆交易守住。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>工單：「一座樁同一時間一張進行中根因工單」——18:10:08 第二次申告時要立刻擋，不能等。技術員：「一張工單一個主責技術員」——但阿豪離線時這條要等他回報才對得齊。節奏不一樣，拆成資產維運（AssetOps）和派工（Dispatch）。</p><p>OCPP 不是一群人的語言，是樁的協定。它應該是充電的外部系統，中間要翻譯——<code>StatusNotification(Faulted)</code> 進來變 <code>ChargerFaulted</code>。</p><p>所以現在是五堆：停車、充電、帳務、資產維運、派工。核心是充電。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>五堆各自有語言、不變條件、存活條件，可辯護。兩件事要留在檔案裡：（1）「三堆」那版放進「我推翻過的切法」，寫清楚是哪條線索推翻的；（2）「OCPP 不是 context」這句放進「語言衝突」小節——它是 Day 2 storm 時就被你挑掉的「系統動作當事實」的延續。</p><p>先別急著對答案。把五堆的四欄填完，然後替 R1–R8 每一條標擁有者——如果有一條跨兩堆，回來重切。</p><p><b>下一個最小步驟：</b>在 context-map.md 的 context 清單表填滿 5 列 × 4 欄，10 分鐘。</p></div>
+</div>
+
+<h3>哪些替代切法「可辯護」</h3>
+<p>課綱 §1.4 是五個，但 rubric 說 3–7 個都收，關鍵是「說得出理由」。講師在驗收時會遇到這幾種，判準如下：</p>
+<div class="table-scroll"><table>
+  <thead><tr><th>學員的切法</th><th>可辯護嗎</th><th>講師怎麼判</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">4 個：AssetOps + Dispatch 合併為「Ops」</td><td>可辯護</td><td>MVP1 裡 Dispatch 只是 stub，合併不影響 Day 4–6。要求他寫出代價：技術員離線回報（阿豪 3）與工單即時去重（R5）的一致性節奏不同，將來拆的時候要動 Ops 的聚合。ADR-0001 的替代方案要出現「拆成兩個」。</td></tr>
+    <tr><td class="nowrap">6 個：Billing 拆成「計價 Pricing」與「發票 Invoicing」</td><td>可辯護</td><td>發票開立是 Generic（有 SaaS）、費率合併有一點差異化——這正是 <code>ddd-strategic.md</code> §2 說的「子領域 ≠ context」。要求他說明 R7 歸哪一個、Day 5 的 BillingDraftConsumer 在哪一個。</td></tr>
+    <tr><td class="nowrap">3 個：只有 Charging、AssetOps、Billing（Parking、Dispatch 當外部）</td><td>有條件可辯護</td><td>這是 <code>day3.md</code>「如果你落後了」的最小版。必須在文件裡明寫「Parking 是既有廠商系統、Dispatch 是 Sprint 2」，而且 R6 要有歸屬（歸到「Parking 外部系統的事件契約」）。沒寫這兩句就是沒切完。</td></tr>
+    <tr><td class="nowrap">3 個：場站（停車 + 充電）、總部（工單 + 派工）、帳務</td><td>不可辯護</td><td>「場站」裡有兩種會話、兩條不變條件（T1 車位 vs R1 連接器）；人工放行會被未結束的充電會話擋住（§1.7 T6 耦合）。這是部署位置，不是語言邊界。用「P-441 vs S-991」一個問題就能推翻。</td></tr>
+    <tr><td class="nowrap">2 個：場站、總部</td><td>不可辯護</td><td>同上，而且帳務被塞進總部後 R7 沒有擁有者。問：「老陳月底才工作，跟 Vicky 每天派工是同一群人、同一套詞嗎？」</td></tr>
+    <tr><td class="nowrap">≥ 8 個：連接器、計量、憑證、工單、技術員各一個</td><td>不可辯護</td><td>把聚合與值物件當 context。問：「連接器有自己的一群人在乎、自己的一套詞嗎？還是它是充電會話裡的一個名詞？」</td></tr>
+  </tbody>
+</table></div>
+
+<div class="file"><p class="path">workshop/day3/context-map.md <span class="chip">B1 第 40 分鐘的快照 · 第一版切法（後來被推翻）</span></p><div class="body">
+<h4>Context 清單（第一版，三堆）</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>Context</th><th>說的話</th><th>不變條件</th><th>獨立存活</th><th>Core / Supporting / Generic</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">場站 Site</td><td>進場、車位、插槍、授權、計量、放行</td><td>一個車位一次一輛車</td><td>總部斷線要能進場、充電、放行</td><td>Core</td></tr>
+    <tr><td class="nowrap">維運 Ops</td><td>故障、工單、派工、技術員、備品</td><td>一根樁一張工單</td><td>總部的事，場站只上報</td><td>Supporting</td></tr>
+    <tr><td class="nowrap">帳務 Billing</td><td>停車費、電費、發票、對帳</td><td>帳單開了不能改（R7）</td><td>可以晚，不能漏</td><td>Generic</td></tr>
+  </tbody>
+</table></div>
+<h4>被助教戳出來的問題（原樣留著，B1 結束移到「我推翻過的切法」）</h4>
+<ul>
+  <li>「場站」裡「會話」有兩個意思：阿忠的 P-441（14:02–14:33）與小美的 S-991（14:04–14:31）。一個 P-441 可以有 0..n 個 S-991。<b>語言衝突 + 生命週期</b> → 拆成 Parking 與 Charging。</li>
+  <li>「一個車位一次一輛車」守的是 T1；R1「連接器占用拒絕第二次 Start」守的是 CP-A12-2，不是車位（阿忠：每天 5 台車占位不充電）。兩條不變條件、兩個聚合、兩種語言。</li>
+  <li>「維運」裡 R5（同樁同碼一張根因工單）要在 18:10:08 立刻擋；「一張工單一個主責技術員」要等阿豪從地下室上來才對得齊。<b>一致性節奏不同 + Conway（Vicky vs 阿豪）</b> → 拆成 AssetOps 與 Dispatch。</li>
+  <li>OCPP 沒有出現在任何一堆——它不是一群人的語言，是樁的協定。它是 Charging 的外部系統，中間要有翻譯層。</li>
+</ul>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 1</p>
+<p><b>驗收時看這三行：</b>（1）「語言衝突」小節有沒有「P-441 14:02–14:33」與「S-991 14:04–14:31」這兩個數字——有數字代表他真的翻了 <code>interviews.md</code>；（2）「獨立存活」小節有沒有引用阿忠隱藏事實 1（鑰匙開閘、日誌本）或小美隱藏事實 2（月票白名單 24 小時快取）——沒有的話「斷線」只是口號；（3）「我推翻過的切法」是不是真的比最終版少或多一堆，而且寫了是哪條線索推翻的。</p>
+<p><b>常見失真：</b>「場站 / 總部」兩堆（部署位置當邊界）；十堆（聚合當 context）；「帳務找不到不變條件」（回 R7）；把 OCPP 畫成 context；核心域選 Billing「因為它管錢」（老陳的痛是「對得起來」，不是「算得比別人好」）。</p>
+<p><b>怎麼攔：</b>走動時聽到「一個 Session 表加 type 欄」就問「人工放行時那個 Session 的 status 是什麼？」（instructor.md 誤解 #5）。聽到「切幾個才對」就說「切幾個是從牆上推出來的，助教只戳洞」。B1 結束前 10 分鐘投影一位學員的推導紀錄（徵得同意），指出哪一句是證據、哪一句是立場。</p>
+</div>
+
+<p class="end">教師版 · EV Charge Ops 七天工作坊 · 教材與程式碼：<a href="https://github.com/clarencechien/dddguide">github.com/clarencechien/dddguide</a> · 學員主控台：<a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">ev-charge-ops-workshop</a> · 本頁假設全流程跑完；學員實際產出會與此不同，差異正是驗收要看的地方。</p>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+  </defs>
+</svg>
+
+<script>
+/* 無第三方、無 storage：狀態只活在變數裡（imitator 的 opaque origin 會讓 storage API 丟例外） */
+(() => {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+
+  /* theme toggle — STYLE.md floor item 5 */
+  {
+    const root = document.documentElement, btn = $('#theme-toggle');
+    let dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    btn.textContent = 'theme · ' + (dark ? 'dark' : 'light');
+    btn.addEventListener('click', () => {
+      dark = !dark; root.dataset.theme = dark ? 'dark' : 'light';
+      btn.textContent = 'theme · ' + (dark ? 'dark' : 'light'); btn.setAttribute('aria-pressed', 'true');
+    });
+  }
+
+  /* tabs: <div class="tabs" data-tabs><button data-pane="id">…  + <div class="pane" id="id"> */
+  $$('[data-tabs]').forEach(group => {
+    const btns = $$('button[data-pane]', group);
+    const show = id => {
+      btns.forEach(b => b.classList.toggle('on', b.dataset.pane === id));
+      btns.forEach(b => { const p = document.getElementById(b.dataset.pane); if (p) p.classList.toggle('on', b.dataset.pane === id); });
+    };
+    btns.forEach(b => b.addEventListener('click', () => show(b.dataset.pane)));
+    const first = btns.find(b => b.classList.contains('on')) || btns[0];
+    if (first) show(first.dataset.pane);
+  });
+
+  /* steppers: <section data-stepper data-step="1" data-max="7">
+       <ol class="steps"><li data-goto="1">…</li>…</ol>
+       <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><span class="cap"></span></div>
+       <div class="step-note" data-note="1">…</div>  (one per step; shown when active)
+       <div class="wall" data-step-target>…stickies with data-from / data-until…</div> */
+  $$('[data-stepper]').forEach(sec => {
+    const max = parseInt(sec.dataset.max || '7', 10);
+    let step = parseInt(sec.dataset.step || '1', 10);
+    const targets = $$('[data-step-target]', sec);
+    const notes = $$('[data-note]', sec);
+    const steps = $$('.steps li[data-goto]', sec);
+    const cap = $('.cap', sec);
+    const paint = () => {
+      sec.dataset.step = String(step);
+      targets.forEach(t => t.dataset.step = String(step));
+      notes.forEach(n => n.hidden = n.dataset.note !== String(step));
+      steps.forEach(li => { const n = parseInt(li.dataset.goto, 10); li.classList.toggle('on', n === step); li.classList.toggle('done', n < step); });
+      if (cap) cap.textContent = `步驟 ${step} / ${max}`;
+      $$('[data-prev]', sec).forEach(b => b.disabled = step <= 1);
+      $$('[data-next]', sec).forEach(b => b.disabled = step >= max);
+    };
+    $$('[data-prev]', sec).forEach(b => b.addEventListener('click', () => { if (step > 1) { step--; paint(); } }));
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (step < max) { step++; paint(); } }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { step = 1; paint(); }));
+    steps.forEach(li => li.addEventListener('click', () => { step = parseInt(li.dataset.goto, 10); paint(); }));
+    paint();
+  });
+
+  /* replay lists: <ol class="replay" data-replay> children hidden until "下一步"; uses .stepper inside same section */
+  $$('[data-replay]').forEach(sec => {
+    const items = $$('[data-item]', sec);
+    let i = 0;
+    const paint = () => { items.forEach((el, k) => el.hidden = k >= i); const c = $('.cap', sec); if (c) c.textContent = i === 0 ? '尚未開始' : `${i} / ${items.length}`; };
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (i < items.length) { i++; paint(); } }));
+    $$('[data-all]', sec).forEach(b => b.addEventListener('click', () => { i = items.length; paint(); }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { i = 0; paint(); }));
+    paint();
+  });
+})();
+</script>
+</body>
+</html>
