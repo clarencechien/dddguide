@@ -808,6 +808,23 @@ body.instructor .instructor-only { display: block; }
 .kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--rule-hard); border-bottom-width: 2px; border-radius: 3px; padding: 0 .35em; }
 .small { font-size: var(--fs-sm); color: var(--ink-2); }
 .wrap-pre { white-space: pre-wrap; }
+
+/* ── 工作物件用整個頁寬；卡片列、演練、設定列破出到 66rem（和圖一樣）；表格依內容定欄寬 ── */
+.report > :is(.block, .lab, .prompt, .setup, .days-bar, .cols, .faq, .cmd, .storm), .report > :is(section, article) > :is(.block, .lab, .prompt, .setup, .days-bar, .cols, .dod, .quiz, .cmd) { max-width: none; }
+.report > :is(.cols, .lab, .setup, .days-bar), .report > :is(section, article) > :is(.lab, .cols) { margin-inline: calc(-1 * var(--bleed)); }
+.cols { grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+.cmd { flex-wrap: nowrap; align-items: center; }
+.cmd code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; display: block; }
+.cmd .copy-btn { flex: none; }
+.table-scroll table { width: max-content; min-width: 100%; }
+.table-scroll th, .table-scroll td { overflow-wrap: anywhere; min-width: 5.5em; max-width: 26em; }
+.table-scroll th:first-child, .table-scroll td:first-child { min-width: 3.5em; }
+.table-scroll th.nowrap, .table-scroll td.nowrap { max-width: none; }
+:not(.report):not(section):not(article) > .table-scroll { margin-inline: 0; }
+figure.gallery-pane { margin-inline: calc(-1 * var(--bleed)); }
+figure.gallery-pane > .title, figure.gallery-pane > .subtitle, figure.gallery-pane > figcaption { padding-inline: var(--bleed); }
+@media (max-width: 40rem) { figure.gallery-pane > .title, figure.gallery-pane > .subtitle, figure.gallery-pane > figcaption { padding-inline: 0; } }
+.diagram svg { max-width: 52rem; }
 </style>
 <body>
 <div class="progress" aria-hidden="true"></div>
