@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Publish teacher pages to imitator. Usage: teacher/_shared/publish.sh [index day1 ...]  (default: all built pages)
-# Requires $IMITATOR_TOKEN. Visibility: group (token holders / link holders). Pass VIS=public to override.
+# Requires $IMITATOR_TOKEN. Visibility: public by default (teacher pages are meant to be linkable). Pass VIS=group to restrict.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 : "${IMITATOR_TOKEN:?set IMITATOR_TOKEN}"
-VIS="${VIS:-group}"
+VIS="${VIS:-public}"
 pages=("$@"); [ ${#pages[@]} -eq 0 ] && pages=(index day1 day2 day3 day4 day5 day6 day7)
 for p in "${pages[@]}"; do
   f="$p.html"; [ -f "$f" ] || { echo "skip $f (not built)"; continue; }
