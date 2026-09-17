@@ -671,6 +671,9 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 .wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
 .wall-scroll .wall { padding-inline: 2px; }
 
+/* 長路徑與識別碼沒有斷點：給有可能塞進 mono 字串的容器一個斷字機會，免得 375px 被撐寬 */
+.meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
+
 </style>
 <body>
 <div class="progress" aria-hidden="true"></div>
@@ -1043,9 +1046,9 @@ a1f3c9e refactor(charging): endedAt comes from the command, not the wall clock (
     <text class="t s" x="295" y="338" text-anchor="middle">Day 7 B3</text>
     <text class="t a" x="295" y="356" text-anchor="middle">/retro · /takeaway</text>
 
-    <path class="ar ev" d="M220 283 L105 283 L105 118"/>
-    <text class="t a" x="112" y="205">Sprint 2 backlog</text>
-    <text class="t s" x="112" y="222">回到第 1 步</text>
+    <path class="ar ev" d="M220 283 L24 283 L24 83 L30 83"/>
+    <text class="t a" x="122" y="258" text-anchor="middle">Sprint 2 backlog</text>
+    <text class="t s" x="122" y="274" text-anchor="middle">→ 回到第 1 步</text>
   </svg></div>
   <figcaption>實線＝這一週的順序；虛線＝retro 產出的 Sprint 2 backlog 回到第 1 步。粗框的兩步（紅綠重構、review）是講師驗收時抽問最多的地方。</figcaption>
 </figure>
@@ -1394,8 +1397,8 @@ ci / e2e         pass  1m21s</pre>
     <text class="t b" x="313" y="172" text-anchor="middle">config</text>
     <text class="t s" x="313" y="190" text-anchor="middle">讀 .config → matrix</text>
 
-    <path class="ar" d="M368 177 L400 110"/>
-    <rect class="box core" x="400" y="60" width="120" height="66" rx="6"/>
+    <path class="ar" d="M368 177 L392 110"/>
+    <rect class="box core" x="392" y="60" width="136" height="66" rx="6"/>
     <text class="t b" x="460" y="82" text-anchor="middle">test</text>
     <text class="t m" x="460" y="100" text-anchor="middle">matrix: node only</text>
     <text class="t s" x="460" y="116" text-anchor="middle">cache npm · 41 passed</text>
@@ -1405,7 +1408,7 @@ ci / e2e         pass  1m21s</pre>
     <text class="t b" x="460" y="172" text-anchor="middle">contracts</text>
     <text class="t s" x="460" y="190" text-anchor="middle">validate.mjs · 7 valid</text>
 
-    <path class="ar" d="M520 93 L540 240 L400 240"/>
+    <path class="ar" d="M313 204 L313 267 L400 267"/>
     <rect class="box ext" x="400" y="240" width="120" height="54" rx="6"/>
     <text class="t b" x="460" y="262" text-anchor="middle">e2e（選配）</text>
     <text class="t s" x="460" y="280" text-anchor="middle">API + 14:02 → 18:18</text>
@@ -1453,6 +1456,466 @@ ci / e2e         pass  1m21s</pre>
 <p><strong>常見失真：</strong><code>ci.yml</code> 整份請 Claude 生。攔法：指著任一行問為什麼（本頁的 <code>fromJSON</code>、<code>tr -d '[:space:]'</code>、<code>node-version: 22</code>）。另一種：PR 描述貼 <code>sdlc.md</code> §4 範本連數字都沒改（47 passed 是範本的數字；本頁學員是 41）。第三種：base 開到 <code>main</code>——整合分支 <code>workshop-submissions</code> 要講師<strong>事先建好</strong>並在 kickoff 說。</p>
 <p><strong>時間：</strong>每次 CI 紅→修→push→等，實際 4–6 分鐘；預算兩輪。超過三輪紅的學員通常是 SQLite 驅動在 ubuntu-latest 編譯失敗（day7.md 卡點有寫：改 <code>node:sqlite</code> 或 <code>DB_PATH=:memory:</code>）——這時講師直接給答案，不要讓他耗掉 Block 3。</p>
 </div>
+
+<p class="eyebrow">BLOCK 3 · RETRO + BACKLOG + 帶回公司</p>
+<h2>誠實的 retro、能開工的 backlog、來自自己交付物的帶回清單</h2>
+<h3>實況</h3>
+<p>13:30–13:40 學員先不開 Claude，用 <code>git log --format='%ad %s' --date=format:'%m-%d %H:%M' -- workshop/ starter/</code> 把七天的 commit 時間抓出來，自己寫 retro 草稿：Keep 三條、卡最久三處（各附「當時缺的是知識 / 工具 / 決定」）、重來 Day 1 就會做的事、助教用法。13:40–13:55 貼給 <code>/retro</code>，它一次只問一題：「當時缺的是什麼？」「這件事在 Day 1 哪個 Block 可以做？」「哪一次你要到了答案卻沒學到？」——每條沒有證據的它不收。13:55–14:25 Sprint 2 backlog：三件必列 + R6 + relay + 技術債，每條五個欄位（context、觸發命令、成功事件、拒絕事件、GWT）沒齊不准進表。14:25–14:40 主控台最終評量，閉卷，貼報告。14:40–15:00 <code>/takeaway</code>：先映射（你公司裡誰是阿忠、誰是老陳），再從 retro 與 Day 1–3 的檔案裡提煉 5 件事，30 天計畫每週一件、問「需要誰點頭」。</p>
+
+<h3>助教對話重播 · /retro</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /retro</p><p>Day 7 Block 3。這是我自己先寫的 retro 草稿（workshop/day7/retro.md，請直接讀檔）。請不要重寫。對「卡最久的三處」各追問一次：「當時缺的是知識、工具、還是一個沒人幫你做的決定？」；對「重來會做的事」問：「這件事在 Day 1 的哪個 Block 可以做？要花多久？」；對「助教用法」問：「哪一次你要到了答案卻沒學到？」然後幫我把 Sprint 2 backlog 的三件事各檢查：Context、新事件 / 契約、驗收 GWT、估點、依賴——缺的欄位列出來讓我填。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀了草稿與 <code>git log</code>：Day 4 最後 commit 21:10、Day 6 20:45，其他天都在 19:30 前。你草稿「卡最久」第一條寫「R3 紅了 40 分鐘」。當時缺的是知識（不知道怎麼寫倒退計量的測試）、工具（vitest 不熟）、還是一個沒人幫你做的決定？</p><p><b>下一個最小步驟：</b>回答這一題，一句話 + 證據是哪個檔案。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>是決定。<code>rules.md</code> R3 當時寫「計量值單調遞增」但沒決定「相等算不算」，也沒數字；我在 <code>&lt;</code> 和 <code>&lt;=</code> 之間換了三次。後來補 4100 → 3900 拒絕、4100 → 4100 接受，測試 10 分鐘就綠。證據：<code>workshop/day2/rules.md</code> R3 的「待決問題」在 Day 4 才被劃掉，commit <code>9c2e1d4 docs(day2): R3 equal meter value is accepted</code>。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>那這條不是「Start：先寫數字」而已，是「Start：<code>rules.md</code> 的待決問題清單清空之前不開測試檔」——證據 <code>9c2e1d4</code> 比 Day 4 第一個紅燈晚了 35 分鐘。寫進 Start 表。第二題：你「重來會做的事」寫「Day 1 就建 <code>glossary.md</code> 的『不是』欄」。這件事在 Day 1 哪個 Block 可以做？要花多久？</p><p><b>下一個最小步驟：</b>把 Start #1 改成上面那句，然後回答第二題。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>Day 1 B2 訪談完每一位就能做，每位 3 分鐘：小美說「插槍就算開始」、老陳說「沒授權不算」，那時就該寫下「充電會話：是插槍授權到結束計量；不是插槍」。我 Day 2 B1 才發現這兩句矛盾，白貼了 20 分鐘的便利貼。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>收。第三題：助教用法——哪一次你要到了答案卻沒學到？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>Day 6 SQLite outbox 同交易那次。我說「卡住 20 分鐘」（其實只有 12 分鐘），<code>/ta</code> 指了 <code>solutions/</code> 的 in-memory <code>commit()</code> 註解，我照著寫了 <code>BEGIN … COMMIT</code> 就過了——但隔天 <code>/review</code> 問我「save 成功、publish 失敗會怎樣」我答不出來，才發現我根本沒想過 relay 那一半。Stop：「不誠實的 20 分鐘」。怎麼停：計時器真的按下去。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>這條是今天最有價值的一條，寫進 Stop 並把「怎麼停」放進 30 天計畫。Backlog 檢查：#1 Billing 合併出帳缺「拒絕事件」與「兩個契約的共同鍵」；#2 Dispatch 缺「拒絕事件」與不變條件；#3 Parking 缺 GWT 的數字。R6 你列成 #4，好；relay 重試你列成 #5，好，但缺估點。技術債 #6（review 沒修的）有 GWT 了。三件必列都缺拒絕事件——這是 Day 2 的老問題：<strong>寫不出拒絕事件代表規則還沒想清楚</strong>。</p><p><b>下一個最小步驟：</b>先補 #1 的拒絕事件：帳單開立後有人下 <code>AdjustInvoice</code> 但沒給理由，會發生什麼？名字自己取，標「需新契約 + ADR」。</p></div>
+</div>
+
+<h3>產出：時間線的來源（<code>git log</code>）</h3>
+<pre class="term">$ git log --reverse --format='%h %ad %s' --date=format:'%m-%d %H:%M' -- workshop/ starter/ contracts/ .github/ | awk 'NR==1 || /^[0-9a-f]+ 09-(16|17|18|21|22|23|24)/' | sed -n '1p;7p;13p;19p;27p;33p;40p;47p'
+3e1a0f2 09-16 18:40 docs(day1): interviews, as-is, to-be
+8b4c7d1 09-17 18:05 docs(day2): storm board, glossary, rules R1-R8
+5f9e2a6 09-18 19:20 docs(day3): context map, c4, ADR-0001, ADR-0002
+9c2e1d4 09-21 20:35 docs(day2): R3 equal meter value is accepted
+c7d3b90 09-21 21:10 feat(assetops): dedupe fault reports into root-cause work order (R5)
+4a6f8e3 09-22 18:30 feat(assetops): fault process manager opens WO-2208 and dispatches TECH-HAO
+d1b5c48 09-23 20:45 feat(persistence): sqlite outbox written in the same transaction as the session
+2d7a5b0 09-24 17:30 refactor(billing): name the tariff constant RATE_TWD_PER_KWH
+
+$ git rev-list --count main..HEAD
+47
+$ git log --format=%s main..HEAD | grep -cE '^(test|feat|fix|refactor)\('
+31
+$ grep -c "卡住" workshop/day*/notes.md
+7</pre>
+
+<h3>產出：<code>workshop/day7/retro.md</code></h3>
+<div class="file"><p class="path">workshop/day7/retro.md <span class="chip">交付物</span></p><div class="body">
+<h4>Retro — clarence · Day 1–7</h4>
+<h4>時間線</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>Day</th><th>交付物</th><th>最後 commit</th><th>卡點（當時缺什麼）</th><th>幫最多的 skill</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>interviews.md、as-is.md、to-be.md</td><td class="nowrap">09-16 18:40</td><td>阿忠的隱藏事實只問出 2/4：問了「你需要什麼功能」（引導）——缺<strong>知識</strong>（怎麼問例外）</td><td>/interview</td></tr>
+<tr><td>2</td><td>storm-board.md、glossary.md、rules.md</td><td class="nowrap">09-17 18:05</td><td>「收到 StatusNotification」被 /storm 退回三次；R3 沒決定相等——缺<strong>決定</strong></td><td>/storm、/rules-check</td></tr>
+<tr><td>3</td><td>context-map.md、c4.md、adr/0001、0002</td><td class="nowrap">09-18 19:20</td><td>先切了「Session」一個 context，/context-map 挑戰用 T6「人工放行被未結束充電擋住」推翻——缺<strong>知識</strong>（四條線索）</td><td>/context-map</td></tr>
+<tr><td>4</td><td>model.md、test-report.md、charging/** 全綠</td><td class="nowrap">09-21 21:10</td><td>R3 紅燈 40 分鐘：<code>&lt;</code> 還是 <code>&lt;=</code>——缺<strong>決定</strong>（rules.md 待決問題沒清）</td><td>/tdd</td></tr>
+<tr><td>5</td><td>event-flow.md、app/billing/assetops 全綠、contracts/</td><td class="nowrap">09-22 18:30</td><td>completed 先於 started 的亂序測試：第一版建了第二張草稿——缺<strong>知識</strong>（去重鍵是 sessionId 不是 eventId）</td><td>/event-contract</td></tr>
+<tr><td>6</td><td>README-mvp.md、e2e-log.md、scripts/e2e 綠</td><td class="nowrap">09-23 20:45</td><td>SQLite outbox 同交易：不誠實的「20 分鐘」拿到答案——缺<strong>工具</strong>（better-sqlite3 的交易 API）但真正缺的是耐心</td><td>/ship</td></tr>
+<tr><td>7</td><td>pr.md、ci.yml、retro.md、backlog、takeaway.md</td><td class="nowrap">09-24 17:30</td><td>CI 第一次紅：<code>.config</code> 尾端空白——缺<strong>工具</strong>（沒在本機跑 config job 的 shell）</td><td>/review、/ta</td></tr>
+</tbody></table></div>
+<h4>Start（下次要開始做）</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>Start</th><th>證據</th><th>下一步</th></tr></thead>
+<tbody>
+<tr><td><code>rules.md</code> 的「待決問題」清空之前不開測試檔</td><td>Day 4 R3：commit <code>9c2e1d4</code>（決定相等接受）比第一個紅燈晚 35 分鐘；<code>rules.md</code> R3 待決問題 Day 4 才劃掉</td><td>Sprint 2 #1 開工前先把 backlog 的 GWT 貼給 <code>/rules-check</code></td></tr>
+<tr><td>訪談完每一位立刻寫 glossary 的「是 / 不是」欄</td><td><code>interviews.md</code> 小美「插槍就算開始」vs 老陳「沒授權不算」，Day 2 B1 才發現矛盾，白貼 20 分鐘</td><td>回公司第一週的 30 分鐘訪談，當場寫三個詞</td></tr>
+<tr><td>每個消費者先寫「同一則事件送兩次」的測試，再寫 handler</td><td>Day 5 亂序測試建了第二張草稿；Day 7 <code>/review</code> #4 又抓到 <code>+=</code>——兩次都是同一種錯</td><td>Sprint 2 #2 Dispatch 消費者第一個測試就是重送</td></tr>
+<tr><td>寫完 adapter 就跑一次 <code>grep -rnE "errorCode|transactionId" src/*/domain</code></td><td>Day 7 <code>/review</code> #2：<code>errorCode</code> 從 Day 6 11:00 漏到 Day 7 09:40 才被抓到</td><td>把這行 grep 加進 CI（Sprint 2 技術債 #8）</td></tr>
+</tbody></table></div>
+<h4>Stop（要停止）</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>Stop</th><th>證據</th><th>怎麼停</th></tr></thead>
+<tbody>
+<tr><td>不誠實的「我卡住 20 分鐘了」</td><td>Day 6 SQLite outbox：12 分鐘就說 20，拿到 <code>solutions/</code> 的方向抄了 <code>BEGIN … COMMIT</code>，隔天 <code>/review</code> 問「save 成功 publish 失敗會怎樣」答不出來</td><td>手機計時器真的按；20 分鐘到之前只准寫下「我試過的三件事」</td></tr>
+<tr><td>在 adapter 裡寫業務判斷</td><td><code>/review</code> 🟠 #5：<code>src/adapters/http/routes/ocpp.ts:38</code> 先查占用回 409，聚合的 <code>ChargingStartRejected</code> 沒人看</td><td>handler 的 PR checklist 加一條「這裡有 <code>if</code> 嗎？它是規則嗎？」；CI grep <code>findActiveByConnector</code> 只准出現在 application</td></tr>
+<tr><td>沒在本機跑就 push CI</td><td>Day 7 CI run #1 紅：<code>.config</code> 尾端空白；本機跑一次 <code>bash -c</code> 那段 5 秒就會發現</td><td>ci.yml 的每個 <code>run:</code> 先在本機 <code>bash -e</code> 跑過</td></tr>
+</tbody></table></div>
+<h4>Continue（要保留）</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>Continue</th><th>證據</th></tr></thead>
+<tbody>
+<tr><td>測試名 = 規則句子（<code>R1 occupied connector rejects a second start</code>）</td><td><code>/review</code> 亮點第一條；Day 7 review 對照 <code>rules.md</code> 不用開檔案</td></tr>
+<tr><td>事件先 record、由 relay 發（R8）</td><td>Day 5 <code>R8 the aggregate never publishes directly</code> 一次過；Day 7 #3 修 relay 順序時聚合與應用層一行沒動</td></tr>
+<tr><td>拒絕是事件不是例外</td><td><code>ChargingStartRejected</code>、<code>MeterValueRejected</code> 讓 e2e 14:05 那一步能斷言「回 Blocked、無 S-992」</td></tr>
+<tr><td>每個綠燈一個 commit、訊息帶規則編號</td><td><code>git log</code> 31/47 個 commit 是 <code>test/feat/fix/refactor(scope)</code>；Day 7 retro 的時間線就是從這裡抓的</td></tr>
+</tbody></table></div>
+<h4>數字</h4>
+<ul>
+  <li>commit：47（其中 test 9、feat 12、fix 2、refactor 8、docs 13、chore 3）</li>
+  <li>測試：Day 4 結束 13 → Day 5 結束 27 → Day 6 結束 38 → Day 7 結束 41；e2e 1 條劇本 13 步</li>
+  <li><code>/ta</code> 求助 23 次；<code>/tdd</code> 循環 11 次，其中 2 次想跳過紅燈（R2、R5）被拒</li>
+  <li>卡住 ≥ 20 分鐘：3 次（Day 4 R3 40 分、Day 5 亂序 25 分、Day 6 SQLite 交易 12 分——不誠實計入）</li>
+  <li>看 <code>solutions/</code>：2 次（Day 5 <code>FaultProcessManager</code> 的 <code>causationId</code>、Day 6 outbox 交易），都在看完後關掉重寫</li>
+  <li>CI：2 次 run，1 紅 1 綠；<code>/review</code> 8 條，修 7、不修 1</li>
+</ul>
+<h4>對助教（Claude Code）的用法</h4>
+<ul>
+  <li>有用：貼<strong>輸出</strong>（紅燈訊息、grep 結果、<code>git log</code>）比貼<strong>問題</strong>有用；<code>/tdd R3</code> 在我貼出紅燈之前拒絕給產品碼，逼我先把 GWT 補數字。</li>
+  <li>有用：<code>/context-map 挑戰</code> 一句「人工放行時那個 Session 的 status 是什麼？」比讀 ddd-strategic.md 兩小時有用。</li>
+  <li>沒用：Day 1 問「阿忠需要什麼功能」——它照角色回我「大一點的按鈕」，我真的寫進 to-be.md，被 <code>/bpr-review</code> 退回。</li>
+  <li>沒學到：Day 6 那次不誠實的 20 分鐘（見 Stop #1）。</li>
+</ul>
+<h4>一句話</h4>
+<p>這七天我最大的改變是：以前先想表怎麼設計，現在先問「這件事發生了之後，老陳會看到什麼事實」。</p>
+</div></div>
+
+<h3>產出：<code>workshop/day7/sprint-2-backlog.md</code></h3>
+<div class="file"><p class="path">workshop/day7/sprint-2-backlog.md <span class="chip">交付物</span></p><div class="body">
+<h4>Sprint 2 Backlog — clarence</h4>
+<p>規則：每條沒有「擁有的 context、觸發命令、成功事件、拒絕事件、帶數字的 GWT」五項不准進表。§1.8 以外的事件名一律標「需新契約 + ADR」。估點 S / M / L（S ≤ 半天、M ≤ 2 天、L ≤ 一週）。</p>
+<div class="table-scroll"><table>
+<thead><tr><th>#</th><th>標題</th><th>擁有的 context</th><th>觸發命令</th><th>成功事件</th><th>拒絕事件</th><th>估</th><th>依賴</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Billing 合併出帳（R7 完整版）</td><td>Billing</td><td><code>IssueInvoice</code>（政策：每當 <code>parking.session.closed.v1</code> 與 <code>charging.session.completed.v1</code> 同一車牌都到齊）；<code>AdjustInvoice</code></td><td><code>InvoiceIssued</code> → <code>billing.invoice.issued.v1</code>（需新契約 + ADR）；<code>InvoiceAdjusted</code>（§1.9）</td><td><code>InvoiceAdjustmentRejected(reason=MissingReason)</code>（需新契約 + ADR）；已開立後任何直接改金額的命令一律拒絕</td><td>L</td><td>#3（要有 <code>plate</code>）；<code>charging.session.started.v1</code> 升 <code>v2</code> 加 <code>plate?</code>；ADR-0004</td></tr>
+<tr><td>2</td><td>Dispatch 真派工</td><td>Dispatch</td><td><code>AssignTechnician</code>（政策：每當 <code>ops.work_order.opened.v1</code>）</td><td><code>TechnicianAssigned</code> → <code>dispatch.technician.assigned.v1</code>（需新契約 + ADR；ADR-0003 已預告）</td><td><code>AssignmentRejected(reason=TechnicianBusy)</code>（需新契約 + ADR）；不變條件「一張工單同一時間一個主責技術員」</td><td>M</td><td>ADR-0003；AssetOps PM 拆成兩段（開單 / 收派工回覆）；備品預留另開 #9</td></tr>
+<tr><td>3</td><td>Parking 真整合（LPR、月票）</td><td>Parking</td><td><code>RegisterVehicleEntry</code>（LPR 訊息經 ACL 翻譯）</td><td><code>VehicleEntered</code> → <code>parking.vehicle_entered.v1</code>（契約已有）</td><td><code>VehicleEntryRejected(reason=ActiveSessionExists)</code>（需新契約 + ADR）；不變條件「一輛車同一時間一個進行中停車會話」</td><td>L</td><td>LPR 廠商訊息格式（ACL）；月票名單 port</td></tr>
+<tr><td>4</td><td>R6 人工放行與斷線對齊</td><td>Parking</td><td><code>ReleaseVehicleManually</code>（值班長）</td><td><code>ParkingManuallyReleased</code>（§1.9）+ <code>VehicleExited</code> → <code>parking.session.closed.v1(releaseMode=Manual)</code>（契約已有）</td><td><code>ManualReleaseRejected(reason=AlreadyReleased)</code>（需新契約 + ADR）</td><td>M</td><td>#3 的 <code>ParkingSession</code> 聚合；場站節點自己的 outbox</td></tr>
+<tr><td>5</td><td>Outbox relay 背景輪詢、重試計數、死信</td><td>各 context 自己的 outbox（Charging、AssetOps、Parking）；relay 是 shared adapter</td><td><code>PublishPending</code>（排程每 2 秒）</td><td>無領域事件；outbox 列 <code>publishedAt</code> 寫入</td><td>無拒絕事件；publish 失敗 → 列留 pending、<code>attempts + 1</code>；第 5 次失敗 → <code>failedAt</code> 寫入（死信），告警</td><td>M</td><td>Day 6 SQLite outbox 表加 <code>attempts</code>、<code>failedAt</code>；#6</td></tr>
+<tr><td>6</td><td>技術債：AssetOps 去重鍵與工單同交易（<code>/review</code> #6）</td><td>AssetOps</td><td>無（消費者：<code>charging.charger.faulted.v1</code>）</td><td>不變：<code>WorkOrderOpened</code> / <code>DuplicateFaultReported</code></td><td>無；重送（同 eventId）什麼都不發生</td><td>S</td><td>SQLite <code>processed_events(event_id, consumer)</code> 表</td></tr>
+<tr><td>7</td><td>跨時段費率（小美隱藏事實 1）</td><td>Billing</td><td>無新命令；<code>on charging.session.completed.v1</code> 計價改查費率表</td><td><code>DraftInvoicePriced</code>（Billing 內部事件，不對外）</td><td>無；費率表缺該時段 → 草稿標 <code>needsReview</code></td><td>M</td><td>費率表 port；契約已含 <code>startedAt</code> / <code>endedAt</code>，不需升版</td></tr>
+</tbody></table></div>
+<h4>驗收條件（GWT，每條一個成功一個拒絕）</h4>
+<p><strong>#1 Billing 合併出帳</strong></p>
+<pre class="gwt"><b>Given</b> parking.session.closed.v1 P-441 plate ABC-1234 durationMin 31 releaseMode Manual
+<b>And</b>   charging.session.started.v2 S-991 plate ABC-1234 已到、charging.session.completed.v1 S-991 energyWh 12400 已到
+<b>When</b>  出帳政策觸發 IssueInvoice
+<b>Then</b>  INV-778 Issued，兩個明細：停車 31 分（30 元 / 30 分，不足 30 分以 30 分計）= 60 元、電費 12.4 kWh × 8 = 99.2 元，合計 159.2
+<b>And</b>   billing.invoice.issued.v1 一則
+
+<b>Given</b> INV-778 已 Issued 159.2
+<b>When</b>  AdjustInvoice(delta = -20, reason = "")
+<b>Then</b>  InvoiceAdjustmentRejected(reason = MissingReason)；INV-778 amount 仍 159.2、total 仍 159.2
+<b>But</b>   AdjustInvoice(delta = -20, reason = "Disputed: charger stopped early") → InvoiceAdjusted，amount 159.2 不變、total 139.2</pre>
+<p><strong>#2 Dispatch 真派工</strong></p>
+<pre class="gwt"><b>Given</b> ops.work_order.opened.v1 WO-2208 chargerId CP-A12 faultCode GroundFailure openedAt 18:10
+<b>And</b>   TECH-HAO 目前沒有進行中的工單、SLA 2 小時
+<b>When</b>  AssignTechnician(WO-2208, TECH-HAO)
+<b>Then</b>  TechnicianAssigned；dispatch.technician.assigned.v1 一則；AssetOps 收到後 WO-2208 → Assigned
+
+<b>Given</b> TECH-HAO 已是 WO-2207 的主責技術員（進行中）
+<b>When</b>  AssignTechnician(WO-2208, TECH-HAO)
+<b>Then</b>  AssignmentRejected(reason = TechnicianBusy)；WO-2208 仍 Open；Vicky 看板顯示「待派」
+<b>But</b>   WO-2207 Closed 之後再派 → TechnicianAssigned</pre>
+<p><strong>#3 Parking 真整合</strong></p>
+<pre class="gwt"><b>Given</b> ABC-1234 沒有進行中的停車會話
+<b>When</b>  LPR 14:02 辨識 ABC-1234 → RegisterVehicleEntry
+<b>Then</b>  VehicleEntered；P-441 Active；parking.vehicle_entered.v1（plate ABC-1234, siteId SITE-TPE-01, lane 1, occurredAt 14:02）
+
+<b>Given</b> P-441 Active（ABC-1234）
+<b>When</b>  LPR 14:03 再次辨識 ABC-1234（同一車道抖動）
+<b>Then</b>  VehicleEntryRejected(reason = ActiveSessionExists)；仍只有 P-441；不發第二則 vehicle_entered</pre>
+<p><strong>#4 R6 人工放行</strong></p>
+<pre class="gwt"><b>Given</b> P-441 Active；HQ 連線中斷（場站節點 outbox 累積中）
+<b>When</b>  阿忠 14:33 ReleaseVehicleManually(P-441)
+<b>Then</b>  ParkingManuallyReleased(releasedBy 阿忠)、VehicleExited(releaseMode Manual)；閘門開；parking.session.closed.v1(P-441, ABC-1234, durationMin 31, Manual) 進場站 outbox
+<b>And</b>   HQ 恢復後 relay 補送 1 則；Billing 草稿仍只有 INV-778 一張
+
+<b>Given</b> P-441 已 Released
+<b>When</b>  再次 ReleaseVehicleManually(P-441)
+<b>Then</b>  ManualReleaseRejected(reason = AlreadyReleased)；不再發 closed</pre>
+<p><strong>#5 relay 重試</strong></p>
+<pre class="gwt"><b>Given</b> outbox 有 3 則 pending；bus 對第 2 則 throw（broker down）
+<b>When</b>  relay 跑一輪 PublishPending
+<b>Then</b>  第 1 則 publishedAt 寫入；第 2、3 則仍 pending，第 2 則 attempts = 1
+<b>And</b>   下一輪 bus 正常 → 第 2、3 則 published；順序 2 → 3 不變
+
+<b>Given</b> 第 2 則 attempts = 4
+<b>When</b>  第 5 次 publish 仍失敗
+<b>Then</b>  第 2 則 failedAt 寫入（死信）、告警一則；第 3 則照常發布（不被卡住）</pre>
+<p><strong>#6 去重鍵同交易</strong></p>
+<pre class="gwt"><b>Given</b> WO-2208 由 charging.charger.faulted.v1 eventId X 開單；程序重啟（processedEventIds 清空）
+<b>When</b>  broker 18:12 重送 eventId X
+<b>Then</b>  仍只有 WO-2208；duplicateReportCount 仍 1（18:10:08 那次）；processed_events 有 X，與 work_orders 同一交易寫入
+<b>But</b>   18:10:08 那則不同 eventId 的再申告 → duplicateReportCount + 1（R5 的路，不是這條）</pre>
+<p><strong>#7 跨時段費率</strong></p>
+<pre class="gwt"><b>Given</b> 費率表：尖峰 08:00–22:00 8 元 / kWh；離峰 22:00–08:00 5 元 / kWh
+<b>When</b>  charging.session.completed.v1 S-991 startedAt 14:04 endedAt 14:31 energyWh 12400
+<b>Then</b>  草稿 99.2（全在尖峰）
+<b>But</b>   同樣 12400 Wh 的會話 22:10–22:40 → 62.0；跨 22:00 的會話按 EnergyMetered 樣本比例分攤（需訂閱 EnergyMetered → 契約升版，Sprint 3）</pre>
+<h4>Sprint 2 只做三條</h4>
+<p>#1（老陳月底最痛：合併對帳）、#2（Vicky：真的派工）、#4（阿忠：斷線放行是產品假設的核心）。#3 是 #1 與 #4 的依賴，但 LPR 廠商格式要先拿到——Sprint 2 第一天先做一次 Parking 的 event storming 再決定要不要拉進來。#5、#6 是技術債，排在 #4 之後。#7 等費率表定案。</p>
+<h4>不做（且為什麼）</h4>
+<ul>
+  <li><strong>真 broker（Kafka / RabbitMQ）</strong>：in-memory bus + SQLite outbox 已證明模式；換 broker 只改 <code>EventBus</code> adapter（ADR-0002）。等 Sprint 2 有兩個程序（site / HQ）真的分開再做。</li>
+  <li><strong>全國健康度看板</strong>：讀模型，訂閱 <code>ops.work_order.opened / closed.v1</code> 就能做，但沒有人訪談過總部看板的使用者。</li>
+  <li><strong>發票字軌與稅</strong>：Billing 的 generic 子領域，買現成的。</li>
+  <li><strong>OCPP 2.0.1</strong>：ACL 隔離了；升版時只動 <code>src/adapters/ocpp/</code>，等樁商說要。</li>
+</ul>
+<h4>技術債（B1 沒修 + Day 6 已知限制）</h4>
+<ul>
+  <li>#6 去重鍵同交易（上表）。</li>
+  <li>#8 CI 加 grep：<code>src/*/domain</code> 不得出現 <code>errorCode|transactionId|StatusNotification|new Date|publish\(</code>（S）。</li>
+  <li>#9 SQLite 樂觀鎖：<code>charging_sessions.version</code> 欄與 <code>UPDATE … WHERE version = ?</code>（S）；備品預留（Dispatch）（M）。</li>
+  <li>#10 HTTP 認證（樁的 basic auth / 值班長的登入）（M）；<code>stillEnergized</code> 改由樁回報（需 OCPP <code>MeterValues</code> 的 <code>Power.Active.Import</code>）（S）。</li>
+</ul>
+</div></div>
+
+<figure class="wide">
+  <p class="title">Sprint 2 delta：MVP1 有什麼、Sprint 2 加什麼</p><p class="subtitle">實框實線＝MVP1 已有；藍綠虛線與 S2 標記＝Sprint 2 加入或升版；灰虛框＝仍是 stub / 外部系統。五個 context 沒有變，變的是關係上的事件。</p>
+  <div class="diagram"><svg viewBox="0 0 960 460" role="img" aria-label="Context map delta: five bounded contexts Parking, Charging, Billing, AssetOps, Dispatch with OCPP and LPR as external systems; MVP1 relationships solid, Sprint 2 additions highlighted: Parking real integration and R6, started.v2 with plate, Billing merged invoice R7, AssetOps processed_events, Dispatch real assignment with a new assigned.v1 event">
+    <rect class="zone plain" x="18" y="20" width="440" height="420" rx="10"/>
+    <text class="t s" x="30" y="40">SITE 場站節點（斷線仍要能運作）</text>
+    <rect class="zone plain" x="478" y="20" width="464" height="420" rx="10"/>
+    <text class="t s" x="490" y="40">HQ 總部節點</text>
+
+    <rect class="box ext" x="34" y="60" width="130" height="50" rx="6"/>
+    <text class="t b" x="99" y="82" text-anchor="middle">OCPP 樁</text>
+    <text class="t s" x="99" y="100" text-anchor="middle">CP-A12 · 外部</text>
+    <rect class="box ext" x="34" y="300" width="130" height="50" rx="6"/>
+    <text class="t b" x="99" y="322" text-anchor="middle">LPR 車牌辨識</text>
+    <text class="t a" x="99" y="340" text-anchor="middle">S2 #3 · 外部</text>
+
+    <rect class="box core" x="200" y="60" width="230" height="110" rx="6"/>
+    <text class="t b" x="315" y="84" text-anchor="middle">Charging（核心）</text>
+    <text class="t s" x="315" y="104" text-anchor="middle">MVP1：R1–R4、ACL、Outbox、SQLite</text>
+    <text class="t a" x="315" y="126" text-anchor="middle">S2：session.started.v2 +plate?</text>
+    <text class="t s" x="315" y="146" text-anchor="middle">（給 Billing 合併用，v1 並行）</text>
+    <path class="ar" d="M164 85 L200 85"/>
+    <text class="t s" x="182" y="76" text-anchor="middle">ACL</text>
+
+    <rect class="box" x="200" y="270" width="230" height="110" rx="6"/>
+    <text class="t b" x="315" y="294" text-anchor="middle">Parking</text>
+    <text class="t s" x="315" y="314" text-anchor="middle">MVP1：stub，只有契約 + R6 事件</text>
+    <text class="t a" x="315" y="336" text-anchor="middle">S2 #3 真整合 · #4 R6 人工放行</text>
+    <text class="t s" x="315" y="356" text-anchor="middle">一輛車一個進行中停車會話</text>
+    <path class="ar ev" d="M164 325 L200 325"/>
+    <text class="t a" x="182" y="316" text-anchor="middle">S2 ACL</text>
+    <path class="ar ev" d="M315 270 L315 170"/>
+    <text class="t a" x="305" y="225" text-anchor="end">S2 Partnership：plate ↔ connector</text>
+
+    <rect class="box" x="494" y="60" width="212" height="110" rx="6"/>
+    <text class="t b" x="600" y="84" text-anchor="middle">Billing</text>
+    <text class="t s" x="600" y="104" text-anchor="middle">MVP1：草稿 INV-778 · sessionId 去重</text>
+    <text class="t a" x="600" y="126" text-anchor="middle">S2 #1 合併出帳 R7 · #7 費率</text>
+    <text class="t s" x="600" y="146" text-anchor="middle">invoice.issued.v1（新契約）</text>
+    <path class="ar ev" d="M430 100 L494 100"/>
+    <text class="t s" x="462" y="90" text-anchor="middle">started</text>
+    <text class="t s" x="462" y="116" text-anchor="middle">completed</text>
+    <path class="ar ev" d="M430 300 L470 300 L470 130 L494 130"/>
+    <text class="t a" x="450" y="292" text-anchor="middle">S2</text>
+    <text class="t s" x="486" y="215" text-anchor="middle" transform="rotate(-90 486 215)">parking.session.closed.v1</text>
+
+    <rect class="box" x="494" y="270" width="212" height="110" rx="6"/>
+    <text class="t b" x="600" y="294" text-anchor="middle">AssetOps</text>
+    <text class="t s" x="600" y="314" text-anchor="middle">MVP1：WO-2208、R5、PM、關單</text>
+    <text class="t a" x="600" y="336" text-anchor="middle">S2 #6 processed_events 同交易</text>
+    <text class="t s" x="600" y="356" text-anchor="middle">PM 拆兩段（ADR-0003）</text>
+    <path class="ar ev" d="M430 150 L460 150 L460 325 L494 325"/>
+    <text class="t s" x="446" y="248" text-anchor="middle" transform="rotate(-90 446 248)">charger.faulted.v1 · 遵奉者</text>
+
+    <rect class="box ext" x="736" y="270" width="200" height="110" rx="6"/>
+    <text class="t b" x="836" y="294" text-anchor="middle">Dispatch</text>
+    <text class="t s" x="836" y="314" text-anchor="middle">MVP1：port stub → TECH-HAO</text>
+    <text class="t a" x="836" y="336" text-anchor="middle">S2 #2 真派工 · SLA</text>
+    <text class="t s" x="836" y="356" text-anchor="middle">technician.assigned.v1（新契約）</text>
+    <path class="ar" d="M706 305 L736 305"/>
+    <text class="t s" x="721" y="296" text-anchor="middle">port</text>
+    <path class="ar ev" d="M736 345 L706 345"/>
+    <text class="t a" x="721" y="365" text-anchor="middle">S2 事件</text>
+
+    <rect class="box dim" x="736" y="60" width="200" height="110" rx="6"/>
+    <text class="t b" x="836" y="84" text-anchor="middle">shared adapters</text>
+    <text class="t s" x="836" y="104" text-anchor="middle">MVP1：記憶體 bus、relay 同程序</text>
+    <text class="t a" x="836" y="126" text-anchor="middle">S2 #5 relay 重試計數 · 死信</text>
+    <text class="t s" x="836" y="146" text-anchor="middle">不做：真 broker</text>
+
+    <text class="t s" x="30" y="420">實線＝命令 / port　虛線＝整合事件　藍綠 S2＝Sprint 2 新增或升版　帳務不得回呼 Charging（顧客—供應者）</text>
+  </svg></div>
+  <figcaption>看這張圖要問的一題：Sprint 2 #1 需要 Parking 與 Charging 的共同鍵——它是從哪條線來的？答案是 site 內那條「S2 Partnership：plate ↔ connector」，它讓 <code>started.v2</code> 帶 <code>plate?</code>，而不是讓 Billing 回頭去查 Charging。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<thead><tr><th>節點 / 關係</th><th>MVP1</th><th>Sprint 2 delta</th><th>backlog #</th></tr></thead>
+<tbody>
+<tr><td>OCPP 樁 → Charging</td><td>ACL（StartTransaction / MeterValues / StopTransaction / StatusNotification）</td><td>不變</td><td>—</td></tr>
+<tr><td>Charging</td><td>R1–R4、Outbox、SQLite、HTTP</td><td><code>charging.session.started.v2</code> 加 <code>plate?</code>，v1 並行</td><td>#1</td></tr>
+<tr><td>LPR → Parking</td><td>無</td><td>新 ACL；<code>RegisterVehicleEntry</code></td><td>#3</td></tr>
+<tr><td>Parking</td><td>stub；R6 事件</td><td>真聚合；R6 人工放行 + 斷線對齊</td><td>#3、#4</td></tr>
+<tr><td>Parking ↔ Charging</td><td>無實作</td><td>Partnership：插槍時對應 plate ↔ connector</td><td>#1、#3</td></tr>
+<tr><td>Charging → Billing</td><td>started / completed.v1，sessionId 去重</td><td>不變（加 v2 訂閱）</td><td>#1</td></tr>
+<tr><td>Parking → Billing</td><td>契約有、無發布者</td><td><code>parking.session.closed.v1</code> 真的發</td><td>#1、#4</td></tr>
+<tr><td>Billing</td><td>草稿 INV-778，單一費率</td><td>合併出帳 R7、<code>invoice.issued.v1</code>（新契約）、跨時段費率</td><td>#1、#7</td></tr>
+<tr><td>Charging → AssetOps</td><td><code>charger.faulted.v1</code>，遵奉者</td><td>不變</td><td>—</td></tr>
+<tr><td>AssetOps</td><td>WorkOrder、R5、PM、關單</td><td><code>processed_events</code> 同交易；PM 拆兩段</td><td>#6、#2</td></tr>
+<tr><td>AssetOps → Dispatch</td><td>同步 port（ADR-0003）</td><td>事件：<code>ops.work_order.opened.v1</code> → <code>dispatch.technician.assigned.v1</code>（新契約）</td><td>#2</td></tr>
+<tr><td>shared adapters</td><td>in-memory bus、relay 同程序</td><td>relay 背景輪詢、attempts、死信；不做真 broker</td><td>#5</td></tr>
+</tbody></table></div></details>
+
+<h3>助教對話重播 · /takeaway</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /takeaway</p><p>Day 7 Block 3。請讀 workshop/day1/as-is.md、workshop/day3/context-map.md、workshop/day7/retro.md，然後只用提問幫我完成 workshop/day7/takeaway.md：1. 問我公司裡三個最像「阿忠打電話給總部」的交接點（一次問一個）。2. 問我：如果只能切一個 Bounded Context，用四種線索的哪一種最站得住？3. 30 天計畫：每週一件事，問我「這件事需要誰點頭？」整理成 takeaway.md 的骨架（只放我的答案，不加你的建議）。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先映射。你公司的系統裡，哪一段最像「阿忠打電話問小美度數」——一個人拿著電話或訊息，替兩個系統傳資料？</p><p><b>下一個最小步驟：</b>回一個具體的人與一個具體的系統。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>客服。訂單出貨狀態在 WMS，客服系統看不到，客服每天在 Teams 問倉管「#48211 出了沒」，倉管去 WMS 查了貼回來。一天大概 30 次，每次等 5–15 分鐘。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>這就是第 1 件事的公司落點，而且有數字（30 次 × 10 分鐘 = 5 小時 / 天）。工作坊裡你是怎麼發現這種交接的？<code>as-is.md</code> 圈了幾處、第幾處是 <code>/bpr-review</code> 才找到的？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>四處。第四處「老陳月底把停車單和充電單手動對」是 <code>/bpr-review</code> 問「月底 / 例外時你做什麼」才出來的——我訪談時只問了正常流程。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>那第 1 件事的做法是「畫 As-Is 時逐角色問『月底 / 例外 / 系統掛掉時你做什麼』」，證據是 <code>as-is.md</code> 第四處，落點是「下週約客服主管 30 分鐘，問她 #48211 這種事一天幾次、最糟的一次等多久」。第二個交接點？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>財務月底對帳：訂單系統的「訂單」和金流的「交易」對不上，因為一張訂單可以分兩次付、也可以退一部分——跟 P-441 包含零到多個 S-991 一模一樣。第三個：退貨要 email 給物流開 RMA，物流回 email 我們再手動改狀態。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>第二個是「一個詞兩種意思」（訂單 vs 交易），你 Day 3 用生命週期線索推翻「單一 Session」的那段可以直接搬——<code>context-map.md</code>「我推翻過的切法」。第三個是 ChargerFaulted → WorkOrder 的形狀：一個事實、一個下游的承諾。如果只能切一個 Bounded Context，用四種線索（語言衝突 / 生命週期 / 一致性 / 獨立存活）哪一種最站得住？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>生命週期。「付款」：一張訂單零到多次付款、付款可以晚於出貨、可以部分退——跟訂單的生命週期完全不同步。語言衝突也有（交易），但生命週期是我能拿數字證明的：上個月 2,100 張訂單、2,640 筆付款、180 筆退款。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>好，「第一個要切的 BC = Payment，線索 = 生命週期，證據 = 2,100 / 2,640 / 180」。30 天計畫：第 1 週只觀察——一次 30 分鐘訪談 + 一頁 glossary。這件事需要誰點頭？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>不需要，客服主管我直接約得到。第 2 週一張 storm board（客服 → 倉管那條），需要倉管組長給我 1 小時。第 3 週一條規則 TDD：「訂單已出貨後不得再改收件地址」，我們現有 repo，不需要批准。第 4 週一份 ADR「Payment 是不是獨立 context」+ 15 分鐘分享，需要 tech lead 給我團隊會議的 15 分鐘。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>四週都小到「一個人、第一週就能做」，而且第 3 週那條規則已經有拒絕路徑的形狀（<code>AddressChangeRejected(reason=AlreadyShipped)</code>）。骨架寫進 <code>takeaway.md</code>，只放你的答案。給主管的一頁你自己寫，我只提醒：用「5 小時 / 天」與「2,640 筆付款」這種你公司的數字，不要用「DDD」這個詞。</p><p><b>下一個最小步驟：</b>把映射表三列填進 <code>workshop/day7/takeaway.md</code>，然後寫第 1 件事的三欄。</p></div>
+</div>
+
+<h3>產出：<code>workshop/day7/takeaway.md</code></h3>
+<div class="file"><p class="path">workshop/day7/takeaway.md <span class="chip">交付物</span></p><div class="body">
+<h4>帶回公司 — clarence</h4>
+<p>公司：電商，約 120 人；我是後端工程師（2 年），訂單 / 出貨團隊 6 人。最痛的流程：客服問倉管出貨狀態、財務月底對帳、退貨 RMA。</p>
+<h4>映射</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>工作坊</th><th>我公司</th></tr></thead>
+<tbody>
+<tr><td>阿忠打電話問小美度數（人當 API #1）</td><td>客服在 Teams 問倉管「#48211 出了沒」，倉管查 WMS 貼回來；約 30 次 / 天、每次 5–15 分鐘</td></tr>
+<tr><td>老陳月底手動合併停車單與充電單（人當 API #4）</td><td>財務月底把訂單系統的「訂單」與金流的「交易」對表：上月 2,100 張訂單、2,640 筆付款、180 筆退款</td></tr>
+<tr><td>阿忠打電話報修 → 客服開單（人當 API #2、#3）</td><td>退貨要 email 物流開 RMA，物流回 email 後我們手動改狀態</td></tr>
+<tr><td>「會話」兩種意思</td><td>「交易」：訂單系統指一張訂單，金流指一筆付款</td></tr>
+<tr><td>聚合裡打 HTTP / 先 publish 再 commit</td><td><code>OrderService.ship()</code> 在 DB commit 之前呼叫物流 API 又發 SNS；物流 timeout 時訂單沒出貨但通知已送</td></tr>
+</tbody></table></div>
+<h4>帶回公司的 5 件事</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>#</th><th>做法</th><th>工作坊證據</th><th>公司落點</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>畫 As-Is 時逐角色問「月底 / 例外 / 系統掛掉時你做什麼」，把「人當 API」圈出來並量化（次數 × 等待）</td><td><code>workshop/day1/as-is.md</code> 第四處（老陳月底合併）是 <code>/bpr-review</code> 追問才出現；<code>interviews.md</code> 阿忠 debrief 2/4 是因為我問了功能</td><td>下週三與客服主管 30 分鐘：#48211 一天幾次、最糟等多久；產出一頁 As-Is 附三個數字</td></tr>
+<tr><td>2</td><td>一個詞兩種意思就寫進 glossary 的「是 / 不是」欄，不要在同一個表加 <code>type</code> 欄</td><td><code>workshop/day2/glossary.md</code>「充電會話：不是 OCPP Transaction、不是插槍」；<code>context-map.md</code>「我推翻過的切法：單一 Session」</td><td>wiki 開一頁「訂單 / 付款 / 交易」三個詞的是 / 不是；下次 sprint planning 有人說「交易」就指過去</td></tr>
+<tr><td>3</td><td>規則先寫成帶數字的 GWT，測試名就是那句話；拒絕是事件不是例外</td><td><code>rules.md</code> R3 4100 → 3900；<code>test/charging/ChargingSession.test.ts</code> 的 <code>R1 occupied connector rejects a second start</code>；retro Start #1（待決問題清空前不開測試檔）</td><td>下一個 ticket「已出貨不得改地址」：先寫 GWT（#48211 已出貨 14:31、15:02 改地址 → <code>AddressChangeRejected(AlreadyShipped)</code>），測試名照抄</td></tr>
+<tr><td>4</td><td>聚合只 record，交易成功後由 Outbox relay 發；消費者用去重鍵冪等</td><td><code>ChargingService.commit()</code> save + outbox 同交易；<code>/review</code> #3、#4 兩條 🔴 都是這一課的反例，修完各有測試</td><td><code>OrderService.ship()</code>：先畫現況（commit 前呼叫物流 + SNS），下下週提一頁「物流 timeout 時發生了什麼」的事故清單，再提 Outbox——只在有痛的證據時推</td></tr>
+<tr><td>5</td><td>難逆轉的決定寫一頁 ADR：脈絡、決定、否決的替代方案、壞後果；改了就寫新的一份</td><td><code>adr/0001</code>、<code>0002</code>；Day 7 <code>/adr</code> 抓到 0002 一句不符 → 新開 <code>0003</code> 而不是改原文</td><td>第 4 週：ADR-0001「Payment 是否獨立 context」，15 分鐘團隊分享；之後每個「要不要拆」的決定都先開 ADR 再開會</td></tr>
+</tbody></table></div>
+<h4>我會先切的一個 Bounded Context</h4>
+<p><strong>Payment</strong>。線索：<strong>生命週期</strong>——一張訂單零到多次付款、付款可晚於出貨、可部分退款（上月 2,100 張訂單、2,640 筆付款、180 筆退款），和 P-441 包含零到多個 S-991 同構。語言衝突（「交易」）是第二個線索。一致性：付款「已入帳金額不可默默改」正是 R7 的形狀；退款走新事件。獨立存活：金流閘道掛掉時訂單仍要能建立與出貨。<strong>不會做的事</strong>：回去就提「重切系統」。先畫現況 context map 給自己看（<code>sdlc.md</code> §6）。</p>
+<h4>30 天行動計畫</h4>
+<div class="table-scroll"><table>
+<thead><tr><th>週</th><th>可交付</th><th>需要誰點頭</th><th>完成標準</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>與客服主管 30 分鐘訪談（問「系統掛掉 / 月底 / 例外時你做什麼」）+ 一頁 glossary（≥ 10 詞，含「是 / 不是」：訂單、付款、交易、出貨、RMA…）</td><td>不需要（自己約）</td><td>glossary 貼在 wiki；As-Is 一頁附三個數字（次數、等待、誰背鍋）</td></tr>
+<tr><td>2</td><td>一張 storm board：客服 → 倉管那條流程（≥ 8 事實、≥ 2 hotspot，只貼過去式）</td><td>倉管組長 1 小時</td><td>照片 + 三個「這是事實還是系統動作？」的問題寄給組長</td></tr>
+<tr><td>3</td><td>一條規則 TDD：「已出貨不得改收件地址」——一個紅燈 → 綠燈 → 重構，拒絕是 <code>AddressChangeRejected</code> 事件</td><td>不需要（既有 repo、既有 ticket）</td><td>PR 內含測試，測試名 = 規則句；commit 訊息帶規則編號</td></tr>
+<tr><td>4</td><td>ADR-0001「Payment 是否為獨立 context」（含兩個否決方案、兩條壞後果）+ 15 分鐘分享（只講 As-Is 的數字與那條規則）</td><td>tech lead 給團隊會議 15 分鐘</td><td>ADR merged；分享後拿到「下一個要圈的交接點」至少一個</td></tr>
+</tbody></table></div>
+<h4>給主管的一頁</h4>
+<ul>
+  <li><strong>問題</strong>：客服每天約 30 次在 Teams 問倉管出貨狀態，每次等 5–15 分鐘（≈ 5 小時 / 天）；財務月底對 2,640 筆付款與 2,100 張訂單靠人工對表。</li>
+  <li><strong>我做了</strong>：七天工作坊，從訪談到一個能跑的 MVP（41 個測試、CI 綠、一條端到端劇本），練的是「先找出人在替系統傳資料的地方，再把它變成一個事實 + 一個訂閱者」。</li>
+  <li><strong>我學到</strong>：先問例外與月底，交接點才會浮出來；一個詞兩種意思就是兩個模型；規則寫成帶數字的例子就能直接變測試；發通知要在資料庫確定之後。</li>
+  <li><strong>建議下一步</strong>：30 天內做四件小事（上表），不改架構、不加系統；第 4 週給一頁 ADR 與三個數字，再決定要不要做「出貨事件」讓客服系統自己訂閱。</li>
+  <li><strong>需要的支持</strong>：客服主管 30 分鐘、倉管組長 1 小時、團隊會議 15 分鐘。不需要預算。</li>
+</ul>
+<h4>延伸閱讀（三本以內，來自 docs/references/reading-list.md）</h4>
+<ul>
+  <li>Vlad Khononov, <em>Learning Domain-Driven Design</em>, 2021 — 第 1–4 章，回公司後第一本；配第 1–2 週畫現況 context map。</li>
+  <li>Chris Richardson, microservices.io「Transactional outbox」「Idempotent Consumer」 — 各 5 分鐘；第 4 件事提案前再讀一次。</li>
+  <li>Nicole Forsgren, Jez Humble &amp; Gene Kim, <em>Accelerate</em>, 2018 — 第 1–2 章；給主管的一頁引用四個指標。</li>
+</ul>
+<h4>最終評量分數</h4>
+<p><strong>90%</strong>（9 / 10，≥ 80% 過關）。答錯：「換掉持久化（in-memory → SQLite）時，六角架構保證什麼？」——我選「e2e 自動通過」；正確是「domain 與 application 測試一行不改」。e2e 是另一層的安全網，adapter 要自己的 contract test（我 Day 6 其實寫了 <code>SqliteChargingSessionRepository.test.ts</code> 跟 in-memory 跑同一組，卻答錯了這題）。</p>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 3</p>
+<p><strong>驗收看哪一行：</strong>(1) <code>retro.md</code>「數字」段——沒有 commit 數、測試數、卡住次數的 retro 是印象文；rubric Day 7 明寫「retro 有沒有數字」。(2) Start / Stop 每一條的「證據」欄要指到<strong>檔案或 commit</strong>（本頁的 <code>9c2e1d4</code>、<code>ocpp.ts:38</code>）；寫「Day 4 很累」的不算。(3) <code>sprint-2-backlog.md</code> 三件必列的「拒絕事件」欄——空的代表規則沒想清楚，這是 Day 2 的老毛病在 Day 7 現形；標了「需新契約 + ADR」的才算誠實。(4) <code>takeaway.md</code> 每一件事的「工作坊證據」欄——寫「訪談很重要」而不是「<code>as-is.md</code> 第四處」的，是口號。(5) 30 天計畫的「需要誰點頭」——出現「主管批准」「全公司」的，退回。</p>
+<p><strong>常見失真：</strong>retro 寫成「都很好」——kickoff 就說「retro 對三個月後的你有用，不是給我看的」；backlog 寫成功能清單（「做 Dispatch」）——用 skill 的規則擋：五項沒齊不進表；takeaway 的公司落點寫「推廣 DDD」——追問「下週一你會約誰、問什麼」。另一種失真：學員的評量 < 80% 卻把分數寫成 80——報告是主控台產生的文字，貼給 <code>/checkout</code> 時講師可以要求看原文。</p>
+<p><strong>時間：</strong>這個 Block 塞了 retro（25）+ backlog（30）+ 評量（15）+ takeaway（20）= 90 分鐘，實際上 backlog 七條寫到有 GWT 要 45 分鐘以上。建議：課堂只逼三件必列 + 技術債各一條 GWT，其餘四條當回家作業；<code>/takeaway</code> 的「給主管的一頁」也可以回家寫。</p>
+</div>
+
+<p class="eyebrow">CHECK-OUT</p>
+<h2>/checkout day7：交付物、評量報告、quiz、七天總評</h2>
+<h3>學員貼進來的評量報告（主控台產生）</h3>
+<div class="file"><p class="path">主控台 → Day 7 → 評量 → 「產生評量報告」 <span class="chip">貼給 /checkout</span></p><div class="body"><pre># 工作坊評量報告 · clarence · node
+
+## 交付物自評
+- Day 1: 3/3
+- Day 2: 3/3
+- Day 3: 4/4
+- Day 4: 3/3
+- Day 5: 4/4
+- Day 6: 4/4
+- Day 7: 5/5
+
+## Check-out 小測
+- Day 1: 5/5
+- Day 2: 5/5
+- Day 3: 4/5
+- Day 4: 5/5
+- Day 5: 5/5
+- Day 6: 4/5
+- Day 7: 5/5
+
+## 最終評量：9/10（90%）· 通過
+
+答錯：
+- 換掉持久化（in-memory → SQLite）時，六角架構保證什麼？
+
+（由主控台產生，貼給 /checkout day7）</pre></div></div>
+<p>那一題錯在哪：學員選了「e2e 自動通過」。六角架構（port / adapter）保證的是 <strong>domain 與 application 的測試一行不改</strong>——因為它們只依賴 port 介面；新的 adapter 要有自己的 contract test（學員 Day 6 其實寫了 <code>SqliteChargingSessionRepository.test.ts</code> 與 in-memory 跑同一組），e2e 是另一層安全網，不是架構「保證」的東西。這題錯得有價值：它正是 rubric §3 口試第 4 題「save 成功、publish 失敗會怎樣」的鄰居——學員知道怎麼做，但把「誰保證什麼」講混了。</p>
+
+<h3>助教回覆</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /checkout day7</p><p>今天是 Day 7，也是最後一天。請對照 docs/rubric.md 的 Day 7 DoD 與總評：1. 跑測試貼摘要；確認沒有 .skip / xfail。2. 讀 .github/workflows/ci.yml，指出你認為在乾淨機器上會失敗的一行（如果有）。3. 讀 workshop/day7/ 四個檔案，每個檔案回「過 / 不過 + 一句理由」。4. 用 docs/rubric.md 的總評項目替我做一次七天總自評（每項 過 / 不過），列出「不過」的項目對應哪一天的哪個 Block。最後給「下一個最小步驟」——這次是「回公司後的第一個最小步驟」。（評量報告貼在上面。）</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問今天的 check-out 問題一題：<code>/review</code> 指出「route handler 內判斷憑證是否有效」——這違反哪個鏡頭？應該移到哪一層？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>六角（adapter 不做決策）和 DDD（R2 是規則）。移到 <code>StartCharging</code> 處理器，透過 <code>AuthorizationService</code> port 拿到布林值，聚合記錄 <code>ChargingStartRejected(Unauthorized)</code>；handler 只把它映射成 OCPP 的 <code>Invalid</code>。我 B1 修的 #5 是同一類（R1 版）。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>✅。<code>npm test</code> 41 passed，<code>grep -rn "\.skip\|\.todo\|xfail" test/</code> 空。<code>ci.yml</code> 我找不到會在乾淨機器上失敗的一行；唯一的風險是 e2e job 的 <code>npm run start</code> 依賴你 <code>package.json</code> 有那個 script（有）。表格如下。</p>
+<div class="table-scroll"><table>
+<thead><tr><th>交付物</th><th>DoD（rubric Day 7）</th><th>狀態</th><th>一句理由 / 位置</th></tr></thead>
+<tbody>
+<tr><td><code>starter/node/**</code></td><td>/review High 全修、Medium 有處理或註明；≥ 1 個 <code>refactor(...)</code> 有測試保護</td><td>✅</td><td>🔴 ×4 修、🟠 ×1 修 ×1 註明（pr.md）、🟡 ×2 修；<code>c94e11a → d02b7f5</code> 紅綠成對</td></tr>
+<tr><td><code>.github/workflows/ci.yml</code></td><td>存在且綠；跑 LANG 的測試 + contracts</td><td>✅</td><td>run #2 四 job 綠；config job 只跑 node；contracts 7 valid</td></tr>
+<tr><td><code>pr.md</code></td><td>PR 到指定分支；範圍、ADR 連結、契約連結、怎麼驗證、金字塔數字、已知限制、請 reviewer 看哪裡</td><td>✅</td><td>PR #41 base workshop-submissions；八段齊；「怎麼驗證」有指令與預期輸出</td></tr>
+<tr><td><code>retro.md</code></td><td>Start / Stop / Continue 各 ≥ 2，前三項有下一步；「數字」段</td><td>✅</td><td>4 / 3 / 4 條各有證據；數字段六行；Stop #1 那條最誠實</td></tr>
+<tr><td><code>sprint-2-backlog.md</code></td><td>≥ 6 項，含 Billing 合併出帳（R7）、Dispatch、Parking；每項有 context 與驗收條件</td><td>✅</td><td>7 項 + 技術債 3 項；每項 GWT 成功 + 拒絕；新事件名都標「需新契約 + ADR」</td></tr>
+<tr><td><code>takeaway.md</code></td><td>5 件事、30 天計畫、給主管的一頁</td><td>✅</td><td>5 件事各有 <code>workshop/</code> 檔案證據；30 天計畫「需要誰點頭」沒有主管批准；一頁用公司數字</td></tr>
+<tr><td>最終評量</td><td>≥ 80%</td><td>✅</td><td>9 / 10 = 90%；錯的那題你在 takeaway.md 自己解釋對了</td></tr>
+<tr><td>Quiz</td><td>（不計分）</td><td>✅</td><td>5 / 5；第 4 題 <code>v2</code> 理由完整</td></tr>
+</tbody></table></div>
+<p>判定：<strong>通過</strong>。七天總評（rubric §3）在下面那張表：79 / 90 = 87.8%，一票否決四條都沒踩（<code>grep</code> 空、兩個語言只做一個、抽問三處答對三處）。三句話：你帶走的是「先問例外再畫圖」、「規則是帶數字的句子、拒絕是事件」、「事件先記錄後發布、消費者自己去重」。</p>
+<p><b>下一個最小步驟（回公司後）：</b>下週三之前約到客服主管 30 分鐘，只問一題：「#48211 這種事一天幾次、最糟的一次等多久？」把兩個數字寫進 <code>takeaway.md</code> 的 As-Is。</p></div>
+</div>
+
+<h3>Quiz 五題參考答案</h3>
+<div class="answer"><p class="head">1 · route handler 內判斷憑證是否有效，違反哪個鏡頭？移到哪一層？</p>
+<p>兩個鏡頭：六角（adapter 不做決策）與 DDD（授權是 R2，屬 Charging 的規則）。移法：<code>StartCharging</code> 處理器呼叫 <code>AuthorizationService.isAuthorized(idTag)</code> port 得到布林值，傳進 <code>ChargingSession.start({ authorized })</code>；聚合記錄 <code>ChargingStartRejected(reason=Unauthorized)</code>；handler 只把事件映射成回應碼（OCPP <code>idTagInfo.status = Invalid</code>；HTTP 4xx）。守住它的測試：<code>R2 through the service: unknown idTag is rejected by the AuthorizationService port</code>。</p></div>
+<div class="answer"><p class="head">2 · CI 的 contracts job 在守什麼？有人拿掉 <code>energyWh</code>，哪個測試會紅？</p>
+<p>守「契約沒有被默默改壞」——範例與 Schema 要一直對得上，而且程式產生的事件也要過。如果有人從 <code>charging.session.completed.v1.schema.json</code> 的 <code>required</code> 拿掉 <code>energyWh</code>，<code>node contracts/validate.mjs</code> 本身不會紅（範例還帶著 <code>energyWh</code>，少一個 required 不算違規）——會紅的是 Day 5 的 <code>StopCharging output validates against charging.session.completed.v1</code> 若加了 <code>additionalProperties: false</code>，以及下游 <code>BillingDraftConsumer</code> 的 <code>creates one draft invoice INV-778 for session S-991 with 12.4 kWh</code>（金額變 0）。反過來，如果把 <code>energyWh</code> 從<strong>範例</strong>拿掉，<code>validate.mjs</code> 立刻紅：<code>$.payload: missing required "energyWh"</code>。講師追問：這說明 contracts job 守的是哪個方向？（Schema 變嚴 → 範例紅；Schema 變鬆 → 要靠程式端測試。）</p></div>
+<div class="answer"><p class="head">3 · PR 描述為什麼要連結 ADR-0002，而不只寫「MVP1 做了 Charging」？</p>
+<p>「做了 Charging」是<em>什麼</em>，ADR-0002 是<em>為什麼只做這些、否決了什麼、代價是什麼</em>。Reviewer（與三個月後的自己）要能判斷取捨是否合理：為什麼不先做 Billing 合併出帳（Billing 需要顧客、費率表、停車事件，三者 MVP1 都沒有）、為什麼 Dispatch 只是 stub。Sprint 2 開工時也才知道哪些假設可以推翻——本頁 ADR-0003 就是「對帳」時發現 0002 一句不符而新開的，這件事只有在 PR 連到 ADR 時才會發生。</p></div>
+<div class="answer"><p class="head">4 · Billing 合併出帳需要把停車會話與充電會話對上——兩個契約有共同鍵嗎？升版哪個、加哪個欄位、為什麼是 v2？</p>
+<p>沒有。<code>charging.session.completed.v1</code> 有 <code>sessionId</code> / <code>connectorId</code> 沒有 <code>plate</code>；<code>parking.session.closed.v1</code> 有 <code>plate</code> / <code>parkingSessionId</code> 沒有 <code>sessionId</code>。選項：<code>charging.session.started.v1</code> 升 <code>v2</code> 加 <code>plate?</code>（由 Parking ↔ Charging 的 Partnership 在插槍時對應 connector ↔ plate），或新增一個關聯事件。用 <code>v2</code> 而不是改 <code>v1</code>：既有消費者（Billing 草稿、Parking）依 <code>v1</code> Schema 驗證，改 <code>v1</code> 會讓舊消費者與舊範例同時失效；<code>contracts/README.md</code> 規則 2「版本只能加欄位；改語意或刪欄位升 v2 並行一段時間」。加 optional 欄位嚴格說可以留在 v1，但「plate 從哪來、誰保證」是語意上的新承諾，所以本頁學員選 v2 並行。</p></div>
+<div class="answer"><p class="head">5 · 你公司裡的一個「人當 API」交接點，用哪三個工具可以在 30 天內改成事件驅動？</p>
+<p>以本頁學員的「客服問倉管出貨狀態」為例：訪談（找出交接點兩端的人與詞：客服說「出了沒」、倉管說「揀貨完成 / 交寄」——兩個詞）→ storm（把交接點變成一個過去式事實：<code>ShipmentDispatched</code>，不是「呼叫 WMS API」）→ 契約 + Outbox（WMS 端記錄事件、relay 發布；客服系統以 <code>orderId</code> 去重消費），必要時 ACL 隔開 WMS 的原始欄位名。30 天內做到「事件契約 + 一個訂閱者」就夠；不需要重切系統。</p></div>
+
+<h3>七天總評（rubric §3，0–3 分 × 權重）</h3>
+<div class="table-scroll"><table>
+<thead><tr><th>#</th><th>面向</th><th>分</th><th>權重</th><th>得分</th><th>一句理由（為什麼不是 3 / 為什麼是 3）</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>領域理解</td><td>3</td><td>2</td><td>6</td><td>口試講 14:02 → 18:18 全程通用語言；「會話」拆成兩個、「狀態」分四個狀態機</td></tr>
+<tr><td>2</td><td>訪談與 BPR</td><td>2</td><td>2</td><td>4</td><td>人當 API 4 處有量化；但阿忠隱藏事實只 2/4、有一題引導式（<code>interviews.md</code> 自己承認）</td></tr>
+<tr><td>3</td><td>Event Storming</td><td>3</td><td>2</td><td>6</td><td>主線 9 事實、故障支線 6，全過去式；hotspot 5 個各對到角色；樞紐 3</td></tr>
+<tr><td>4</td><td>規則（GWT）</td><td>3</td><td>3</td><td>9</td><td>R1–R8 八條五項齊；R3 相等邊界與 R4 12400 算對；<code>/rules-check</code> 全完整</td></tr>
+<tr><td>5</td><td>戰略設計</td><td>2</td><td>3</td><td>6</td><td>四條線索有證據、推翻過「單一 Session」；但 Parking ↔ Charging 的 Partnership 理由薄（「都在場站」），口試反駁「單一 Session」用了提示</td></tr>
+<tr><td>6</td><td>C4 + ADR</td><td>3</td><td>2</td><td>6</td><td>Context 圖無 DB、Container 圖兩個邊界；ADR-0001 / 0002 各兩個真替代方案與兩條壞後果；Day 7 補 0003 而非改 0002</td></tr>
+<tr><td>7</td><td>戰術設計</td><td>3</td><td>3</td><td>9</td><td>聚合 ≤ 210 行、VO 有驗證、拒絕是事件、<code>pullEvents()</code>；<code>grep</code> domain 空（Day 7 修掉 <code>new Date</code> 後）</td></tr>
+<tr><td>8</td><td>TDD 紀律</td><td>2</td><td>3</td><td>6</td><td><code>git log</code> 紅綠可辨、測試名 = 規則；但 Day 4 R3 有一個 40 分鐘的大 commit、Day 6 一次不誠實的 20 分鐘（retro 自己寫了）</td></tr>
+<tr><td>9</td><td>事件驅動</td><td>3</td><td>3</td><td>9</td><td>Outbox 同交易有測試；兩層冪等（sessionId、eventId）各有重送測試；契約 7 valid；<code>errorCode</code> 外洩 Day 7 修掉</td></tr>
+<tr><td>10</td><td>MVP</td><td>2</td><td>3</td><td>6</td><td>e2e 13 步綠、斷線劇本綠；但 Day 6 改了核心一次（<code>reportFault</code> 對 idle 連接器不 persist）——README 有說明，不扣分；扣在 relay 無重試計數</td></tr>
+<tr><td>11</td><td>SDLC</td><td>3</td><td>2</td><td>6</td><td>CI 綠且只跑 LANG；PR 描述五分鐘能導航（reviewer 請特別看 + 從哪開始）；31/47 commit 符合 conventional</td></tr>
+<tr><td>12</td><td>Retro 與帶回公司</td><td>3</td><td>2</td><td>6</td><td>retro 有數字段與下一步；takeaway 5 件事全指到自己的檔案；30 天計畫不需授權</td></tr>
+<tr><td colspan="4"><strong>總分</strong></td><td><strong>79 / 90</strong></td><td><strong>87.8% ✅</strong>（及格 72 / 80%）；一票否決：無</td></tr>
+</tbody></table></div>
+<p>講師版與自評版差距：學員自評 82 / 90（#2、#5、#8 都給自己 3）。差距 3.3%，小於 15%，不需要在 retro 解釋；但講師在 kickoff 隔天（如果有）唸一次 #5 的差距理由——「都在場站」不是 Partnership 的理由，「插槍時要對應 plate ↔ connector、雙方都要改」才是。</p>
+
+<p class="eyebrow">講師手記</p>
+<h2>這七天教材的誠實評估</h2>
+<h3>Day 7 本身</h3>
+<p><strong>夠的部分：</strong><code>docs/days/day7.md</code>、<code>docs/references/sdlc.md</code>、三個 Day 7 skill（<code>/review</code>、<code>/retro</code>、<code>/takeaway</code>）與 <code>/checkout</code> 四者的輸出格式互相對得上：review 的 findings 表欄位、retro 的三張表、takeaway 的三欄五件事、checkout 的 DoD 表——學員照 skill 走就會產出本頁這個形狀。<code>sdlc.md</code> §2.8 給了 CI 最小版、§4 給了 PR 描述範本、§5 給了 retro 45 分鐘的跑法，<code>.github/README.md</code> 把「自己寫」講得很清楚。rubric Day 7 的 DoD 與 §3 的 12 項總評能直接拿來打分。這一天不需要講師補方法論。</p>
+<p><strong>不夠、講師要自己補的：</strong></p>
+<ul>
+  <li><strong>整合分支</strong>：<code>workshop-submissions</code> 不存在於 repo，講師要在 Day 7 之前建好並在 kickoff 說 base 是它；自學者要在 kickoff 段落被告知「開到你 fork 的 main」。</li>
+  <li><strong>CI 的執行環境</strong>：fork 上的 Actions 預設關閉；學員第一次 push 看不到 workflow 會以為自己寫錯。講師要準備一句「Settings → Actions → Enable」。GitHub 免費額度也要提一下（e2e job 選配的原因之一）。</li>
+  <li><strong>Node 版本不一致</strong>：<code>day7.md</code> 寫 <code>node-version: 20</code>，但 <code>scripts/e2e/run.mjs</code> 與 <code>solutions/node</code> 靠 Node 22 原生 type stripping。本頁的 ci.yml 用 22，助教對話也點了出來；講師 kickoff 要說一次，否則 e2e job 一定紅。</li>
+  <li><strong>e2e job 沒有參考解</strong>：HTTP 層本來就沒有 <code>solutions/</code>（Day 6 是學員自己的），所以 CI 的 e2e job 完全依賴學員 Day 6 的啟動指令與 <code>/health</code> 端點。本頁的 e2e job 是一個合理的形狀，不是可以照抄的答案；講師要決定 e2e job 是「選配」還是「不做」，並在 kickoff 說清楚。</li>
+  <li><strong>retro 三個範本不一致</strong>：<code>workshop/day7/TEMPLATE.md</code> 的 retro 是「Keep / 卡最久三處 / 重來會做 / 助教用法」；<code>/retro</code> skill 與 <code>sdlc.md</code> 是 Start / Stop / Continue + 數字；rubric 要求 Start / Stop / Continue 各 ≥ 2 + 數字段。本頁把兩種合在一份（時間線表涵蓋「卡最久三處」，助教用法獨立一段）。講師要在 kickoff 說「兩個都要，合在一份」，否則 <code>/checkout</code> 會依 rubric 判學員的 TEMPLATE 版「不過」。</li>
+  <li><strong>backlog 數量也不一致</strong>：<code>day7.md</code> 說「三件 + 技術債」，rubric 說 ≥ 6 項。本頁做 7 項 + 技術債。以 rubric 為準（rubric 自己說「兩邊不一致以本檔為準並回報講師」）——講師要把這個回報真的做掉。</li>
+  <li><strong>真實世界的故事</strong>：教材裡沒有任何「真的 OCPP 場站」的故事。講師要自備兩則：一則「transactionId 在樁重開機後從 1 重數，兩個月後撞號」（為什麼 <code>sessionIdFor()</code> 只能在 ACL、為什麼 sessionId 該由我們發）；一則「Faulted 狀態抖動：同一根樁 8 秒內報 3 次 GroundFailure」（R5 為什麼分「再申告」與「broker 重送」）。沒有這兩則，R5 與 ACL 對學員只是規則。</li>
+  <li><strong>公司例子</strong>：<code>/takeaway</code> 的映射需要學員說出自己公司的交接點；沒有經驗的學員（剛畢業）會答不出來。講師準備兩個自己的（本頁用的「客服問倉管」、「財務對帳」）當備援。</li>
+  <li><strong>最終評量太容易</strong>：10 題單選，每題有兩個明顯的稻草人選項；80% 幾乎人人過。真正的閘門是 rubric §3.3 的 15 分鐘口試與 §3.2 的一票否決（一行 grep）。講師要真的做口試，至少抽三題；<code>/checkout day7</code> 的自評分數只是參考。</li>
+  <li><strong>Review 的「人」那一半</strong>：<code>/review</code> 做完，教材說「修完再請人看」，但一個人的工作坊沒有第二個人。講師若有時間，Day 7 下午花 10 分鐘 / 人做真人 review——只看 PR 描述能不能導航，不看 diff。這是整週唯一一次講師以 reviewer 身份出現，價值很高。</li>
+</ul>
+<p><strong>時間會不會爆：</strong>會，在 B3。B1 的 90 分鐘如果 <code>/review</code> 回 8 條而每條要補測試，實際只修得完 4–5 條（本頁的 7 條是理想值；4 條 🔴 + 1 條 🟠 是務實目標）。B2 的兩輪 CI 迭代各 4–6 分鐘，加上 PR 描述與 ADR 對帳，90 分鐘剛好。B3 的 retro + backlog + 評量 + takeaway 是四件事塞 90 分鐘：backlog 七條寫到有 GWT 至少 45 分鐘。建議：backlog 課堂只做三件必列 + 技術債各一條 GWT，其餘回家；「給主管的一頁」回家寫；評量可以在午休前先考。</p>
+<h3>七天整體</h3>
+<p><strong>完整的：</strong>領域設定（curriculum §1）是自洽的：識別碼、時間線、事件、R1–R8、五個 context、契約——七天所有教材、skills、starter、solutions、e2e 都用同一組名字，這是這套教材最強的地方。Day 4–6 的程式碼路徑（starter 紅燈 → solutions → contracts → e2e）真的能跑（<code>node scripts/e2e/run.mjs</code> 直接驅動 solutions）。skills 的「先問後答、20 分鐘、下一個最小步驟」規則在 CLAUDE.md 與每個 SKILL.md 都一致，助教的行為可預期。</p>
+<p><strong>講師必須自己帶的：</strong>(1) 真實世界的 OCPP / 停車場故事（上面兩則之外，還有「總部斷線兩小時、值班長手動放行 40 台車、隔天帳務對不上」——這一則是 R6 與整個「site 獨立存活」假設的來源）。(2) 學員自己公司的映射（Day 1 開場與 Day 7 takeaway 都需要）。(3) 人的 review 與口試。(4) 整合分支、Actions 開關、Node 22 這類環境細節。(5) Day 6 HTTP 層與持久化沒有參考解——卡住 20 分鐘的學員在 Day 6 沒有 <code>solutions/</code> 可指，講師要準備一份自己的 SQLite unit of work 片段（≤ 30 行）當備援。</p>
+<p><strong>砍成五天的建議（同意 <code>instructor.md</code> §7.1，補兩點）：</strong>Day 7 縮成半天時，砍 CI 與 45 分鐘 retro、留 <code>/review</code>（只修 🔴）+ PR（描述照 §4）+ <code>/takeaway</code>（只做映射 + 30 天計畫），CI 範本直接給本頁的 <code>ci.yml</code>。補一：不要砍「retro 的數字段」——五分鐘的 <code>git log</code> 統計就能做，而它是 rubric #12 的證據；補二：五天版把 Day 2 + 3 合併會讓 ADR-0002 由講師給，那 Day 7 的 <code>/adr</code> 對帳就沒有意義，直接砍掉 ADR-0003 那一步。絕對不砍的五件事（§7.3）裡，Day 5「同一事件送兩次」的測試在 Day 7 review 會再現一次（本頁 #4）——這是整套教材裡重複出現最多次的一課，五天版也要留。</p>
 
 <p class="end">教師版 · EV Charge Ops 七天工作坊 · 教材與程式碼：<a href="https://github.com/clarencechien/dddguide">github.com/clarencechien/dddguide</a> · 學員主控台：<a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">ev-charge-ops-workshop</a> · 本頁假設全流程跑完；學員實際產出會與此不同，差異正是驗收要看的地方。</p>
 </main>

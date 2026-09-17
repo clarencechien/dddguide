@@ -353,9 +353,9 @@ a1f3c9e refactor(charging): endedAt comes from the command, not the wall clock (
     <text class="t s" x="295" y="338" text-anchor="middle">Day 7 B3</text>
     <text class="t a" x="295" y="356" text-anchor="middle">/retro · /takeaway</text>
 
-    <path class="ar ev" d="M220 283 L105 283 L105 118"/>
-    <text class="t a" x="112" y="205">Sprint 2 backlog</text>
-    <text class="t s" x="112" y="222">回到第 1 步</text>
+    <path class="ar ev" d="M220 283 L24 283 L24 83 L30 83"/>
+    <text class="t a" x="122" y="258" text-anchor="middle">Sprint 2 backlog</text>
+    <text class="t s" x="122" y="274" text-anchor="middle">→ 回到第 1 步</text>
   </svg></div>
   <figcaption>實線＝這一週的順序；虛線＝retro 產出的 Sprint 2 backlog 回到第 1 步。粗框的兩步（紅綠重構、review）是講師驗收時抽問最多的地方。</figcaption>
 </figure>
@@ -704,8 +704,8 @@ ci / e2e         pass  1m21s</pre>
     <text class="t b" x="313" y="172" text-anchor="middle">config</text>
     <text class="t s" x="313" y="190" text-anchor="middle">讀 .config → matrix</text>
 
-    <path class="ar" d="M368 177 L400 110"/>
-    <rect class="box core" x="400" y="60" width="120" height="66" rx="6"/>
+    <path class="ar" d="M368 177 L392 110"/>
+    <rect class="box core" x="392" y="60" width="136" height="66" rx="6"/>
     <text class="t b" x="460" y="82" text-anchor="middle">test</text>
     <text class="t m" x="460" y="100" text-anchor="middle">matrix: node only</text>
     <text class="t s" x="460" y="116" text-anchor="middle">cache npm · 41 passed</text>
@@ -715,7 +715,7 @@ ci / e2e         pass  1m21s</pre>
     <text class="t b" x="460" y="172" text-anchor="middle">contracts</text>
     <text class="t s" x="460" y="190" text-anchor="middle">validate.mjs · 7 valid</text>
 
-    <path class="ar" d="M520 93 L540 240 L400 240"/>
+    <path class="ar" d="M313 204 L313 267 L400 267"/>
     <rect class="box ext" x="400" y="240" width="120" height="54" rx="6"/>
     <text class="t b" x="460" y="262" text-anchor="middle">e2e（選配）</text>
     <text class="t s" x="460" y="280" text-anchor="middle">API + 14:02 → 18:18</text>
@@ -966,58 +966,59 @@ $ grep -c "卡住" workshop/day*/notes.md
     <text class="t b" x="99" y="322" text-anchor="middle">LPR 車牌辨識</text>
     <text class="t a" x="99" y="340" text-anchor="middle">S2 #3 · 外部</text>
 
-    <rect class="box core" x="210" y="60" width="230" height="110" rx="6"/>
-    <text class="t b" x="325" y="84" text-anchor="middle">Charging（核心）</text>
-    <text class="t s" x="325" y="104" text-anchor="middle">MVP1：R1–R4、ACL、Outbox、SQLite</text>
-    <text class="t a" x="325" y="126" text-anchor="middle">S2：session.started.v2 +plate?</text>
-    <text class="t s" x="325" y="146" text-anchor="middle">（給 Billing 合併用，v1 並行）</text>
-    <path class="ar" d="M164 85 L210 85"/>
-    <text class="t s" x="187" y="76" text-anchor="middle">ACL</text>
+    <rect class="box core" x="200" y="60" width="230" height="110" rx="6"/>
+    <text class="t b" x="315" y="84" text-anchor="middle">Charging（核心）</text>
+    <text class="t s" x="315" y="104" text-anchor="middle">MVP1：R1–R4、ACL、Outbox、SQLite</text>
+    <text class="t a" x="315" y="126" text-anchor="middle">S2：session.started.v2 +plate?</text>
+    <text class="t s" x="315" y="146" text-anchor="middle">（給 Billing 合併用，v1 並行）</text>
+    <path class="ar" d="M164 85 L200 85"/>
+    <text class="t s" x="182" y="76" text-anchor="middle">ACL</text>
 
-    <rect class="box" x="210" y="270" width="230" height="110" rx="6"/>
-    <text class="t b" x="325" y="294" text-anchor="middle">Parking</text>
-    <text class="t s" x="325" y="314" text-anchor="middle">MVP1：stub，只有契約 + R6 事件</text>
-    <text class="t a" x="325" y="336" text-anchor="middle">S2 #3 真整合 · #4 R6 人工放行</text>
-    <text class="t s" x="325" y="356" text-anchor="middle">一輛車一個進行中停車會話</text>
-    <path class="ar ev" d="M164 325 L210 325"/>
-    <text class="t a" x="187" y="316" text-anchor="middle">S2 ACL</text>
-    <path class="ar ev" d="M325 270 L325 170"/>
-    <text class="t a" x="335" y="225">S2 Partnership：plate ↔ connector</text>
+    <rect class="box" x="200" y="270" width="230" height="110" rx="6"/>
+    <text class="t b" x="315" y="294" text-anchor="middle">Parking</text>
+    <text class="t s" x="315" y="314" text-anchor="middle">MVP1：stub，只有契約 + R6 事件</text>
+    <text class="t a" x="315" y="336" text-anchor="middle">S2 #3 真整合 · #4 R6 人工放行</text>
+    <text class="t s" x="315" y="356" text-anchor="middle">一輛車一個進行中停車會話</text>
+    <path class="ar ev" d="M164 325 L200 325"/>
+    <text class="t a" x="182" y="316" text-anchor="middle">S2 ACL</text>
+    <path class="ar ev" d="M315 270 L315 170"/>
+    <text class="t a" x="305" y="225" text-anchor="end">S2 Partnership：plate ↔ connector</text>
 
-    <rect class="box" x="500" y="60" width="200" height="110" rx="6"/>
+    <rect class="box" x="494" y="60" width="212" height="110" rx="6"/>
     <text class="t b" x="600" y="84" text-anchor="middle">Billing</text>
     <text class="t s" x="600" y="104" text-anchor="middle">MVP1：草稿 INV-778 · sessionId 去重</text>
     <text class="t a" x="600" y="126" text-anchor="middle">S2 #1 合併出帳 R7 · #7 費率</text>
     <text class="t s" x="600" y="146" text-anchor="middle">invoice.issued.v1（新契約）</text>
-    <path class="ar ev" d="M440 100 L500 100"/>
-    <text class="t s" x="470" y="90" text-anchor="middle">started · completed</text>
-    <path class="ar ev" d="M440 300 L470 300 L470 130 L500 130"/>
-    <text class="t a" x="452" y="292" text-anchor="middle">S2</text>
-    <text class="t s" x="470" y="318" text-anchor="middle">session.closed.v1</text>
+    <path class="ar ev" d="M430 100 L494 100"/>
+    <text class="t s" x="462" y="90" text-anchor="middle">started</text>
+    <text class="t s" x="462" y="116" text-anchor="middle">completed</text>
+    <path class="ar ev" d="M430 300 L470 300 L470 130 L494 130"/>
+    <text class="t a" x="450" y="292" text-anchor="middle">S2</text>
+    <text class="t s" x="486" y="215" text-anchor="middle" transform="rotate(-90 486 215)">parking.session.closed.v1</text>
 
-    <rect class="box" x="500" y="270" width="200" height="110" rx="6"/>
+    <rect class="box" x="494" y="270" width="212" height="110" rx="6"/>
     <text class="t b" x="600" y="294" text-anchor="middle">AssetOps</text>
     <text class="t s" x="600" y="314" text-anchor="middle">MVP1：WO-2208、R5、PM、關單</text>
     <text class="t a" x="600" y="336" text-anchor="middle">S2 #6 processed_events 同交易</text>
     <text class="t s" x="600" y="356" text-anchor="middle">PM 拆兩段（ADR-0003）</text>
-    <path class="ar ev" d="M440 150 L460 150 L460 325 L500 325"/>
+    <path class="ar ev" d="M430 150 L460 150 L460 325 L494 325"/>
     <text class="t s" x="446" y="248" text-anchor="middle" transform="rotate(-90 446 248)">charger.faulted.v1 · 遵奉者</text>
 
-    <rect class="box ext" x="740" y="270" width="190" height="110" rx="6"/>
-    <text class="t b" x="835" y="294" text-anchor="middle">Dispatch</text>
-    <text class="t s" x="835" y="314" text-anchor="middle">MVP1：stub，同步 port，TECH-HAO</text>
-    <text class="t a" x="835" y="336" text-anchor="middle">S2 #2 真派工 · SLA</text>
-    <text class="t s" x="835" y="356" text-anchor="middle">technician.assigned.v1（新契約）</text>
-    <path class="ar" d="M700 305 L740 305"/>
-    <text class="t s" x="720" y="296" text-anchor="middle">port</text>
-    <path class="ar ev" d="M740 345 L700 345"/>
-    <text class="t a" x="720" y="365" text-anchor="middle">S2 事件</text>
+    <rect class="box ext" x="736" y="270" width="200" height="110" rx="6"/>
+    <text class="t b" x="836" y="294" text-anchor="middle">Dispatch</text>
+    <text class="t s" x="836" y="314" text-anchor="middle">MVP1：port stub → TECH-HAO</text>
+    <text class="t a" x="836" y="336" text-anchor="middle">S2 #2 真派工 · SLA</text>
+    <text class="t s" x="836" y="356" text-anchor="middle">technician.assigned.v1（新契約）</text>
+    <path class="ar" d="M706 305 L736 305"/>
+    <text class="t s" x="721" y="296" text-anchor="middle">port</text>
+    <path class="ar ev" d="M736 345 L706 345"/>
+    <text class="t a" x="721" y="365" text-anchor="middle">S2 事件</text>
 
-    <rect class="box dim" x="740" y="60" width="190" height="110" rx="6"/>
-    <text class="t b" x="835" y="84" text-anchor="middle">shared adapters</text>
-    <text class="t s" x="835" y="104" text-anchor="middle">MVP1：in-memory bus、relay 同程序</text>
-    <text class="t a" x="835" y="126" text-anchor="middle">S2 #5 relay 輪詢、attempts、死信</text>
-    <text class="t s" x="835" y="146" text-anchor="middle">不做：真 broker</text>
+    <rect class="box dim" x="736" y="60" width="200" height="110" rx="6"/>
+    <text class="t b" x="836" y="84" text-anchor="middle">shared adapters</text>
+    <text class="t s" x="836" y="104" text-anchor="middle">MVP1：記憶體 bus、relay 同程序</text>
+    <text class="t a" x="836" y="126" text-anchor="middle">S2 #5 relay 重試計數 · 死信</text>
+    <text class="t s" x="836" y="146" text-anchor="middle">不做：真 broker</text>
 
     <text class="t s" x="30" y="420">實線＝命令 / port　虛線＝整合事件　藍綠 S2＝Sprint 2 新增或升版　帳務不得回呼 Charging（顧客—供應者）</text>
   </svg></div>
@@ -1114,3 +1115,111 @@ $ grep -c "卡住" workshop/day*/notes.md
 <p><strong>常見失真：</strong>retro 寫成「都很好」——kickoff 就說「retro 對三個月後的你有用，不是給我看的」；backlog 寫成功能清單（「做 Dispatch」）——用 skill 的規則擋：五項沒齊不進表；takeaway 的公司落點寫「推廣 DDD」——追問「下週一你會約誰、問什麼」。另一種失真：學員的評量 < 80% 卻把分數寫成 80——報告是主控台產生的文字，貼給 <code>/checkout</code> 時講師可以要求看原文。</p>
 <p><strong>時間：</strong>這個 Block 塞了 retro（25）+ backlog（30）+ 評量（15）+ takeaway（20）= 90 分鐘，實際上 backlog 七條寫到有 GWT 要 45 分鐘以上。建議：課堂只逼三件必列 + 技術債各一條 GWT，其餘四條當回家作業；<code>/takeaway</code> 的「給主管的一頁」也可以回家寫。</p>
 </div>
+
+<p class="eyebrow">CHECK-OUT</p>
+<h2>/checkout day7：交付物、評量報告、quiz、七天總評</h2>
+<h3>學員貼進來的評量報告（主控台產生）</h3>
+<div class="file"><p class="path">主控台 → Day 7 → 評量 → 「產生評量報告」 <span class="chip">貼給 /checkout</span></p><div class="body"><pre># 工作坊評量報告 · clarence · node
+
+## 交付物自評
+- Day 1: 3/3
+- Day 2: 3/3
+- Day 3: 4/4
+- Day 4: 3/3
+- Day 5: 4/4
+- Day 6: 4/4
+- Day 7: 5/5
+
+## Check-out 小測
+- Day 1: 5/5
+- Day 2: 5/5
+- Day 3: 4/5
+- Day 4: 5/5
+- Day 5: 5/5
+- Day 6: 4/5
+- Day 7: 5/5
+
+## 最終評量：9/10（90%）· 通過
+
+答錯：
+- 換掉持久化（in-memory → SQLite）時，六角架構保證什麼？
+
+（由主控台產生，貼給 /checkout day7）</pre></div></div>
+<p>那一題錯在哪：學員選了「e2e 自動通過」。六角架構（port / adapter）保證的是 <strong>domain 與 application 的測試一行不改</strong>——因為它們只依賴 port 介面；新的 adapter 要有自己的 contract test（學員 Day 6 其實寫了 <code>SqliteChargingSessionRepository.test.ts</code> 與 in-memory 跑同一組），e2e 是另一層安全網，不是架構「保證」的東西。這題錯得有價值：它正是 rubric §3 口試第 4 題「save 成功、publish 失敗會怎樣」的鄰居——學員知道怎麼做，但把「誰保證什麼」講混了。</p>
+
+<h3>助教回覆</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /checkout day7</p><p>今天是 Day 7，也是最後一天。請對照 docs/rubric.md 的 Day 7 DoD 與總評：1. 跑測試貼摘要；確認沒有 .skip / xfail。2. 讀 .github/workflows/ci.yml，指出你認為在乾淨機器上會失敗的一行（如果有）。3. 讀 workshop/day7/ 四個檔案，每個檔案回「過 / 不過 + 一句理由」。4. 用 docs/rubric.md 的總評項目替我做一次七天總自評（每項 過 / 不過），列出「不過」的項目對應哪一天的哪個 Block。最後給「下一個最小步驟」——這次是「回公司後的第一個最小步驟」。（評量報告貼在上面。）</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問今天的 check-out 問題一題：<code>/review</code> 指出「route handler 內判斷憑證是否有效」——這違反哪個鏡頭？應該移到哪一層？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>六角（adapter 不做決策）和 DDD（R2 是規則）。移到 <code>StartCharging</code> 處理器，透過 <code>AuthorizationService</code> port 拿到布林值，聚合記錄 <code>ChargingStartRejected(Unauthorized)</code>；handler 只把它映射成 OCPP 的 <code>Invalid</code>。我 B1 修的 #5 是同一類（R1 版）。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>✅。<code>npm test</code> 41 passed，<code>grep -rn "\.skip\|\.todo\|xfail" test/</code> 空。<code>ci.yml</code> 我找不到會在乾淨機器上失敗的一行；唯一的風險是 e2e job 的 <code>npm run start</code> 依賴你 <code>package.json</code> 有那個 script（有）。表格如下。</p>
+<div class="table-scroll"><table>
+<thead><tr><th>交付物</th><th>DoD（rubric Day 7）</th><th>狀態</th><th>一句理由 / 位置</th></tr></thead>
+<tbody>
+<tr><td><code>starter/node/**</code></td><td>/review High 全修、Medium 有處理或註明；≥ 1 個 <code>refactor(...)</code> 有測試保護</td><td>✅</td><td>🔴 ×4 修、🟠 ×1 修 ×1 註明（pr.md）、🟡 ×2 修；<code>c94e11a → d02b7f5</code> 紅綠成對</td></tr>
+<tr><td><code>.github/workflows/ci.yml</code></td><td>存在且綠；跑 LANG 的測試 + contracts</td><td>✅</td><td>run #2 四 job 綠；config job 只跑 node；contracts 7 valid</td></tr>
+<tr><td><code>pr.md</code></td><td>PR 到指定分支；範圍、ADR 連結、契約連結、怎麼驗證、金字塔數字、已知限制、請 reviewer 看哪裡</td><td>✅</td><td>PR #41 base workshop-submissions；八段齊；「怎麼驗證」有指令與預期輸出</td></tr>
+<tr><td><code>retro.md</code></td><td>Start / Stop / Continue 各 ≥ 2，前三項有下一步；「數字」段</td><td>✅</td><td>4 / 3 / 4 條各有證據；數字段六行；Stop #1 那條最誠實</td></tr>
+<tr><td><code>sprint-2-backlog.md</code></td><td>≥ 6 項，含 Billing 合併出帳（R7）、Dispatch、Parking；每項有 context 與驗收條件</td><td>✅</td><td>7 項 + 技術債 3 項；每項 GWT 成功 + 拒絕；新事件名都標「需新契約 + ADR」</td></tr>
+<tr><td><code>takeaway.md</code></td><td>5 件事、30 天計畫、給主管的一頁</td><td>✅</td><td>5 件事各有 <code>workshop/</code> 檔案證據；30 天計畫「需要誰點頭」沒有主管批准；一頁用公司數字</td></tr>
+<tr><td>最終評量</td><td>≥ 80%</td><td>✅</td><td>9 / 10 = 90%；錯的那題你在 takeaway.md 自己解釋對了</td></tr>
+<tr><td>Quiz</td><td>（不計分）</td><td>✅</td><td>5 / 5；第 4 題 <code>v2</code> 理由完整</td></tr>
+</tbody></table></div>
+<p>判定：<strong>通過</strong>。七天總評（rubric §3）在下面那張表：79 / 90 = 87.8%，一票否決四條都沒踩（<code>grep</code> 空、兩個語言只做一個、抽問三處答對三處）。三句話：你帶走的是「先問例外再畫圖」、「規則是帶數字的句子、拒絕是事件」、「事件先記錄後發布、消費者自己去重」。</p>
+<p><b>下一個最小步驟（回公司後）：</b>下週三之前約到客服主管 30 分鐘，只問一題：「#48211 這種事一天幾次、最糟的一次等多久？」把兩個數字寫進 <code>takeaway.md</code> 的 As-Is。</p></div>
+</div>
+
+<h3>Quiz 五題參考答案</h3>
+<div class="answer"><p class="head">1 · route handler 內判斷憑證是否有效，違反哪個鏡頭？移到哪一層？</p>
+<p>兩個鏡頭：六角（adapter 不做決策）與 DDD（授權是 R2，屬 Charging 的規則）。移法：<code>StartCharging</code> 處理器呼叫 <code>AuthorizationService.isAuthorized(idTag)</code> port 得到布林值，傳進 <code>ChargingSession.start({ authorized })</code>；聚合記錄 <code>ChargingStartRejected(reason=Unauthorized)</code>；handler 只把事件映射成回應碼（OCPP <code>idTagInfo.status = Invalid</code>；HTTP 4xx）。守住它的測試：<code>R2 through the service: unknown idTag is rejected by the AuthorizationService port</code>。</p></div>
+<div class="answer"><p class="head">2 · CI 的 contracts job 在守什麼？有人拿掉 <code>energyWh</code>，哪個測試會紅？</p>
+<p>守「契約沒有被默默改壞」——範例與 Schema 要一直對得上，而且程式產生的事件也要過。如果有人從 <code>charging.session.completed.v1.schema.json</code> 的 <code>required</code> 拿掉 <code>energyWh</code>，<code>node contracts/validate.mjs</code> 本身不會紅（範例還帶著 <code>energyWh</code>，少一個 required 不算違規）——會紅的是 Day 5 的 <code>StopCharging output validates against charging.session.completed.v1</code> 若加了 <code>additionalProperties: false</code>，以及下游 <code>BillingDraftConsumer</code> 的 <code>creates one draft invoice INV-778 for session S-991 with 12.4 kWh</code>（金額變 0）。反過來，如果把 <code>energyWh</code> 從<strong>範例</strong>拿掉，<code>validate.mjs</code> 立刻紅：<code>$.payload: missing required "energyWh"</code>。講師追問：這說明 contracts job 守的是哪個方向？（Schema 變嚴 → 範例紅；Schema 變鬆 → 要靠程式端測試。）</p></div>
+<div class="answer"><p class="head">3 · PR 描述為什麼要連結 ADR-0002，而不只寫「MVP1 做了 Charging」？</p>
+<p>「做了 Charging」是<em>什麼</em>，ADR-0002 是<em>為什麼只做這些、否決了什麼、代價是什麼</em>。Reviewer（與三個月後的自己）要能判斷取捨是否合理：為什麼不先做 Billing 合併出帳（Billing 需要顧客、費率表、停車事件，三者 MVP1 都沒有）、為什麼 Dispatch 只是 stub。Sprint 2 開工時也才知道哪些假設可以推翻——本頁 ADR-0003 就是「對帳」時發現 0002 一句不符而新開的，這件事只有在 PR 連到 ADR 時才會發生。</p></div>
+<div class="answer"><p class="head">4 · Billing 合併出帳需要把停車會話與充電會話對上——兩個契約有共同鍵嗎？升版哪個、加哪個欄位、為什麼是 v2？</p>
+<p>沒有。<code>charging.session.completed.v1</code> 有 <code>sessionId</code> / <code>connectorId</code> 沒有 <code>plate</code>；<code>parking.session.closed.v1</code> 有 <code>plate</code> / <code>parkingSessionId</code> 沒有 <code>sessionId</code>。選項：<code>charging.session.started.v1</code> 升 <code>v2</code> 加 <code>plate?</code>（由 Parking ↔ Charging 的 Partnership 在插槍時對應 connector ↔ plate），或新增一個關聯事件。用 <code>v2</code> 而不是改 <code>v1</code>：既有消費者（Billing 草稿、Parking）依 <code>v1</code> Schema 驗證，改 <code>v1</code> 會讓舊消費者與舊範例同時失效；<code>contracts/README.md</code> 規則 2「版本只能加欄位；改語意或刪欄位升 v2 並行一段時間」。加 optional 欄位嚴格說可以留在 v1，但「plate 從哪來、誰保證」是語意上的新承諾，所以本頁學員選 v2 並行。</p></div>
+<div class="answer"><p class="head">5 · 你公司裡的一個「人當 API」交接點，用哪三個工具可以在 30 天內改成事件驅動？</p>
+<p>以本頁學員的「客服問倉管出貨狀態」為例：訪談（找出交接點兩端的人與詞：客服說「出了沒」、倉管說「揀貨完成 / 交寄」——兩個詞）→ storm（把交接點變成一個過去式事實：<code>ShipmentDispatched</code>，不是「呼叫 WMS API」）→ 契約 + Outbox（WMS 端記錄事件、relay 發布；客服系統以 <code>orderId</code> 去重消費），必要時 ACL 隔開 WMS 的原始欄位名。30 天內做到「事件契約 + 一個訂閱者」就夠；不需要重切系統。</p></div>
+
+<h3>七天總評（rubric §3，0–3 分 × 權重）</h3>
+<div class="table-scroll"><table>
+<thead><tr><th>#</th><th>面向</th><th>分</th><th>權重</th><th>得分</th><th>一句理由（為什麼不是 3 / 為什麼是 3）</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>領域理解</td><td>3</td><td>2</td><td>6</td><td>口試講 14:02 → 18:18 全程通用語言；「會話」拆成兩個、「狀態」分四個狀態機</td></tr>
+<tr><td>2</td><td>訪談與 BPR</td><td>2</td><td>2</td><td>4</td><td>人當 API 4 處有量化；但阿忠隱藏事實只 2/4、有一題引導式（<code>interviews.md</code> 自己承認）</td></tr>
+<tr><td>3</td><td>Event Storming</td><td>3</td><td>2</td><td>6</td><td>主線 9 事實、故障支線 6，全過去式；hotspot 5 個各對到角色；樞紐 3</td></tr>
+<tr><td>4</td><td>規則（GWT）</td><td>3</td><td>3</td><td>9</td><td>R1–R8 八條五項齊；R3 相等邊界與 R4 12400 算對；<code>/rules-check</code> 全完整</td></tr>
+<tr><td>5</td><td>戰略設計</td><td>2</td><td>3</td><td>6</td><td>四條線索有證據、推翻過「單一 Session」；但 Parking ↔ Charging 的 Partnership 理由薄（「都在場站」），口試反駁「單一 Session」用了提示</td></tr>
+<tr><td>6</td><td>C4 + ADR</td><td>3</td><td>2</td><td>6</td><td>Context 圖無 DB、Container 圖兩個邊界；ADR-0001 / 0002 各兩個真替代方案與兩條壞後果；Day 7 補 0003 而非改 0002</td></tr>
+<tr><td>7</td><td>戰術設計</td><td>3</td><td>3</td><td>9</td><td>聚合 ≤ 210 行、VO 有驗證、拒絕是事件、<code>pullEvents()</code>；<code>grep</code> domain 空（Day 7 修掉 <code>new Date</code> 後）</td></tr>
+<tr><td>8</td><td>TDD 紀律</td><td>2</td><td>3</td><td>6</td><td><code>git log</code> 紅綠可辨、測試名 = 規則；但 Day 4 R3 有一個 40 分鐘的大 commit、Day 6 一次不誠實的 20 分鐘（retro 自己寫了）</td></tr>
+<tr><td>9</td><td>事件驅動</td><td>3</td><td>3</td><td>9</td><td>Outbox 同交易有測試；兩層冪等（sessionId、eventId）各有重送測試；契約 7 valid；<code>errorCode</code> 外洩 Day 7 修掉</td></tr>
+<tr><td>10</td><td>MVP</td><td>2</td><td>3</td><td>6</td><td>e2e 13 步綠、斷線劇本綠；但 Day 6 改了核心一次（<code>reportFault</code> 對 idle 連接器不 persist）——README 有說明，不扣分；扣在 relay 無重試計數</td></tr>
+<tr><td>11</td><td>SDLC</td><td>3</td><td>2</td><td>6</td><td>CI 綠且只跑 LANG；PR 描述五分鐘能導航（reviewer 請特別看 + 從哪開始）；31/47 commit 符合 conventional</td></tr>
+<tr><td>12</td><td>Retro 與帶回公司</td><td>3</td><td>2</td><td>6</td><td>retro 有數字段與下一步；takeaway 5 件事全指到自己的檔案；30 天計畫不需授權</td></tr>
+<tr><td colspan="4"><strong>總分</strong></td><td><strong>79 / 90</strong></td><td><strong>87.8% ✅</strong>（及格 72 / 80%）；一票否決：無</td></tr>
+</tbody></table></div>
+<p>講師版與自評版差距：學員自評 82 / 90（#2、#5、#8 都給自己 3）。差距 3.3%，小於 15%，不需要在 retro 解釋；但講師在 kickoff 隔天（如果有）唸一次 #5 的差距理由——「都在場站」不是 Partnership 的理由，「插槍時要對應 plate ↔ connector、雙方都要改」才是。</p>
+
+<p class="eyebrow">講師手記</p>
+<h2>這七天教材的誠實評估</h2>
+<h3>Day 7 本身</h3>
+<p><strong>夠的部分：</strong><code>docs/days/day7.md</code>、<code>docs/references/sdlc.md</code>、三個 Day 7 skill（<code>/review</code>、<code>/retro</code>、<code>/takeaway</code>）與 <code>/checkout</code> 四者的輸出格式互相對得上：review 的 findings 表欄位、retro 的三張表、takeaway 的三欄五件事、checkout 的 DoD 表——學員照 skill 走就會產出本頁這個形狀。<code>sdlc.md</code> §2.8 給了 CI 最小版、§4 給了 PR 描述範本、§5 給了 retro 45 分鐘的跑法，<code>.github/README.md</code> 把「自己寫」講得很清楚。rubric Day 7 的 DoD 與 §3 的 12 項總評能直接拿來打分。這一天不需要講師補方法論。</p>
+<p><strong>不夠、講師要自己補的：</strong></p>
+<ul>
+  <li><strong>整合分支</strong>：<code>workshop-submissions</code> 不存在於 repo，講師要在 Day 7 之前建好並在 kickoff 說 base 是它；自學者要在 kickoff 段落被告知「開到你 fork 的 main」。</li>
+  <li><strong>CI 的執行環境</strong>：fork 上的 Actions 預設關閉；學員第一次 push 看不到 workflow 會以為自己寫錯。講師要準備一句「Settings → Actions → Enable」。GitHub 免費額度也要提一下（e2e job 選配的原因之一）。</li>
+  <li><strong>Node 版本不一致</strong>：<code>day7.md</code> 寫 <code>node-version: 20</code>，但 <code>scripts/e2e/run.mjs</code> 與 <code>solutions/node</code> 靠 Node 22 原生 type stripping。本頁的 ci.yml 用 22，助教對話也點了出來；講師 kickoff 要說一次，否則 e2e job 一定紅。</li>
+  <li><strong>e2e job 沒有參考解</strong>：HTTP 層本來就沒有 <code>solutions/</code>（Day 6 是學員自己的），所以 CI 的 e2e job 完全依賴學員 Day 6 的啟動指令與 <code>/health</code> 端點。本頁的 e2e job 是一個合理的形狀，不是可以照抄的答案；講師要決定 e2e job 是「選配」還是「不做」，並在 kickoff 說清楚。</li>
+  <li><strong>retro 三個範本不一致</strong>：<code>workshop/day7/TEMPLATE.md</code> 的 retro 是「Keep / 卡最久三處 / 重來會做 / 助教用法」；<code>/retro</code> skill 與 <code>sdlc.md</code> 是 Start / Stop / Continue + 數字；rubric 要求 Start / Stop / Continue 各 ≥ 2 + 數字段。本頁把兩種合在一份（時間線表涵蓋「卡最久三處」，助教用法獨立一段）。講師要在 kickoff 說「兩個都要，合在一份」，否則 <code>/checkout</code> 會依 rubric 判學員的 TEMPLATE 版「不過」。</li>
+  <li><strong>backlog 數量也不一致</strong>：<code>day7.md</code> 說「三件 + 技術債」，rubric 說 ≥ 6 項。本頁做 7 項 + 技術債。以 rubric 為準（rubric 自己說「兩邊不一致以本檔為準並回報講師」）——講師要把這個回報真的做掉。</li>
+  <li><strong>真實世界的故事</strong>：教材裡沒有任何「真的 OCPP 場站」的故事。講師要自備兩則：一則「transactionId 在樁重開機後從 1 重數，兩個月後撞號」（為什麼 <code>sessionIdFor()</code> 只能在 ACL、為什麼 sessionId 該由我們發）；一則「Faulted 狀態抖動：同一根樁 8 秒內報 3 次 GroundFailure」（R5 為什麼分「再申告」與「broker 重送」）。沒有這兩則，R5 與 ACL 對學員只是規則。</li>
+  <li><strong>公司例子</strong>：<code>/takeaway</code> 的映射需要學員說出自己公司的交接點；沒有經驗的學員（剛畢業）會答不出來。講師準備兩個自己的（本頁用的「客服問倉管」、「財務對帳」）當備援。</li>
+  <li><strong>最終評量太容易</strong>：10 題單選，每題有兩個明顯的稻草人選項；80% 幾乎人人過。真正的閘門是 rubric §3.3 的 15 分鐘口試與 §3.2 的一票否決（一行 grep）。講師要真的做口試，至少抽三題；<code>/checkout day7</code> 的自評分數只是參考。</li>
+  <li><strong>Review 的「人」那一半</strong>：<code>/review</code> 做完，教材說「修完再請人看」，但一個人的工作坊沒有第二個人。講師若有時間，Day 7 下午花 10 分鐘 / 人做真人 review——只看 PR 描述能不能導航，不看 diff。這是整週唯一一次講師以 reviewer 身份出現，價值很高。</li>
+</ul>
+<p><strong>時間會不會爆：</strong>會，在 B3。B1 的 90 分鐘如果 <code>/review</code> 回 8 條而每條要補測試，實際只修得完 4–5 條（本頁的 7 條是理想值；4 條 🔴 + 1 條 🟠 是務實目標）。B2 的兩輪 CI 迭代各 4–6 分鐘，加上 PR 描述與 ADR 對帳，90 分鐘剛好。B3 的 retro + backlog + 評量 + takeaway 是四件事塞 90 分鐘：backlog 七條寫到有 GWT 至少 45 分鐘。建議：backlog 課堂只做三件必列 + 技術債各一條 GWT，其餘回家；「給主管的一頁」回家寫；評量可以在午休前先考。</p>
+<h3>七天整體</h3>
+<p><strong>完整的：</strong>領域設定（curriculum §1）是自洽的：識別碼、時間線、事件、R1–R8、五個 context、契約——七天所有教材、skills、starter、solutions、e2e 都用同一組名字，這是這套教材最強的地方。Day 4–6 的程式碼路徑（starter 紅燈 → solutions → contracts → e2e）真的能跑（<code>node scripts/e2e/run.mjs</code> 直接驅動 solutions）。skills 的「先問後答、20 分鐘、下一個最小步驟」規則在 CLAUDE.md 與每個 SKILL.md 都一致，助教的行為可預期。</p>
+<p><strong>講師必須自己帶的：</strong>(1) 真實世界的 OCPP / 停車場故事（上面兩則之外，還有「總部斷線兩小時、值班長手動放行 40 台車、隔天帳務對不上」——這一則是 R6 與整個「site 獨立存活」假設的來源）。(2) 學員自己公司的映射（Day 1 開場與 Day 7 takeaway 都需要）。(3) 人的 review 與口試。(4) 整合分支、Actions 開關、Node 22 這類環境細節。(5) Day 6 HTTP 層與持久化沒有參考解——卡住 20 分鐘的學員在 Day 6 沒有 <code>solutions/</code> 可指，講師要準備一份自己的 SQLite unit of work 片段（≤ 30 行）當備援。</p>
+<p><strong>砍成五天的建議（同意 <code>instructor.md</code> §7.1，補兩點）：</strong>Day 7 縮成半天時，砍 CI 與 45 分鐘 retro、留 <code>/review</code>（只修 🔴）+ PR（描述照 §4）+ <code>/takeaway</code>（只做映射 + 30 天計畫），CI 範本直接給本頁的 <code>ci.yml</code>。補一：不要砍「retro 的數字段」——五分鐘的 <code>git log</code> 統計就能做，而它是 rubric #12 的證據；補二：五天版把 Day 2 + 3 合併會讓 ADR-0002 由講師給，那 Day 7 的 <code>/adr</code> 對帳就沒有意義，直接砍掉 ADR-0003 那一步。絕對不砍的五件事（§7.3）裡，Day 5「同一事件送兩次」的測試在 Day 7 review 會再現一次（本頁 #4）——這是整套教材裡重複出現最多次的一課，五天版也要留。</p>

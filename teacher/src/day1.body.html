@@ -273,8 +273,8 @@ BRANCH=workshop/xiaolin</pre>
     <rect class="box" x="580" y="190" width="150" height="56" rx="6"/><text class="t b" x="655" y="213" text-anchor="middle">Vicky · 調度</text><text class="t s" x="655" y="233" text-anchor="middle">Google Sheet · LINE</text>
     <rect class="box ext" x="796" y="190" width="150" height="56" rx="6"/><text class="t b" x="871" y="213" text-anchor="middle">阿豪 · 技術員</text><text class="t s" x="871" y="233" text-anchor="middle">手機 App · 地下室沒訊號</text>
     <!-- plain arrows -->
-    <path class="ar thin" d="M110 116 L110 190"/><text class="t s" x="118" y="150">閃紅（沒人在看，0–120 分）</text>
-    <path class="ar thin" d="M110 320 L110 246"/><text class="t s" x="118" y="290">對講機 · 桿子不開</text>
+    <path class="ar thin" d="M110 116 L110 190"/><text class="t s" x="102" y="148" text-anchor="end">閃紅</text><text class="t s" x="102" y="162" text-anchor="end">沒人看 0–120 分</text>
+    <path class="ar thin" d="M110 320 L110 246"/><text class="t s" x="102" y="286" text-anchor="end">對講機</text><text class="t s" x="102" y="300" text-anchor="end">桿子不開</text>
     <!-- human hops -->
     <path class="ar bad" d="M180 200 L320 96"/>
     <rect class="st hot" x="196" y="128" width="120" height="20" rx="10"/><text class="t s" x="256" y="142" text-anchor="middle">#1 市話：在充嗎？度數？</text>
@@ -294,8 +294,7 @@ BRANCH=workshop/xiaolin</pre>
     <rect class="st hot" x="560" y="36" width="150" height="20" rx="10"/><text class="t s" x="635" y="50" text-anchor="middle">#7 電話：故障前 10 分數據？</text>
     <rect class="st hot" x="300" y="390" width="190" height="20" rx="10"/><text class="t s" x="395" y="404" text-anchor="middle">#3 月底用車牌對停車單 + 充電單</text>
     <!-- Vicky -> 老陳 nothing -->
-    <path class="ar thin" d="M580 240 L470 330"/>
-    <text class="t s" x="560" y="300" text-anchor="middle">（沒有線：老陳月底才知道</text>
+        <text class="t s" x="560" y="300" text-anchor="middle">（沒有線：老陳月底才知道</text>
     <text class="t s" x="560" y="316" text-anchor="middle">這根樁停售三天）</text>
     <text class="t a" x="948" y="418" text-anchor="end">紅線 = 人當 API，共 7 條</text>
   </svg></div>
@@ -575,7 +574,7 @@ BRANCH=workshop/xiaolin</pre>
 
 <figure class="wide">
   <p class="title">As-Is 泳道圖：那個下午、那個晚上、隔天、月底</p><p class="subtitle">六條泳道、九個時間點（不等距）。紅箭頭與紅膠囊是人當 API，共 7 處。</p>
-  <div class="diagram"><svg viewBox="0 0 960 620" role="img" aria-label="As-Is 泳道圖：顧客、閘門與 LPR、樁 CP-A12、阿忠、總部人員、老陳六條泳道；14:02 進場、14:04 插槍、14:31 結束、14:33 斷線放行、18:10 故障、18:25 打電話、隔天早上派工、隔天下午維修、月底對帳；紅色標出七個人當 API 交接">
+  <div class="diagram"><svg viewBox="0 0 960 620" role="img" aria-label="As-Is 泳道圖：顧客、閘門與 LPR、樁 CP-A12、阿忠、總部人員、老陳六條泳道；14:02 進場、14:04 插槍、14:31 結束、14:33 斷線放行、18:10 故障、18:25 打電話、隔天 08:30 派工、隔天 09:00 email、隔天下午維修、月底對帳；紅色標出七個人當 API 交接">
     <!-- lane backgrounds -->
     <rect class="zone plain" x="0" y="40" width="948" height="90"/>
     <rect class="zone plain" x="0" y="220" width="948" height="90"/>
@@ -588,61 +587,62 @@ BRANCH=workshop/xiaolin</pre>
     <text class="t b" x="8" y="440">總部人員</text><text class="t s" x="8" y="456">小美 · 客服</text><text class="t s" x="8" y="470">Vicky · 阿豪</text>
     <text class="t b" x="8" y="540">老陳</text>
     <!-- time headers -->
-    <text class="t a" x="143" y="26" text-anchor="middle">14:02</text>
-    <text class="t a" x="237" y="26" text-anchor="middle">14:04</text>
-    <text class="t a" x="331" y="26" text-anchor="middle">14:31</text>
-    <text class="t a" x="425" y="26" text-anchor="middle">14:33</text>
-    <text class="t a" x="519" y="26" text-anchor="middle">18:10</text>
-    <text class="t a" x="613" y="26" text-anchor="middle">18:25</text>
-    <text class="t a" x="707" y="26" text-anchor="middle">隔天早上</text>
-    <text class="t a" x="801" y="26" text-anchor="middle">隔天下午</text>
-    <text class="t a" x="895" y="26" text-anchor="middle">月底</text>
+    <text class="t a" x="123" y="26" text-anchor="middle">14:02</text>
+    <text class="t a" x="209" y="26" text-anchor="middle">14:04</text>
+    <text class="t a" x="295" y="26" text-anchor="middle">14:31</text>
+    <text class="t a" x="381" y="26" text-anchor="middle">14:33</text>
+    <text class="t a" x="467" y="26" text-anchor="middle">18:10</text>
+    <text class="t a" x="553" y="26" text-anchor="middle">18:25</text>
+    <text class="t a" x="639" y="26" text-anchor="middle">隔天 08:30</text>
+    <text class="t a" x="725" y="26" text-anchor="middle">隔天 09:00</text>
+    <text class="t a" x="811" y="26" text-anchor="middle">隔天下午</text>
+    <text class="t a" x="897" y="26" text-anchor="middle">月底</text>
     <!-- 顧客 lane (mid 85) -->
-    <rect class="box" x="98" y="57" width="90" height="56" rx="4"/><text class="t" x="143" y="79" text-anchor="middle">到閘門</text><text class="t m" x="143" y="97" text-anchor="middle">ABC-1234</text>
-    <rect class="box" x="192" y="57" width="90" height="56" rx="4"/><text class="t" x="237" y="79" text-anchor="middle">插槍 · 刷卡</text><text class="t s" x="237" y="97" text-anchor="middle">月票卡</text>
-    <rect class="box" x="286" y="57" width="90" height="56" rx="4"/><text class="t" x="331" y="79" text-anchor="middle">App 按停止</text><text class="t s" x="331" y="97" text-anchor="middle">12.4 kWh</text>
-    <rect class="box" x="380" y="57" width="90" height="56" rx="4"/><text class="t" x="425" y="79" text-anchor="middle">到出口</text><text class="t s" x="425" y="97" text-anchor="middle">桿子不開</text>
+    <rect class="box" x="83" y="57" width="80" height="56" rx="4"/><text class="t" x="123" y="79" text-anchor="middle">到閘門</text><text class="t m" x="123" y="97" text-anchor="middle">ABC-1234</text>
+    <rect class="box" x="169" y="57" width="80" height="56" rx="4"/><text class="t" x="209" y="79" text-anchor="middle">插槍 · 刷卡</text><text class="t s" x="209" y="97" text-anchor="middle">月票卡</text>
+    <rect class="box" x="255" y="57" width="80" height="56" rx="4"/><text class="t" x="295" y="79" text-anchor="middle">App 按停止</text><text class="t s" x="295" y="97" text-anchor="middle">12.4 kWh</text>
+    <rect class="box" x="341" y="57" width="80" height="56" rx="4"/><text class="t" x="381" y="79" text-anchor="middle">到出口</text><text class="t s" x="381" y="97" text-anchor="middle">桿子不開</text>
     <!-- 閘門 lane (mid 175) -->
-    <rect class="box" x="98" y="147" width="90" height="56" rx="4"/><text class="t" x="143" y="169" text-anchor="middle">LPR 辨識</text><text class="t s" x="143" y="187" text-anchor="middle">開桿 · P-441</text>
-    <rect class="box" x="380" y="147" width="90" height="56" rx="4"/><text class="t" x="425" y="169" text-anchor="middle">總部斷線</text><text class="t s" x="425" y="187" text-anchor="middle">不開桿</text>
+    <rect class="box" x="83" y="147" width="80" height="56" rx="4"/><text class="t" x="123" y="169" text-anchor="middle">LPR 辨識</text><text class="t s" x="123" y="187" text-anchor="middle">開桿 · P-441</text>
+    <rect class="box" x="341" y="147" width="80" height="56" rx="4"/><text class="t" x="381" y="169" text-anchor="middle">總部斷線</text><text class="t s" x="381" y="187" text-anchor="middle">不開桿</text>
     <!-- 樁 lane (mid 265) -->
-    <rect class="box" x="192" y="237" width="90" height="56" rx="4"/><text class="t" x="237" y="259" text-anchor="middle">線上授權</text><text class="t s" x="237" y="277" text-anchor="middle">充電中 S-991</text>
-    <rect class="box" x="286" y="237" width="90" height="56" rx="4"/><text class="t" x="331" y="259" text-anchor="middle">結束</text><text class="t s" x="331" y="277" text-anchor="middle">12,400 Wh</text>
-    <rect class="box" x="474" y="237" width="90" height="56" rx="4"/><text class="t" x="519" y="259" text-anchor="middle">螢幕閃紅</text><text class="t s" x="519" y="277" text-anchor="middle">GroundFailure</text>
-    <rect class="box" x="568" y="237" width="90" height="56" rx="4"/><text class="t" x="613" y="259" text-anchor="middle">每 5 分重送</text><text class="t s" x="613" y="277" text-anchor="middle">Faulted</text>
+    <rect class="box" x="169" y="237" width="80" height="56" rx="4"/><text class="t" x="209" y="259" text-anchor="middle">線上授權</text><text class="t s" x="209" y="277" text-anchor="middle">充電中 S-991</text>
+    <rect class="box" x="255" y="237" width="80" height="56" rx="4"/><text class="t" x="295" y="259" text-anchor="middle">結束</text><text class="t s" x="295" y="277" text-anchor="middle">12,400 Wh</text>
+    <rect class="box" x="427" y="237" width="80" height="56" rx="4"/><text class="t" x="467" y="259" text-anchor="middle">螢幕閃紅</text><text class="t s" x="467" y="277" text-anchor="middle">接地故障</text>
+    <rect class="box" x="513" y="237" width="80" height="56" rx="4"/><text class="t" x="553" y="259" text-anchor="middle">每 5 分重送</text><text class="t s" x="553" y="277" text-anchor="middle">Faulted</text>
     <!-- 阿忠 lane (mid 355) -->
-    <rect class="box" x="192" y="327" width="90" height="56" rx="4"/><text class="t" x="237" y="349" text-anchor="middle">打給小美</text><text class="t s" x="237" y="367" text-anchor="middle">在充嗎？</text>
-    <rect class="box" x="380" y="327" width="90" height="56" rx="4"/><text class="t" x="425" y="349" text-anchor="middle">鑰匙抬桿</text><text class="t s" x="425" y="367" text-anchor="middle">寫日誌本</text>
-    <rect class="box" x="568" y="327" width="90" height="56" rx="4"/><text class="t" x="613" y="349" text-anchor="middle">18:25 看到</text><text class="t s" x="613" y="367" text-anchor="middle">打客服專線</text>
-    <rect class="box" x="662" y="327" width="90" height="56" rx="4"/><text class="t" x="707" y="349" text-anchor="middle">拍日誌本</text><text class="t s" x="707" y="367" text-anchor="middle">email 老陳</text>
+    <rect class="box" x="169" y="327" width="80" height="56" rx="4"/><text class="t" x="209" y="349" text-anchor="middle">打給小美</text><text class="t s" x="209" y="367" text-anchor="middle">在充嗎？</text>
+    <rect class="box" x="341" y="327" width="80" height="56" rx="4"/><text class="t" x="381" y="349" text-anchor="middle">鑰匙抬桿</text><text class="t s" x="381" y="367" text-anchor="middle">寫日誌本</text>
+    <rect class="box" x="513" y="327" width="80" height="56" rx="4"/><text class="t" x="553" y="349" text-anchor="middle">18:25 看到</text><text class="t s" x="553" y="367" text-anchor="middle">打客服專線</text>
+    <rect class="box" x="685" y="327" width="80" height="56" rx="4"/><text class="t" x="725" y="349" text-anchor="middle">拍日誌本</text><text class="t s" x="725" y="367" text-anchor="middle">email 老陳</text>
     <!-- 總部 lane (mid 445) -->
-    <rect class="box" x="192" y="417" width="90" height="56" rx="4"/><text class="t" x="237" y="439" text-anchor="middle">小美查後台</text><text class="t s" x="237" y="457" text-anchor="middle">回電</text>
-    <rect class="box" x="568" y="417" width="90" height="56" rx="4"/><text class="t" x="613" y="439" text-anchor="middle">客服手 key</text><text class="t s" x="613" y="457" text-anchor="middle">工單 ×20</text>
-    <rect class="box" x="662" y="417" width="90" height="56" rx="4"/><text class="t" x="707" y="439" text-anchor="middle">Vicky 挑單</text><text class="t s" x="707" y="457" text-anchor="middle">LINE 派阿豪</text>
-    <rect class="box" x="756" y="417" width="90" height="56" rx="4"/><text class="t" x="801" y="439" text-anchor="middle">阿豪到場</text><text class="t s" x="801" y="457" text-anchor="middle">對編號 · 修</text>
+    <rect class="box" x="169" y="417" width="80" height="56" rx="4"/><text class="t" x="209" y="439" text-anchor="middle">小美查後台</text><text class="t s" x="209" y="457" text-anchor="middle">回電</text>
+    <rect class="box" x="513" y="417" width="80" height="56" rx="4"/><text class="t" x="553" y="439" text-anchor="middle">客服手 key</text><text class="t s" x="553" y="457" text-anchor="middle">工單 ×20</text>
+    <rect class="box" x="599" y="417" width="80" height="56" rx="4"/><text class="t" x="639" y="439" text-anchor="middle">Vicky 挑單</text><text class="t s" x="639" y="457" text-anchor="middle">LINE 派阿豪</text>
+    <rect class="box" x="771" y="417" width="80" height="56" rx="4"/><text class="t" x="811" y="439" text-anchor="middle">阿豪到場</text><text class="t s" x="811" y="457" text-anchor="middle">對編號 · 修</text>
     <!-- 老陳 lane (mid 535) -->
-    <rect class="box" x="662" y="507" width="90" height="56" rx="4"/><text class="t" x="707" y="529" text-anchor="middle">收 email</text><text class="t s" x="707" y="547" text-anchor="middle">補停車費</text>
-    <rect class="box" x="850" y="507" width="90" height="56" rx="4"/><text class="t" x="895" y="529" text-anchor="middle">車牌對帳</text><text class="t s" x="895" y="547" text-anchor="middle">Excel · ERP</text>
+    <rect class="box" x="685" y="507" width="80" height="56" rx="4"/><text class="t" x="725" y="529" text-anchor="middle">收 email</text><text class="t s" x="725" y="547" text-anchor="middle">補停車費</text>
+    <rect class="box" x="857" y="507" width="80" height="56" rx="4"/><text class="t" x="897" y="529" text-anchor="middle">車牌對帳</text><text class="t s" x="897" y="547" text-anchor="middle">Excel · ERP</text>
     <!-- plain arrows -->
-    <path class="ar thin" d="M143 113 L143 147"/>
-    <path class="ar thin" d="M237 113 L237 237"/>
-    <path class="ar thin" d="M331 237 L331 113"/>
-    <path class="ar thin" d="M425 113 L425 147"/>
-    <path class="ar thin" d="M425 203 L425 327"/><text class="t s" x="433" y="270">對講機</text>
-    <path class="ar thin" d="M519 293 L568 327"/><text class="t s" x="519" y="350" text-anchor="middle">沒人看 15 分</text>
-    <path class="ar thin" d="M425 327 L425 318 L707 318 L707 327"/><text class="t s" x="566" y="314" text-anchor="middle">日誌本躺一晚</text>
+    <path class="ar thin" d="M123 113 L123 147"/>
+    <path class="ar thin" d="M209 113 L209 237"/>
+    <path class="ar thin" d="M295 237 L295 113"/>
+    <path class="ar thin" d="M381 113 L381 147"/>
+    <path class="ar thin" d="M381 203 L381 327"/><text class="t s" x="389" y="270">對講機</text>
+    <path class="ar thin" d="M467 293 L513 327"/><text class="t s" x="467" y="352" text-anchor="middle">沒人看 15 分</text>
+    <path class="ar thin" d="M381 327 L381 318 L725 318 L725 327"/><text class="t s" x="553" y="314" text-anchor="middle">日誌本躺一晚</text>
     <!-- human hops -->
-    <path class="ar bad" d="M237 383 L237 417"/>
-    <rect class="st hot" x="246" y="391" width="70" height="18" rx="9"/><text class="t s" x="281" y="404" text-anchor="middle">#1 市話</text>
-    <path class="ar bad" d="M707 383 L707 507"/>
-    <rect class="st hot" x="716" y="436" width="96" height="18" rx="9"/><text class="t s" x="764" y="449" text-anchor="middle">#2 email 隔天</text>
-    <rect class="st hot" x="850" y="489" width="90" height="18" rx="9"/><text class="t s" x="895" y="502" text-anchor="middle">#3 車牌對帳</text>
-    <path class="ar bad" d="M613 383 L613 417"/>
-    <rect class="st hot" x="622" y="391" width="70" height="18" rx="9"/><text class="t s" x="657" y="404" text-anchor="middle">#4 市話</text>
-    <rect class="st hot" x="568" y="474" width="90" height="18" rx="9"/><text class="t s" x="613" y="487" text-anchor="middle">#5 手 key ×20</text>
-    <path class="ar bad" d="M707 417 L707 408 L801 408 L801 417"/>
-    <rect class="st hot" x="724" y="399" width="60" height="18" rx="9"/><text class="t s" x="754" y="412" text-anchor="middle">#6 LINE</text>
-    <rect class="st hot" x="756" y="474" width="90" height="18" rx="9"/><text class="t s" x="801" y="487" text-anchor="middle">#7 電話問小美</text>
+    <path class="ar bad" d="M209 383 L209 417"/>
+    <rect class="st hot" x="218" y="391" width="64" height="18" rx="9"/><text class="t s" x="250" y="404" text-anchor="middle">#1 市話</text>
+    <path class="ar bad" d="M705 383 L705 507"/>
+    <rect class="st hot" x="638" y="476" width="62" height="18" rx="9"/><text class="t s" x="669" y="489" text-anchor="middle">#2 email</text>
+    <rect class="st hot" x="857" y="489" width="80" height="18" rx="9"/><text class="t s" x="897" y="502" text-anchor="middle">#3 車牌對帳</text>
+    <path class="ar bad" d="M553 383 L553 417"/>
+    <rect class="st hot" x="562" y="391" width="64" height="18" rx="9"/><text class="t s" x="594" y="404" text-anchor="middle">#4 市話</text>
+    <rect class="st hot" x="513" y="474" width="80" height="18" rx="9"/><text class="t s" x="553" y="487" text-anchor="middle">#5 手 key ×20</text>
+    <path class="ar bad" d="M679 445 L771 445"/>
+    <rect class="st hot" x="712" y="424" width="58" height="18" rx="9"/><text class="t s" x="741" y="437" text-anchor="middle">#6 LINE</text>
+    <rect class="st hot" x="771" y="474" width="80" height="18" rx="9"/><text class="t s" x="811" y="487" text-anchor="middle">#7 電話問小美</text>
     <!-- legend -->
     <text class="t s" x="8" y="604">紅箭頭 / 紅膠囊 = 人當 API（7 處）· 細箭頭 = 實體動作或對講機 · 時間軸不等距 · 老陳在故障那條線上完全沒有節點，他月底才知道樁停售了 21 小時。</text>
   </svg></div>
@@ -787,14 +787,14 @@ BRANCH=workshop/xiaolin</pre>
     <path class="ar thin" d="M331 237 L331 113"/>
     <path class="ar ev" d="M237 293 L237 507"/><text class="t a" x="245" y="400">充電已開始</text>
     <path class="ar ev" d="M331 293 L331 507"/><text class="t a" x="339" y="400">充電已結束</text>
-    <path class="ar" d="M425 327 L425 203"/><text class="t s" x="433" y="270">放行（命令）</text>
-    <path class="ar ev" d="M425 383 L425 507"/><text class="t a" x="433" y="450">停車已人工放行</text>
+    <path class="ar" d="M425 327 L425 203"/><text class="t s" x="433" y="270">放行</text>
+    <path class="ar ev" d="M425 383 L425 507"/><text class="t a" x="417" y="450" text-anchor="end">停車已人工放行</text>
     <path class="ar ev" d="M478 293 L478 417"/><text class="t a" x="484" y="318">充電器已申告故障</text>
     <path class="ar ev" d="M540 417 L540 383"/><text class="t a" x="546" y="404">工單已開立</text>
     <path class="ar ev" d="M613 293 L613 417"/><text class="t a" x="621" y="360">再申告</text>
-    <path class="ar ev" d="M707 293 L707 417"/><text class="t a" x="715" y="360">重送 · 同 eventId</text>
+    <path class="ar ev" d="M707 293 L707 417"/><text class="t a" x="715" y="360">重送 · 同一則</text>
     <path class="ar ev" d="M801 417 L801 293"/><text class="t a" x="809" y="360">工單已關閉</text>
-    <text class="t s" x="801" y="540" text-anchor="middle">（沒有「技術員已出發」）</text>
+    <text class="t s" x="740" y="540" text-anchor="middle">（沒有「技術員已出發」）</text>
     <text class="t s" x="8" y="604">虛線 = 事實（事件）· 實線 = 命令 · 粗框 = 保留的人工步驟（放行、修復驗證）· 灰底 = 什麼都不做也是一個決定 · 人當 API：0 · SLA 從 18:10:00 起算。</text>
   </svg></div>
   <figcaption>阿忠那條泳道只剩兩個方塊：一個是他自己的決定（放行），一個是他看到的（看板）。老陳從月底搬到了 14:04——但他仍然可以晚一點出帳；他要的從來不是即時，是不漏。</figcaption>
