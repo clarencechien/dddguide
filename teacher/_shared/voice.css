@@ -1,0 +1,212 @@
+
+/* REGISTER:  教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況，給講師與助教對照教材完整性。
+   REFERENCE: 1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙與學生課本區隔、每課固定的「教學目標／教學活動／評量」欄、灰底的「參考答案」框、頁緣的批註欄。
+   PAPER:     教師手冊的淡粉紅道林紙 — hsl(350 22% 95%)。粉紅是為了讓人一眼知道「這本不是給學生的」。
+   VOICE:     襯線體標題（Plex Serif 帶 Noto）、審核章的藍綠印泥只給裁決、單元編號與連結；參考答案一律放灰底框；批註走頁緣。
+   NOT:       主控台、儀表板、學員版的銅橙。沒有要學員按的按鈕，只有講師要看的實況重播。
+   RECENT:    paper 48° 152° 36° · accent 16° 292° 210° — 350° 與 176° 都離得夠遠。 */
+
+:root {
+  --paper: hsl(350 22% 95%);
+  --card: hsl(350 30% 98%);
+  --ink: hsl(340 12% 12%);
+  --ink-2: hsl(340 7% 32%);
+  --mist: hsl(340 5% 44%);
+  --rule: hsl(350 14% 86%);
+  --rule-hard: hsl(350 12% 72%);
+  --accent: hsl(176 52% 26%);      /* 審核章的藍綠印泥 */
+  --accent-soft: hsl(176 30% 90%);
+  --answer: hsl(350 8% 92%);       /* 參考答案的灰底 */
+  --disp: "IBM Plex Serif", "Noto Sans TC", "PingFang TC", serif;
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "IBM Plex Serif", "Noto Sans TC", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* 便利貼：Event Storming 的標準色。這組不是 voice，是 Brandolini 的慣例，深淺兩版都要辨得出來 */
+  --st-evt: hsl(42 95% 72%);   --st-cmd: hsl(210 80% 82%);  --st-pol: hsl(272 45% 84%);
+  --st-agg: hsl(48 60% 92%);   --st-act: hsl(48 90% 62%);   --st-hot: hsl(352 85% 78%);
+  --st-read: hsl(120 40% 84%); --st-ext: hsl(330 55% 86%);  --st-rej: hsl(352 30% 90%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+    --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+    --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+    --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+    --answer: hsl(345 8% 15%);
+    --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+    --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+    --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+  --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+  --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+  --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+  --answer: hsl(345 8% 15%);
+  --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+  --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+  --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+}
+
+/* ── 教師版元件 ─────────────────────────────────────────────── */
+
+/* 七天導覽列：頁首一條，每頁都有 */
+.tnav { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-6); }
+.tnav a { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; text-decoration: none; color: var(--ink-2);
+  border: 1px solid var(--rule); background: var(--card); padding: .35em .7em; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.tnav a:hover { border-color: var(--accent); color: var(--accent); }
+.tnav a.here { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* 課次資訊列 */
+.meta-strip { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); margin: var(--sp-3) 0 var(--sp-5); }
+.meta-strip b { color: var(--ink-2); font-weight: 500; }
+
+/* 頁緣批註：講師註 */
+.teach { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.teach > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--sp-2); }
+.teach > :last-child { margin-bottom: 0; }
+
+/* 參考答案：灰底框 — 教師手冊的核心裝置 */
+.answer { background: var(--answer); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.answer > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--mist); margin: 0 0 var(--sp-3); display: flex; gap: var(--sp-3); align-items: center; }
+.answer > .head::after { content: ""; flex: 1; height: 1px; background: var(--rule-hard); }
+.answer > :last-child { margin-bottom: 0; }
+
+/* 產出檔案卡：路徑 + 內容。這是「跑完會留下什麼」的主要載體 */
+.file { border: 1px solid var(--rule-hard); border-radius: var(--radius); background: var(--card); margin-block: var(--sp-5); overflow: hidden; }
+.file > .path { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-2) var(--sp-4); background: var(--answer); border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; color: var(--ink-2); }
+.file > .path .chip { margin-left: auto; }
+.file > .body { padding: var(--sp-4) var(--sp-5); }
+.file > .body > :last-child { margin-bottom: 0; }
+.file > .body > pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: 0; }
+.file > .body h4 { font-family: var(--disp); font-size: 1.05em; margin: var(--sp-4) 0 var(--sp-2); }
+.file > .body h4:first-child { margin-top: 0; }
+.file .table-scroll { margin-block: var(--sp-3); }
+
+/* 終端輸出 */
+.term { background: hsl(340 10% 10%); color: hsl(350 12% 90%); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); font: var(--fs-xs)/1.7 var(--mono); overflow-x: auto; margin-block: var(--sp-4); white-space: pre; }
+.term .red { color: hsl(4 80% 68%); } .term .green { color: hsl(140 55% 62%); } .term .dim { color: hsl(350 6% 55%); } .term .yel { color: hsl(45 90% 65%); }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .term { background: hsl(345 12% 5%); } }
+:root[data-theme="dark"] .term { background: hsl(345 12% 5%); }
+
+/* 全幅圖：diagram 用 .wide 破出文字欄，SVG 以 960 寬 viewBox 作圖、字級 13 */
+.diagram { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin: var(--sp-4) 0; }
+.diagram svg { display: block; width: 100%; min-width: 40rem; max-width: 66rem; height: auto; overflow: visible; font-family: var(--sans); margin: 0 auto; }
+.diagram .box { fill: var(--card); stroke: var(--rule-hard); stroke-width: 1.2; }
+.diagram .box.core { stroke: var(--accent); stroke-width: 2; }
+.diagram .box.ext { stroke-dasharray: 4 3; }
+.diagram .box.dim { fill: var(--answer); }
+.diagram .zone { fill: var(--accent-soft); fill-opacity: .5; stroke: none; }
+.diagram .zone.plain { fill: var(--answer); fill-opacity: .7; }
+.diagram .t { fill: var(--ink); font-size: 13px; }
+.diagram .t.b { font-weight: 700; font-size: 14px; }
+.diagram .t.s { fill: var(--mist); font-size: 11.5px; }
+.diagram .t.a { fill: var(--accent); font-size: 11.5px; font-family: var(--mono); }
+.diagram .t.m { font-family: var(--mono); font-size: 11.5px; }
+.diagram .ar { fill: none; stroke: var(--ink-2); stroke-width: 1.4; marker-end: url(#arr); }
+.diagram .ar.ev { stroke: var(--accent); stroke-dasharray: 5 3; marker-end: url(#arr-a); }
+.diagram .ar.bad { stroke: var(--critical); marker-end: url(#arr-x); }
+.diagram .ar.thin { stroke-width: 1; }
+.diagram .st { fill: var(--card); stroke: var(--ink-2); stroke-width: 1.2; }
+.diagram .st.hot { stroke: var(--critical); } .diagram .st.good { stroke: var(--good); }
+.diagram .life { stroke: var(--rule-hard); stroke-width: 1; stroke-dasharray: 3 3; }
+.diagram .sticky { stroke: none; }
+.diagram .sticky.evt { fill: var(--st-evt); } .diagram .sticky.cmd { fill: var(--st-cmd); } .diagram .sticky.pol { fill: var(--st-pol); }
+.diagram .sticky.agg { fill: var(--st-agg); stroke: var(--rule-hard); } .diagram .sticky.act { fill: var(--st-act); } .diagram .sticky.hot { fill: var(--st-hot); }
+figure.wide > .title { padding-inline: var(--bleed); }
+figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed); }
+@media (max-width: 40rem) { figure.wide > .title, figure.wide > .subtitle, figure.wide > figcaption { padding-inline: 0; } }
+
+/* Event Storming 牆：HTML 便利貼，逐步揭露 */
+.wall { --cols: 8; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; align-items: start; }
+.wall > * { min-width: 0; }
+.wall .lane { grid-column: 1 / -1; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); padding: var(--sp-2) 0 2px; border-bottom: 1px solid var(--rule); margin-top: var(--sp-2); }
+.sticky { border-radius: 2px; padding: .45em .55em; font-size: .78rem; line-height: 1.35; color: hsl(340 12% 12%); box-shadow: 1px 1px 0 rgb(0 0 0 / .12); min-height: 3.6em; position: relative; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); } }
+:root[data-theme="dark"] .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); }
+.sticky .k { display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; opacity: .7; margin-bottom: .15em; }
+.sticky.evt { background: var(--st-evt); } .sticky.cmd { background: var(--st-cmd); } .sticky.pol { background: var(--st-pol); }
+.sticky.agg { background: var(--st-agg); border: 1px solid var(--rule-hard); } .sticky.act { background: var(--st-act); border-radius: 50% / 40%; text-align: center; }
+.sticky.hot { background: var(--st-hot); transform: rotate(-2deg); } .sticky.read { background: var(--st-read); } .sticky.ext { background: var(--st-ext); }
+.sticky.rej { background: var(--st-rej); text-decoration: line-through; opacity: .8; }
+.sticky.pivot { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sticky .fix { display: block; margin-top: .3em; font-size: .7rem; color: var(--accent); text-decoration: none; }
+.wall-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: var(--sp-2); }
+.wall-scroll .wall { min-width: 56rem; }
+/* 逐步揭露：容器 data-step=N；便利貼 data-from / data-until */
+[data-step] [data-from] { transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+[data-step="1"] [data-from]:not([data-from="1"]), [data-step="2"] [data-from="3"], [data-step="2"] [data-from="4"], [data-step="2"] [data-from="5"], [data-step="2"] [data-from="6"], [data-step="2"] [data-from="7"],
+[data-step="3"] [data-from="4"], [data-step="3"] [data-from="5"], [data-step="3"] [data-from="6"], [data-step="3"] [data-from="7"],
+[data-step="4"] [data-from="5"], [data-step="4"] [data-from="6"], [data-step="4"] [data-from="7"],
+[data-step="5"] [data-from="6"], [data-step="5"] [data-from="7"],
+[data-step="6"] [data-from="7"] { opacity: 0; transform: scale(.96); pointer-events: none; }
+[data-step="2"] [data-until="1"], [data-step="3"] [data-until="1"], [data-step="3"] [data-until="2"], [data-step="4"] [data-until="1"], [data-step="4"] [data-until="2"], [data-step="4"] [data-until="3"],
+[data-step="5"] [data-until="1"], [data-step="5"] [data-until="2"], [data-step="5"] [data-until="3"], [data-step="5"] [data-until="4"],
+[data-step="6"] [data-until="1"], [data-step="6"] [data-until="2"], [data-step="6"] [data-until="3"], [data-step="6"] [data-until="4"], [data-step="6"] [data-until="5"],
+[data-step="7"] [data-until="1"], [data-step="7"] [data-until="2"], [data-step="7"] [data-until="3"], [data-step="7"] [data-until="4"], [data-step="7"] [data-until="5"], [data-step="7"] [data-until="6"] { display: none; }
+
+/* 步驟控制列 */
+.stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-3) 0; }
+.stepper button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.stepper button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper .cap { font-family: var(--mono); font-size: var(--fs-xs); color: var(--mist); }
+.steps { list-style: none; padding: 0; margin: var(--sp-3) 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.steps > * { min-width: 0; }
+.steps li { font-size: var(--fs-xs); font-family: var(--mono); letter-spacing: .03em; padding: .5em .6em; border: 1px solid var(--rule); border-radius: 3px; color: var(--mist); background: var(--card); }
+.steps li.on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.steps li.done { color: var(--ink-2); }
+.step-note { border-left: 3px solid var(--accent); padding: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0; background: var(--card); font-size: var(--fs-sm); }
+.step-note > p { margin: 0; }
+.step-note[hidden] { display: none; }
+
+/* 分頁 */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-3); }
+.tabs button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.tabs button.on { border-color: var(--accent); background: var(--accent-soft); }
+.pane { display: none; } .pane.on { display: block; }
+
+/* 交付物清單（靜態勾） */
+.dod { list-style: none; padding: 0; margin: var(--sp-3) 0; }
+.dod li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: .4em; padding: .4em 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.dod li::before { content: "✓"; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li.partial::before { content: "◐"; color: var(--warn); }
+.dod li.no::before { content: "✗"; color: var(--critical); }
+.dod li:last-child { border-bottom: 0; }
+
+/* 時間線 */
+.timeline { list-style: none; padding: 0; margin: var(--sp-4) 0; border-left: 2px solid var(--rule-hard); }
+.timeline li { position: relative; padding: 0 0 var(--sp-3) var(--sp-5); font-size: var(--fs-sm); }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--accent); }
+.timeline li .t { font-family: var(--mono); font-size: var(--fs-xs); color: var(--accent); letter-spacing: .06em; margin-right: .5em; }
+.timeline li.hot::before { border-color: var(--critical); }
+
+/* GWT */
+.gwt { font-family: var(--mono); font-size: var(--fs-xs); line-height: 1.7; background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: var(--sp-3) var(--sp-4); margin: var(--sp-3) 0; white-space: pre-wrap; }
+.gwt b { color: var(--accent); font-weight: 600; }
+
+/* 表格：severity 記號 */
+td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; margin-right: .3em; vertical-align: -1px; }
+.sev.crit { background: var(--critical); } .sev.warn { background: var(--warn); } .sev.ok { background: var(--good); } .sev.info { background: var(--mist); }
+
+/* 對話重播 */
+.chat { display: grid; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.chat > * { min-width: 0; }
+.msg { border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); background: var(--card); max-width: 44rem; }
+.msg.stu { border-left: 3px solid var(--ink); }
+.msg.ta { border-left: 3px solid var(--accent); margin-left: var(--sp-5); }
+.msg .who { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); margin: 0 0 .3em; text-transform: uppercase; }
+.msg p { margin: 0 0 .5em; } .msg p:last-child { margin: 0; }
+
+.end { margin-top: var(--sp-7); color: var(--mist); font-size: var(--fs-sm); }
+.kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--rule-hard); border-bottom-width: 2px; border-radius: 3px; padding: 0 .35em; }
+@media (hover: hover) and (pointer: fine) {
+  .tnav a, .tabs button, .stepper button { transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+}
+
+/* 讀的欄位維持 34em；工作物件（產出卡、終端、對話、牆、圖）用整個頁寬，牆與 .wide 再破出到 66rem */
+.report :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tnav, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > .pane > *, .report > .pane > * { max-width: none; }
+.wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
+.wall-scroll .wall { padding-inline: 2px; }

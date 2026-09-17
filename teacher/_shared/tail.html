@@ -1,0 +1,84 @@
+
+<p class="end">教師版 · EV Charge Ops 七天工作坊 · 教材與程式碼：<a href="https://github.com/clarencechien/dddguide">github.com/clarencechien/dddguide</a> · 學員主控台：<a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">ev-charge-ops-workshop</a> · 本頁假設全流程跑完；學員實際產出會與此不同，差異正是驗收要看的地方。</p>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+  </defs>
+</svg>
+
+<script>
+/* 無第三方、無 storage：狀態只活在變數裡（imitator 的 opaque origin 會讓 storage API 丟例外） */
+(() => {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+
+  /* theme toggle — STYLE.md floor item 5 */
+  {
+    const root = document.documentElement, btn = $('#theme-toggle');
+    let dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    btn.textContent = 'theme · ' + (dark ? 'dark' : 'light');
+    btn.addEventListener('click', () => {
+      dark = !dark; root.dataset.theme = dark ? 'dark' : 'light';
+      btn.textContent = 'theme · ' + (dark ? 'dark' : 'light'); btn.setAttribute('aria-pressed', 'true');
+    });
+  }
+
+  /* tabs: <div class="tabs" data-tabs><button data-pane="id">…  + <div class="pane" id="id"> */
+  $$('[data-tabs]').forEach(group => {
+    const btns = $$('button[data-pane]', group);
+    const show = id => {
+      btns.forEach(b => b.classList.toggle('on', b.dataset.pane === id));
+      btns.forEach(b => { const p = document.getElementById(b.dataset.pane); if (p) p.classList.toggle('on', b.dataset.pane === id); });
+    };
+    btns.forEach(b => b.addEventListener('click', () => show(b.dataset.pane)));
+    const first = btns.find(b => b.classList.contains('on')) || btns[0];
+    if (first) show(first.dataset.pane);
+  });
+
+  /* steppers: <section data-stepper data-step="1" data-max="7">
+       <ol class="steps"><li data-goto="1">…</li>…</ol>
+       <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><span class="cap"></span></div>
+       <div class="step-note" data-note="1">…</div>  (one per step; shown when active)
+       <div class="wall" data-step-target>…stickies with data-from / data-until…</div> */
+  $$('[data-stepper]').forEach(sec => {
+    const max = parseInt(sec.dataset.max || '7', 10);
+    let step = parseInt(sec.dataset.step || '1', 10);
+    const targets = $$('[data-step-target]', sec);
+    const notes = $$('[data-note]', sec);
+    const steps = $$('.steps li[data-goto]', sec);
+    const cap = $('.cap', sec);
+    const paint = () => {
+      sec.dataset.step = String(step);
+      targets.forEach(t => t.dataset.step = String(step));
+      notes.forEach(n => n.hidden = n.dataset.note !== String(step));
+      steps.forEach(li => { const n = parseInt(li.dataset.goto, 10); li.classList.toggle('on', n === step); li.classList.toggle('done', n < step); });
+      if (cap) cap.textContent = `步驟 ${step} / ${max}`;
+      $$('[data-prev]', sec).forEach(b => b.disabled = step <= 1);
+      $$('[data-next]', sec).forEach(b => b.disabled = step >= max);
+    };
+    $$('[data-prev]', sec).forEach(b => b.addEventListener('click', () => { if (step > 1) { step--; paint(); } }));
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (step < max) { step++; paint(); } }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { step = 1; paint(); }));
+    steps.forEach(li => li.addEventListener('click', () => { step = parseInt(li.dataset.goto, 10); paint(); }));
+    paint();
+  });
+
+  /* replay lists: <ol class="replay" data-replay> children hidden until "下一步"; uses .stepper inside same section */
+  $$('[data-replay]').forEach(sec => {
+    const items = $$('[data-item]', sec);
+    let i = 0;
+    const paint = () => { items.forEach((el, k) => el.hidden = k >= i); const c = $('.cap', sec); if (c) c.textContent = i === 0 ? '尚未開始' : `${i} / ${items.length}`; };
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (i < items.length) { i++; paint(); } }));
+    $$('[data-all]', sec).forEach(b => b.addEventListener('click', () => { i = items.length; paint(); }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { i = 0; paint(); }));
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

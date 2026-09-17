@@ -1,0 +1,184 @@
+<!-- title: 教師版 · EV Charge Ops 七天工作坊竣工紀錄 -->
+<!-- description: 假設七天全程跑完，桌上會留下什麼：每份交付物、每張圖、每個互動演練的實況，分七頁給講師與助教對照教材完整性。 -->
+<p class="eyebrow">教師版 · TEACHER'S EDITION · 竣工紀錄</p>
+<h1 class="display">七天跑完，<br>桌上會<em>留下</em>什麼</h1>
+<p class="lede">學員版主控台告訴學員「現在做哪一步」；這七頁告訴講師「做完會長什麼樣」。每一天一頁：交付物的完整參考版本、每張架構圖與設計圖、Event Storming 一步一步怎麼跑、助教對話會怎麼走、驗收時看哪一行。用它來檢查教材夠不夠，也用它來對照學員交上來的東西。</p>
+<div class="meta-strip"><span>對象 <b>講師 · 助教 · 課程設計者</b></span><span>教材 <b>github.com/clarencechien/dddguide</b></span><span>學員版 <b>ev-charge-ops-workshop</b></span><span>版本 <b>教材 v2 · 教師版 v1</b></span></div>
+
+<p class="eyebrow">00 · HOW TO READ</p>
+<h2>這七頁怎麼用</h2>
+<p>每頁的結構固定：<span class="chip soft">00 跑完會留下什麼</span> → 三個 Block（實況、助教對話重播、產出檔案、講師註、全幅圖）→ <span class="chip soft">Check-out</span> → <span class="chip soft">講師手記</span>。灰底的「參考答案」框是教師手冊的傳統：那是我們認為合理的一種答案，不是唯一答案；學員的版本和它不同時，差異就是驗收要問的問題。</p>
+<p>互動的部分不需要學員操作，是給講師看「過程」用的：Day 2 的 Event Storming 牆會從一疊亂貼的便利貼，七步走到有命令、政策、聚合候選與樞紐事件的完整牆；Day 3 的邊界圖一層一層畫出五個 context；Day 4 的紅綠重構逐條重播；Day 5 的重送測試與故障 Saga 逐步走；Day 6 那條 14:02 到 18:18 的午後逐步播放到四欄狀態都對。</p>
+
+<div class="teach">
+  <p class="head">講師註 · 這份教師版的假設</p>
+  <p>假設學員是 1–3 年後端工程師、沒有 EV 領域知識、用 Node 或 Python、一台筆電、每天 6 小時、有 Claude Code 當助教。每頁的產出是「全程跑完且沒有偷看 solutions」的合理結果；時間預算是估的，Day 4 與 Day 6 最容易爆，各頁的講師手記有砍法。</p>
+</div>
+
+<p class="eyebrow">01 · SEVEN DAYS</p>
+<h2>七天各留下什麼</h2>
+<div class="table-scroll"><table>
+<thead><tr><th>Day</th><th>主題</th><th>跑完桌上會有</th><th>圖</th><th>互動重播</th><th>頁面</th></tr></thead>
+<tbody>
+<tr><td class="nowrap">D1</td><td>進場：領域入門、訪談、BPR</td><td>五位角色訪談紀錄（含隱藏事實）、As-Is 時間線圈出 ≥ 5 個「人當 API」、To-Be 四原則、待驗證假設</td><td>場站平面、As-Is 泳道、To-Be 泳道</td><td>阿忠訪談重播、交接點逐步圈出</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day1">D1 →</a></td></tr>
+<tr><td class="nowrap">D2</td><td>事件風暴與通用語言</td><td>storm-board.md（T0–T6 + 故障支線 F1–F5、命令、政策、聚合候選、樞紐、hotspot）、glossary ≥ 15 詞、rules.md R1–R8 全部 GWT</td><td>政策 vs 同步呼叫、Example Mapping</td><td>七步 Event Storming 牆、規則卡 → 例子卡 → 問題卡</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day2">D2 →</a></td></tr>
+<tr><td class="nowrap">D3</td><td>戰略設計</td><td>context-map.md（五個 context、關係模式、Mermaid）、c4.md（Context + Container）、ADR-0001、ADR-0002</td><td>邊界推導五層圖、Context Map、C4 ×2</td><td>從時間線到邊界的五步揭露</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day3">D3 →</a></td></tr>
+<tr><td class="nowrap">D4</td><td>戰術設計 + TDD</td><td>model.md、ChargingSession 與 WorkOrder 聚合（R1–R5 全綠）、值物件、Repository port、test-report.md</td><td>狀態機、六角架構（實際檔案落位）</td><td>紅 → 綠 → 重構逐條重播</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day4">D4 →</a></td></tr>
+<tr><td class="nowrap">D5</td><td>應用層與事件驅動</td><td>ChargingService、Outbox + relay、整合事件 v1 契約、Billing 冪等消費者、FaultProcessManager、event-flow.md</td><td>Outbox 序列圖、七個事件的發布 / 訂閱圖、故障 Saga</td><td>重送測試逐步、故障兩次申告逐步</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day5">D5 →</a></td></tr>
+<tr><td class="nowrap">D6</td><td>MVP 上線</td><td>HTTP API、OCPP ACL、SQLite / Postgres、relay、Dockerfile、README-mvp.md、e2e-log.md</td><td>請求路徑、部署圖</td><td>14:02 → 18:18 九步 E2E 播放</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day6">D6 →</a></td></tr>
+<tr><td class="nowrap">D7</td><td>SDLC 收尾</td><td>review 發現與修正、ci.yml、pr.md、retro.md、sprint-2-backlog.md、takeaway.md、最終評量</td><td>SDLC 迴圈、Sprint 2 差異圖</td><td>—</td><td><a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day7">D7 →</a></td></tr>
+</tbody></table></div>
+
+<figure class="wide">
+  <p class="title">竣工圖 · 七天的產出怎麼一個接一個長出來</p>
+  <p class="subtitle">每一天的產出都是下一天的原料。哪一天的東西沒交，後面就會在同一個地方失真。</p>
+  <div class="diagram"><svg viewBox="0 0 960 470" role="img" aria-label="七天產出的因果鏈：訪談與 As-Is 餵事件風暴，風暴餵規則與詞彙，規則餵邊界與聚合測試，聚合餵應用層與事件，事件餵 API 與 E2E，最後進 review、CI 與 retro">
+    <rect class="zone plain" x="8" y="8" width="944" height="454" rx="10"/>
+    <g>
+      <text class="t a" x="24" y="30">D1 訪談 · BPR</text>
+      <rect class="box" x="24" y="40" width="118" height="46" rx="5"/><text class="t" x="83" y="59" text-anchor="middle">interviews.md</text><text class="t s" x="83" y="76" text-anchor="middle">五人 · 隱藏事實</text>
+      <rect class="box" x="24" y="98" width="118" height="46" rx="5"/><text class="t" x="83" y="117" text-anchor="middle">as-is.md</text><text class="t s" x="83" y="134" text-anchor="middle">≥5 個人當 API</text>
+      <rect class="box" x="24" y="156" width="118" height="46" rx="5"/><text class="t" x="83" y="175" text-anchor="middle">to-be.md</text><text class="t s" x="83" y="192" text-anchor="middle">四原則 · 保留人工放行</text>
+    </g>
+    <g>
+      <text class="t a" x="168" y="30">D2 風暴 · 規則</text>
+      <rect class="box" x="168" y="40" width="118" height="46" rx="5"/><text class="t" x="227" y="59" text-anchor="middle">storm-board.md</text><text class="t s" x="227" y="76" text-anchor="middle">T0–T6 · F1–F5</text>
+      <rect class="box" x="168" y="98" width="118" height="46" rx="5"/><text class="t" x="227" y="117" text-anchor="middle">glossary.md</text><text class="t s" x="227" y="134" text-anchor="middle">是 / 不是</text>
+      <rect class="box core" x="168" y="156" width="118" height="46" rx="5"/><text class="t b" x="227" y="175" text-anchor="middle">rules.md</text><text class="t s" x="227" y="192" text-anchor="middle">R1–R8 GWT</text>
+    </g>
+    <g>
+      <text class="t a" x="312" y="30">D3 戰略</text>
+      <rect class="box" x="312" y="40" width="118" height="46" rx="5"/><text class="t" x="371" y="59" text-anchor="middle">context-map.md</text><text class="t s" x="371" y="76" text-anchor="middle">五個 context</text>
+      <rect class="box" x="312" y="98" width="118" height="46" rx="5"/><text class="t" x="371" y="117" text-anchor="middle">c4.md</text><text class="t s" x="371" y="134" text-anchor="middle">Context · Container</text>
+      <rect class="box" x="312" y="156" width="118" height="46" rx="5"/><text class="t" x="371" y="175" text-anchor="middle">adr/0001 · 0002</text><text class="t s" x="371" y="192" text-anchor="middle">切法 · MVP1 範圍</text>
+    </g>
+    <g>
+      <text class="t a" x="456" y="30">D4 戰術 · TDD</text>
+      <rect class="box core" x="456" y="40" width="118" height="46" rx="5"/><text class="t b" x="515" y="59" text-anchor="middle">ChargingSession</text><text class="t s" x="515" y="76" text-anchor="middle">R1–R4 綠</text>
+      <rect class="box" x="456" y="98" width="118" height="46" rx="5"/><text class="t" x="515" y="117" text-anchor="middle">WorkOrder</text><text class="t s" x="515" y="134" text-anchor="middle">R5 綠</text>
+      <rect class="box" x="456" y="156" width="118" height="46" rx="5"/><text class="t" x="515" y="175" text-anchor="middle">model.md</text><text class="t s" x="515" y="192" text-anchor="middle">狀態機 · 值物件</text>
+    </g>
+    <g>
+      <text class="t a" x="600" y="30">D5 事件</text>
+      <rect class="box" x="600" y="40" width="118" height="46" rx="5"/><text class="t" x="659" y="59" text-anchor="middle">ChargingService</text><text class="t s" x="659" y="76" text-anchor="middle">+ Outbox · relay</text>
+      <rect class="box core" x="600" y="98" width="118" height="46" rx="5"/><text class="t b" x="659" y="117" text-anchor="middle">contracts v1</text><text class="t s" x="659" y="134" text-anchor="middle">七個整合事件</text>
+      <rect class="box" x="600" y="156" width="118" height="46" rx="5"/><text class="t" x="659" y="175" text-anchor="middle">消費者 · Saga</text><text class="t s" x="659" y="192" text-anchor="middle">冪等 · 去重鍵</text>
+    </g>
+    <g>
+      <text class="t a" x="744" y="30">D6 MVP</text>
+      <rect class="box" x="744" y="40" width="118" height="46" rx="5"/><text class="t" x="803" y="59" text-anchor="middle">HTTP + ACL</text><text class="t s" x="803" y="76" text-anchor="middle">OCPP 止於 adapter</text>
+      <rect class="box" x="744" y="98" width="118" height="46" rx="5"/><text class="t" x="803" y="117" text-anchor="middle">SQLite / PG</text><text class="t s" x="803" y="134" text-anchor="middle">outbox 表 · relay</text>
+      <rect class="box core" x="744" y="156" width="118" height="46" rx="5"/><text class="t b" x="803" y="175" text-anchor="middle">e2e 跑通</text><text class="t s" x="803" y="192" text-anchor="middle">14:02 → 18:18</text>
+    </g>
+    <path class="ar" d="M142 63 L166 63"/><path class="ar" d="M142 121 L166 63"/><path class="ar" d="M142 179 L166 121"/>
+    <path class="ar" d="M286 63 L310 63"/><path class="ar" d="M286 121 L310 121"/><path class="ar" d="M286 179 L310 63"/><path class="ar" d="M286 179 L310 179"/>
+    <path class="ar" d="M430 179 L454 63"/><path class="ar thin" d="M286 179 C 380 240, 400 240, 454 63"/>
+    <path class="ar" d="M574 63 L598 63"/><path class="ar" d="M574 121 L598 179"/>
+    <path class="ar" d="M718 63 L742 63"/><path class="ar" d="M718 121 L742 63"/><path class="ar" d="M718 179 L742 179"/>
+    <path class="ar ev" d="M286 179 C 320 280, 560 280, 598 121"/>
+    <text class="t s" x="440" y="262" text-anchor="middle">rules.md 的拒絕事件與數字例子，直接變成 D4 的測試名與 D5 的契約欄位</text>
+
+    <text class="t a" x="24" y="316">D7 收尾</text>
+    <rect class="box" x="24" y="326" width="150" height="46" rx="5"/><text class="t" x="99" y="345" text-anchor="middle">review · 重構</text><text class="t s" x="99" y="362" text-anchor="middle">findings 全處理</text>
+    <rect class="box" x="198" y="326" width="150" height="46" rx="5"/><text class="t" x="273" y="345" text-anchor="middle">ci.yml · pr.md</text><text class="t s" x="273" y="362" text-anchor="middle">PR 綠 · 引用 ADR 與契約</text>
+    <rect class="box" x="372" y="326" width="150" height="46" rx="5"/><text class="t" x="447" y="345" text-anchor="middle">retro.md</text><text class="t s" x="447" y="362" text-anchor="middle">Start / Stop / Continue</text>
+    <rect class="box" x="546" y="326" width="150" height="46" rx="5"/><text class="t" x="621" y="345" text-anchor="middle">sprint-2-backlog.md</text><text class="t s" x="621" y="362" text-anchor="middle">R6 · R7 · Dispatch · Parking</text>
+    <rect class="box core" x="720" y="326" width="150" height="46" rx="5"/><text class="t b" x="795" y="345" text-anchor="middle">takeaway.md</text><text class="t s" x="795" y="362" text-anchor="middle">帶回公司 5 件事 · 30 天</text>
+    <path class="ar" d="M803 202 L803 240 L99 240 L99 324"/>
+    <path class="ar" d="M174 349 L196 349"/><path class="ar" d="M348 349 L370 349"/><path class="ar" d="M522 349 L544 349"/><path class="ar" d="M696 349 L718 349"/>
+    <text class="t s" x="480" y="420" text-anchor="middle">藍綠粗框 = 這一天沒交就會讓後面全部失真的那一份。驗收時先看它。</text>
+    <text class="t s" x="480" y="440" text-anchor="middle">虛線 = 跨天的直接引用：rules.md 的每一條在 D4 是一個測試名，在 D5 是契約裡的一個欄位。</text>
+  </svg></div>
+  <details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+    <thead><tr><th>Day</th><th>產出</th><th>餵給</th></tr></thead>
+    <tbody>
+      <tr><td>D1</td><td>interviews.md · as-is.md · to-be.md</td><td>D2 storm-board.md（原話 → 事實）、glossary.md（原話 → 詞）</td></tr>
+      <tr><td>D2</td><td>storm-board.md · glossary.md · rules.md</td><td>D3 context-map.md（樞紐事件 → 邊界）；D4 測試名（R1–R5）；D5 契約欄位</td></tr>
+      <tr><td>D3</td><td>context-map.md · c4.md · ADR-0001/0002</td><td>D4 聚合住在哪個 context；D5 誰發布誰訂閱；D7 pr.md 引用</td></tr>
+      <tr><td>D4</td><td>ChargingSession · WorkOrder · model.md</td><td>D5 應用服務包住聚合；事件從 pullEvents 進 outbox</td></tr>
+      <tr><td>D5</td><td>ChargingService · contracts · 消費者 · Saga</td><td>D6 HTTP 與 ACL 只呼叫應用服務；relay 換成真表</td></tr>
+      <tr><td>D6</td><td>HTTP + ACL · 持久化 · e2e</td><td>D7 review 的對象；CI 跑的測試；README-mvp 進 PR</td></tr>
+      <tr><td>D7</td><td>review · ci.yml · pr.md · retro · backlog · takeaway</td><td>回公司</td></tr>
+    </tbody></table></div></details>
+  <figcaption>每一頁的「講師手記」會說這一天的產出如果缺了什麼，後面哪一天會先出事。</figcaption>
+</figure>
+
+<p class="eyebrow">02 · METHOD STACK</p>
+<h2>方法論在七天裡的出場順序</h2>
+<p>教材的立場：四樣東西不在同一層，所以出場順序是因果，不是口味。<span class="mark">沒有被再造過的流程寫進 DDD 只會得到精緻的舊組織圖；沒有領域語言的事件只會得到會飛的 Excel。</span></p>
+<figure class="wide">
+  <p class="title">方法論堆疊 · 每一層回答不同的問題，在不同的日子被引入</p>
+  <div class="diagram"><svg viewBox="0 0 960 300" role="img" aria-label="方法論堆疊：BPR 決定什麼不該自動化（D1）；Event Storming 與 Example Mapping 把流程變成語言與規則（D2）；戰略 DDD 決定邊界（D3）；戰術 DDD 與 TDD 讓規則可執行（D4）；EDA 讓邊界呼吸（D5）；六角架構與持久化讓它上線（D6）；SDLC 讓它能被團隊接手（D7）">
+    <g>
+      <rect class="box" x="20" y="30" width="130" height="220" rx="6"/><text class="t b" x="85" y="56" text-anchor="middle">BPR</text><text class="t s" x="85" y="76" text-anchor="middle">Hammer</text>
+      <text class="t" x="85" y="110" text-anchor="middle">這步該不該存在？</text><text class="t s" x="85" y="132" text-anchor="middle">人當 API 的交接</text><text class="t s" x="85" y="150" text-anchor="middle">先消失，再談事件</text>
+      <text class="t a" x="85" y="236" text-anchor="middle">D1</text>
+    </g>
+    <g>
+      <rect class="box" x="160" y="30" width="130" height="220" rx="6"/><text class="t b" x="225" y="56" text-anchor="middle">Event Storming</text><text class="t s" x="225" y="76" text-anchor="middle">Brandolini · Example Mapping</text>
+      <text class="t" x="225" y="110" text-anchor="middle">發生了什麼事實？</text><text class="t s" x="225" y="132" text-anchor="middle">命令 · 政策 · 聚合候選</text><text class="t s" x="225" y="150" text-anchor="middle">規則要有數字例子</text>
+      <text class="t a" x="225" y="236" text-anchor="middle">D2</text>
+    </g>
+    <g>
+      <rect class="box core" x="300" y="30" width="130" height="220" rx="6"/><text class="t b" x="365" y="56" text-anchor="middle">戰略 DDD</text><text class="t s" x="365" y="76" text-anchor="middle">Evans · Context Map · C4</text>
+      <text class="t" x="365" y="110" text-anchor="middle">這個詞誰擁有？</text><text class="t s" x="365" y="132" text-anchor="middle">語言衝突 · 生命週期</text><text class="t s" x="365" y="150" text-anchor="middle">誰在斷線時活著</text>
+      <text class="t a" x="365" y="236" text-anchor="middle">D3</text>
+    </g>
+    <g>
+      <rect class="box core" x="440" y="30" width="130" height="220" rx="6"/><text class="t b" x="505" y="56" text-anchor="middle">戰術 DDD + TDD</text><text class="t s" x="505" y="76" text-anchor="middle">Vernon · Beck</text>
+      <text class="t" x="505" y="110" text-anchor="middle">不變條件是什麼？</text><text class="t s" x="505" y="132" text-anchor="middle">聚合 · 值物件 · 事件</text><text class="t s" x="505" y="150" text-anchor="middle">紅 → 綠 → 重構</text>
+      <text class="t a" x="505" y="236" text-anchor="middle">D4</text>
+    </g>
+    <g>
+      <rect class="box" x="580" y="30" width="130" height="220" rx="6"/><text class="t b" x="645" y="56" text-anchor="middle">Event-Driven</text><text class="t s" x="645" y="76" text-anchor="middle">Outbox · 冪等 · Saga</text>
+      <text class="t" x="645" y="110" text-anchor="middle">事實怎麼跨邊界？</text><text class="t s" x="645" y="132" text-anchor="middle">至少一次 · 去重鍵</text><text class="t s" x="645" y="150" text-anchor="middle">政策不住聚合</text>
+      <text class="t a" x="645" y="236" text-anchor="middle">D5</text>
+    </g>
+    <g>
+      <rect class="box" x="720" y="30" width="110" height="220" rx="6"/><text class="t b" x="775" y="56" text-anchor="middle">六角 · 上線</text><text class="t s" x="775" y="76" text-anchor="middle">Cockburn</text>
+      <text class="t" x="775" y="110" text-anchor="middle">協定止於 ACL</text><text class="t s" x="775" y="132" text-anchor="middle">換 DB 測試不改</text><text class="t s" x="775" y="150" text-anchor="middle">E2E 跑通</text>
+      <text class="t a" x="775" y="236" text-anchor="middle">D6</text>
+    </g>
+    <g>
+      <rect class="box" x="840" y="30" width="100" height="220" rx="6"/><text class="t b" x="890" y="56" text-anchor="middle">SDLC</text><text class="t s" x="890" y="76" text-anchor="middle">Review · CI · Retro</text>
+      <text class="t" x="890" y="110" text-anchor="middle">團隊接得手？</text><text class="t s" x="890" y="132" text-anchor="middle">PR 引用 ADR</text><text class="t s" x="890" y="150" text-anchor="middle">帶回公司</text>
+      <text class="t a" x="890" y="236" text-anchor="middle">D7</text>
+    </g>
+    <path class="ar" d="M150 190 L158 190"/><path class="ar" d="M290 190 L298 190"/><path class="ar" d="M430 190 L438 190"/><path class="ar" d="M570 190 L578 190"/><path class="ar" d="M710 190 L718 190"/><path class="ar" d="M830 190 L838 190"/>
+    <text class="t s" x="480" y="282" text-anchor="middle">箭頭是因果：左邊沒做完，右邊做出來的東西會很精緻地錯。</text>
+  </svg></div>
+  <details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table><thead><tr><th>層</th><th>回答的問題</th><th>Day</th><th>參考文件</th></tr></thead><tbody>
+    <tr><td>BPR</td><td>這一步該不該存在</td><td>D1</td><td>docs/references/bpr.md</td></tr>
+    <tr><td>Event Storming · Example Mapping</td><td>發生了什麼事實；規則的例子</td><td>D2</td><td>event-storming.md · example-mapping.md</td></tr>
+    <tr><td>戰略 DDD · C4 · ADR</td><td>這個詞誰擁有；邊界在哪</td><td>D3</td><td>ddd-strategic.md · c4.md · adr.md</td></tr>
+    <tr><td>戰術 DDD · TDD</td><td>不變條件現在能不能跑紅轉綠</td><td>D4</td><td>ddd-tactical.md · tdd.md</td></tr>
+    <tr><td>Event-Driven</td><td>事實怎麼跨邊界而不鎖死</td><td>D5</td><td>eda.md</td></tr>
+    <tr><td>六角架構 · 持久化</td><td>協定與 DB 怎麼不進 domain</td><td>D6</td><td>hexagonal.md · ocpp-primer.md</td></tr>
+    <tr><td>SDLC</td><td>團隊接不接得手</td><td>D7</td><td>sdlc.md</td></tr>
+  </tbody></table></div></details>
+</figure>
+
+<p class="eyebrow">03 · ASSESSMENT</p>
+<h2>驗收的三個層次</h2>
+<ol>
+  <li><strong>每日 Check-out（`/checkout dayN`）</strong>：助教對照 <code>docs/rubric.md</code> 的 DoD 逐交付物打 ✅ / ⚠️ / ❌，列「最少要補」三項。每頁的 Check-out 節有這張表跑完的樣子。</li>
+  <li><strong>最終評量</strong>：主控台十題閉卷 ≥ 80%，加上七天 rubric 的 0–3 分加權。Day 7 頁有一份 9/10 的評量報告與 rubric 總表。</li>
+  <li><strong>一票否決</strong>：五份產物裡有系統名稱沒有現場用語、聚合裡有 I/O、OCPP 的字進了 domain、抄 solutions 沒重寫。rubric 的「一票否決」段落是講師最該背起來的四行。</li>
+</ol>
+<div class="answer">
+  <p class="head">參考答案 · 講師最常問的一題</p>
+  <p><strong>「學員切出來的 context 和參考解不一樣，算錯嗎？」</strong>不算。驗收看的是每條邊界能不能用三個理由之一說明：這個詞兩邊意思不同、生命週期不同、誰要在斷線時活著。四個 context 或六個 context 都可辯護；「一個超級充電平台」不行，因為它沒有回答任何一個問題。Day 3 頁的「可辯護的替代切法」段落列了三種常見變體。</p>
+</div>
+
+<p class="eyebrow">04 · WHAT THE TEACHER MUST BRING</p>
+<h2>教材沒有、講師要自己帶進教室的東西</h2>
+<ul>
+  <li><strong>真實故事。</strong>教材的五位角色是寫出來的；講師如果有一個真的值班長打過的那通電話，Day 1 開場講它，訪談會活起來。</li>
+  <li><strong>學員公司的例子。</strong>Day 7 的 takeaway 要對應到學員自己的流程；講師在 Day 1 就先問每個人「你們公司哪一條流程是人在當 API」，Day 7 回收。</li>
+  <li><strong>對 Event Storming 的判斷。</strong>一個人做風暴少了團隊的碰撞，助教能挑「非事實」但挑不出「你們公司其實不是這樣」。講師在 Day 2 下午巡一輪，每人問一張黃貼「這句誰說的」。</li>
+  <li><strong>砍課的決定。</strong>七天變五天怎麼砍在 <code>docs/instructor.md</code>；每頁講師手記有那一天的砍法。時間會爆的是 D4 與 D6，不是 D2。</li>
+</ul>
+
+<p class="eyebrow">05 · COLOPHON</p>
+<h2>這七頁怎麼做出來的</h2>
+<p>單檔 HTML、無第三方 script、無 storage API，照 imitator 的 STYLE.md v3；chassis 原文貼入，聲部是 1990 年代國立編譯館《教師手冊》的淡粉紅道林紙與審核章的藍綠。原始碼在 repo 的 <code>teacher/src/dayN.body.html</code>，用 <code>node teacher/_shared/build.mjs</code> 組裝；圖是手寫的 inline SVG，每張圖後面附文字版表格。學員版主控台是另一份聲部（銅橙、活頁講義），兩邊刻意長得不一樣，讓人一眼分得出手上拿的是哪一本。</p>

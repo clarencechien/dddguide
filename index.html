@@ -690,7 +690,7 @@ button, summary { transition: transform var(--dur-fast) var(--ease-out); }
 .setup .seg { margin-bottom: 0; }
 
 /* 七天進度條 */
-.days-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: var(--sp-4) 0 var(--sp-2); }
+.days-bar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: var(--sp-4) 0 var(--sp-2); }
 .days-bar a {
   display: block; text-align: center; text-decoration: none; min-height: 44px;
   font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em;
@@ -777,7 +777,7 @@ button, summary { transition: transform var(--dur-fast) var(--ease-out); }
 
 /* 配對題（事件 → 發布者）*/
 .match { display: grid; gap: var(--sp-2); }
-.match-row { display: grid; grid-template-columns: 1fr auto; gap: var(--sp-2); align-items: center; padding: .4em .6em; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); }
+.match-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-2); align-items: center; padding: .4em .6em; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); }
 .match-row code { font-size: .82em; }
 .match-row select { min-height: 40px; font: inherit; font-size: var(--fs-xs); padding: .3em .5em; border: 1px solid var(--rule-hard); border-radius: 4px; background: var(--card); color: var(--ink); }
 .match-row.ok { border-color: var(--good); }
