@@ -12,23 +12,23 @@ C4Container
   System_Ext(parking, "既有停車場系統", "MVP1：事件 stub")
 
   Container_Boundary(site, "場站節點 SITE-TPE-01（總部斷線可獨立運作）") {
-    Container(ocpp, "OCPP 端點 + ACL", "Node ws / Python websockets；charging/acl", "接樁；翻譯為 StartCharging / ReportMeterValue / StopCharging / ReportFault；transactionId 5567 ↔ S-991")
-    Container(siteapi, "場站 API + Charging 應用層", "Fastify / FastAPI；src/app", "命令處理器（R1–R4）、人工放行 stub（R6）、看板查詢")
-    ContainerDb(sitedb, "場站 DB", "SQLite（預設）或 Postgres", "charging_sessions、outbox、acl_mapping、work_order 副本")
-    Container(relay, "Outbox relay", "同程序定時迴圈", "讀 outbox 未送事件 → 發布；斷線時重試（至少一次）")
+    Container(ocpp, "OCPP 端點 + ACL", "POST /ocpp/:chargerId → adapters/ocpp/OcppAcl（真樁：WebSocket）", "接樁；翻譯為 StartCharging / ReportMeterValue / StopCharging / ReportFault；transactionId 991 ↔ S-991；拒絕回 Blocked / Invalid")
+    Container(siteapi, "場站 API + ChargingService", "Fastify / FastAPI；charging/application", "命令處理器（R1–R4 在聚合內）、人工放行 stub（R6）、GET /sessions/:id")
+    ContainerDb(sitedb, "場站 DB", "SQLite（預設）或 Postgres", "charging_sessions、outbox、work_order 副本")
+    Container(relay, "OutboxRelay", "publishPending()；POST /relay 或定時迴圈", "讀 outbox 未送事件 → 發布 → markPublished；失敗不標記 → 至少一次")
   }
 
   Container_Boundary(hq, "總部節點 HQ") {
-    Container(bus, "事件匯流排", "MVP1：程序內 in-memory；Sprint 2：broker", "整合事件 v1（信封：eventId / type / version / occurredAt / …）")
-    Container(assetops, "AssetOps + Process Manager", "同語言；src/assetops, src/app/FaultToWorkOrder", "charging.charger.faulted.v1 → WorkOrder（R5 去重 chargerId+faultCode）→ opened / closed")
-    Container(billing, "Billing 草稿消費者", "同語言；src/billing", "訂閱 started / completed；sessionId 去重；草稿 INV-778")
-    Container(dispatch, "Dispatch stub", "同語言", "訂閱 opened → 固定指派 TECH-HAO；不排路線、不預留備品")
+    Container(bus, "InMemoryEventBus", "MVP1：程序內；Sprint 2：broker", "整合事件 v1（信封八欄位）；redeliver() 模擬至少一次")
+    Container(assetops, "AssetOps + FaultProcessManager", "同語言；src/assetops/{domain,application}", "charging.charger.faulted.v1 → WorkOrder（R5 去重 chargerId+faultCode；eventId 去重）→ opened / closed")
+    Container(billing, "BillingDraftConsumer", "同語言；src/billing", "訂閱 started / completed；sessionId 去重；草稿 INV-778 = 99.2")
+    Container(dispatch, "DispatchService stub", "同語言", "requestTechnician → 固定回 TECH-HAO；不排路線、不預留備品")
     ContainerDb(hqdb, "總部 DB", "SQLite 或 Postgres", "work_orders、draft_invoices、processed_events")
     Container(hqapi, "總部 API", "Fastify / FastAPI", "工單查詢、關單（CloseWorkOrder）、草稿帳單查詢")
   }
 
   Rel(driver, charger, "插槍、刷卡", "")
-  Rel(charger, ocpp, "Boot / Status / Authorize / Start / Meter / Stop", "WebSocket")
+  Rel(charger, ocpp, "Boot / Status / Authorize / Start / Meter / Stop", "HTTP POST（scripts/ocpp-sim --url）/ WebSocket（真樁）")
   Rel(ocpp, siteapi, "命令", "程序內呼叫")
   Rel(siteapi, sitedb, "聚合 + outbox 同一交易（R8）", "SQL")
   Rel(relay, sitedb, "讀未送事件、標記已送", "SQL")
@@ -39,7 +39,7 @@ C4Container
   Rel(assetops, hqdb, "work_orders + outbox", "SQL")
   Rel(billing, hqdb, "draft_invoices + processed_events", "SQL")
   Rel(assetops, bus, "ops.work_order.opened / closed.v1", "經 outbox 發布")
-  Rel(bus, dispatch, "ops.work_order.opened.v1", "訂閱")
+  Rel(assetops, dispatch, "requestTechnician(WO-2208, CP-A12)", "程序內（MVP1）")
   Rel(bus, siteapi, "ops.work_order.opened / closed.v1（看板副本、恢復可售）", "訂閱")
   Rel(azhong, siteapi, "看板、人工放行", "HTTP")
   Rel(vicky, hqapi, "工單、關單", "HTTP")

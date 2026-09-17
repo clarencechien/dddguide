@@ -10,7 +10,7 @@
 從訪談需求開始，走完 BPR → Event Storming → 戰略 DDD → 戰術 DDD + TDD → Event-Driven → MVP 上線 → SDLC 收尾。**
 
 - 學員：1–3 年工程師（後端為主，前端 / QA 亦可），不需要 EV 領域知識。
-- 環境：一台筆電。Node 20+ **或** Python 3.11+；Git；Claude Code。Docker 選配（Day 6 才用得到，沒有也能走完）。
+- 環境：一台筆電。Node 22+ **或** Python 3.11+；Git；Claude Code。Docker 選配（Day 6 才用得到，沒有也能走完）。
 - 講師：Day 1 早上 30–60 分鐘開場；之後每日早上 15 分鐘 kickoff（可用 `docs/days/dayN.md` 的「講師開場」段落）。
 - 助教：Claude Code（讀 `CLAUDE.md` + `.claude/skills/`）。學員在主控台按按鈕產生提示，貼給 Claude Code。
 - 主控台：`index.html`，單一檔案、無建置、可直接開、可上傳到任何靜態主機（imitator / GitHub Pages / S3）。所有連結指回 https://github.com/clarencechien/dddguide 。

@@ -5,7 +5,7 @@
 
 ## 讀完你會拿到
 
-- 一個能跑測試的本機環境（Node 20+ **或** Python 3.11+，二選一）。
+- 一個能跑測試的本機環境（Node 22+ **或** Python 3.11+，二選一）。
 - 打開主控台 `index.html`，知道每個按鈕在幹嘛。
 - Claude Code 已經讀到 `CLAUDE.md`，`/ta` 有回應。
 - 一條自己的分支 `workshop/<你的名字>`，以及第一個 commit。
@@ -53,22 +53,30 @@ cd dddguide
 
 ### 2.3 跑 starter 測試
 
-Node：
+Node（20+；Day 6 跑 `node src/app.ts` 與 `scripts/e2e` 需要 22+ 的原生 TypeScript 支援）：
 ```bash
 cd starter/node
-npm ci
+npm install
 npm test
 ```
 
 Python：
 ```bash
 cd starter/python
-python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 pytest
 ```
 
-**預期結果：有一個紅燈。** starter 故意放了第一個失敗的測試（R1 的第一個 scenario），這是 Day 4 的起點。看到紅燈 = 環境正確。看到 import error 或找不到指令 = 環境問題，先修。
+**預期結果：一個紅燈 `Error: TODO R1`，其餘三個 skip。** starter 故意放了第一個失敗的測試（R1 的第一個 scenario，`test/charging/ChargingSession.test.ts` 或 `tests/charging/test_charging_session.py`），這是 Day 4 的起點。看到紅燈 = 環境正確。看到 import error 或找不到指令 = 環境問題，先修。
+
+然後告訴助教你選了哪個語言：
+
+```bash
+cp workshop/.config.example workshop/.config      # 打開它，留下 LANG=node 或 LANG=python 其中一行
+```
+
+Claude Code 每次對話都會讀 `workshop/.config` 決定用哪個 starter。
 
 ### 2.4 Docker（選配，Day 6 才用）
 
@@ -141,12 +149,12 @@ git checkout -b workshop/<你的名字>       # 例：workshop/clarence
 | 1 | `workshop/day1/interviews.md`, `as-is.md`, `to-be.md` |
 | 2 | `workshop/day2/storm-board.md`, `glossary.md`, `rules.md` |
 | 3 | `workshop/day3/context-map.md`, `c4.md`, `adr/0001-*.md`, `adr/0002-*.md` |
-| 4 | `starter/<lang>/src/charging/**` 測試全綠 |
-| 5 | `starter/<lang>/src/{app,billing,assetops}/**` 測試全綠、`contracts/*.json` |
-| 6 | `scripts/e2e` 跑通、`workshop/day6/README-mvp.md` |
-| 7 | PR + CI 綠、`workshop/day7/retro.md`, `sprint-2-backlog.md` |
+| 4 | `workshop/day4/model.md`, `test-report.md`；`starter/<lang>/src/charging/**` 測試全綠 |
+| 5 | `workshop/day5/event-flow.md`；`src/{charging/application,billing,assetops/application}/**` 測試全綠；整合事件過 `contracts/validate.mjs` |
+| 6 | `workshop/day6/README-mvp.md`, `e2e-log.md`；`scripts/e2e` 跑通 |
+| 7 | `workshop/day7/pr.md`, `retro.md`, `sprint-2-backlog.md`, `takeaway.md`；PR + CI 綠 |
 
-`workshop/dayN/` 已有 `.gitkeep` 與範本檔（`*.template.md`），複製一份改名開始寫。
+`workshop/dayN/` 已有 `.gitkeep` 與 `TEMPLATE.md`，照範本的段落開始寫（完整 DoD 在 `docs/rubric.md`）。
 
 ### 4.3 Commit
 
@@ -161,9 +169,10 @@ git push -u origin workshop/<你的名字>
 ### 4.4 第一個 commit（現在）
 
 ```bash
-mkdir -p workshop/day1
-cp workshop/day1/interviews.template.md workshop/day1/interviews.md   # 若範本存在
-git add workshop/day1 && git commit -m "docs(day1): start interviews" && git push -u origin workshop/<你的名字>
+cp workshop/day1/TEMPLATE.md workshop/day1/interviews.md     # 照範本段落開始寫
+git add workshop/.config workshop/day1
+git commit -m "docs(day1): start interviews"
+git push -u origin workshop/<你的名字>
 ```
 
 ---

@@ -1,15 +1,15 @@
 # TDD（Test-Driven Development）
 
-> Day 4 B2 的方法論，Day 5 延續。交付物：`starter/<lang>/src/charging/**` 測試全綠。用 `/tdd` 當教練——它會拒絕在沒有紅燈時寫產品碼。
+> Day 4 B2 的方法論，Day 5 延續。交付物：`starter/<lang>/src/charging/**` 測試全綠、`workshop/day4/test-report.md`。用 `/tdd` 當教練——它會拒絕在沒有紅燈時寫產品碼。
 
 ## 讀完你會拿到
 
 - 紅 / 綠 / 重構的節奏，以及每一步「停下來」的條件。
 - 本專案的 inside-out 順序：聚合 → 應用服務 → adapter，與對應的測試金字塔形狀。
 - 「測試名稱就是規則」的命名法。
-- vitest 與 pytest 的最小速查表。
+- vitest 與 pytest 的最小速查表，含 starter 的實際指令與檔案路徑。
 - 跟 Claude 做 TDD 的對話長什麼樣（含 Claude 不准做的事）。
-- R1 的紅燈測試，TypeScript 與 Python 各一份，可直接貼進 starter。
+- starter 附的 R1 紅燈測試（TypeScript 與 Python）逐行解讀，以及「正確的紅」長什麼樣。
 
 ---
 
@@ -34,14 +34,14 @@ Kent Beck 的定義只有三步：
 ```
 挑一條規則（R1）
   └─ 挑一個 scenario（「占用中的連接器拒絕第二次 Start」）
-       ├─ 紅：寫測試 → 跑 → 看到它因為「正確的理由」失敗
-       │      停止條件：失敗訊息是「找不到 ChargingSession」或「期望 1 個 ChargingStartRejected 得到 0 個」，
-       │                不是語法錯誤、不是 import 錯誤
+       ├─ 紅：寫 / 讀測試 → 跑 → 看到它因為「正確的理由」失敗
+       │      停止條件：失敗訊息是 `Error: TODO R1`（starter 的骨架）或
+       │                「期望 1 個 ChargingStartRejected 得到 0 個」——不是語法錯、不是 import 錯
        ├─ 綠：最少程式碼 → 跑 → 全綠
        │      停止條件：這個測試過了，而且之前的測試沒壞
-       └─ 重構：改名、抽值物件、刪重複 → 跑 → 仍全綠
+       └─ 重構：改名、抽方法、刪重複 → 跑 → 仍全綠
               停止條件：你能在 10 秒內說出「我改了什麼、行為沒變」
-  └─ 下一個 scenario
+  └─ 下一個 scenario（把 `it.skip` / `@pytest.mark.skip` 拿掉）
 下一條規則
 ```
 
@@ -59,13 +59,13 @@ Kent Beck 的定義只有三步：
 
 | 順序 | 層 | 測什麼 | 替身 | Day |
 |---|---|---|---|---|
-| 1 | 聚合（`charging/domain`） | R1–R4 的每個 scenario | 無（純物件） | 4 |
-| 2 | 聚合（`assetops/domain`） | R5 | 無 | 4 |
-| 3 | 應用服務（`app/`） | 命令 → 聚合 → 事件進 Outbox；R1 的 repo 查詢；R2 的授權 | in-memory repo、fake clock、spy outbox | 5 |
-| 4 | 消費者（`billing/`, Process Manager） | 冪等、去重鍵 | in-memory bus、store | 5 |
-| 5 | ACL（`charging/acl`） | OCPP JSON → 命令 | 無（純函式） | 6 |
+| 1 | 聚合 `charging/domain/ChargingSession` | R1–R4 的每個 scenario | 無（純物件） | 4 |
+| 2 | 聚合 `assetops/domain/WorkOrder` | R5 | 無 | 4 |
+| 3 | 應用服務 `charging/application/ChargingService` | 命令 → 聚合 → 整合事件進 Outbox；授權 port | `InMemoryChargingSessionRepository`、`InMemoryAuthorizationService`、`InMemoryOutbox`、`FixedClock` | 5 |
+| 4 | `billing/BillingDraftConsumer`、`assetops/application/FaultProcessManager` | 冪等、去重鍵、`redeliver` | `InMemoryEventBus` | 5 |
+| 5 | ACL `adapters/ocpp/OcppAcl` | OCPP frame → 命令；拒絕 → `Blocked` / `Invalid` | 上面那些 | 6 |
 | 6 | Adapter（HTTP、SQLite） | 路由 → 命令；repo 契約測試 | 真 SQLite（記憶體模式） | 6 |
-| 7 | E2E（`scripts/e2e`） | 14:02 → 18:18 整條 | 模擬器 + 真程序 | 6 |
+| 7 | E2E `scripts/e2e` | 14:02 → 18:18 整條 | 模擬器 + 真程序 | 6 |
 
 **為什麼 inside-out 而不是 outside-in**：因為規則在裡面。Outside-in（從 HTTP 測試開始）適合「規則不清楚、先把介面定下來」的情境；我們 Day 2 已經把規則定得很清楚了。
 
@@ -73,8 +73,8 @@ Kent Beck 的定義只有三步：
 
 ```
         E2E（1 條劇本）                 ← scripts/e2e
-      Adapter 測試（~10）               ← HTTP 路由、SQLite repo 契約
-    應用服務 + 消費者測試（~20）        ← app/, billing/, Process Manager
+      Adapter 測試（~10）               ← OcppAcl、HTTP 路由、SQLite repo 契約
+    應用服務 + 消費者測試（~20）        ← ChargingService、BillingDraftConsumer、FaultProcessManager
   聚合測試（~30–40）                    ← R1–R5 的每個 scenario 至少一個
 ```
 
@@ -84,207 +84,175 @@ Kent Beck 的定義只有三步：
 
 ## 4. 測試名稱就是規則
 
+starter 的慣例（CLAUDE.md）：**測試名 = 規則句子，英文**。
+
 ```ts
-describe("R1 連接器占用時拒絕第二次 Start", () => {
-  it("空閒的連接器可以開始", ...);
-  it("占用中的連接器拒絕第二次 Start，發布 ChargingStartRejected(ConnectorOccupied)", ...);
-  it("被拒後原會話不變", ...);
-  it("另一把槍不受影響", ...);
+describe('ChargingSession aggregate (Day 4)', () => {
+  it('R1 occupied connector rejects a second start', ...);
+  it('R2 unauthorized idTag cannot start charging', ...);
+  it('R3 meter values must be monotonic; a backwards value is rejected and recorded', ...);
+  it('R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)', ...);
 });
 ```
 
+Python：`def test_R1_occupied_connector_rejects_a_second_start():`。
+
 規則：
 
-- `describe` = 規則編號 + 一句話（從 `rules.md` 複製）。
-- `it` = scenario 名稱（從 `rules.md` 複製）。
-- 測試失敗時的輸出直接是業務語言：`R1 連接器占用時拒絕第二次 Start › 被拒後原會話不變`。老陳看得懂。
+- 名稱開頭是規則編號；後面是 `rules.md` 那個 scenario 的一句話。
+- 測試失敗時的輸出直接是業務語言：`R1 occupied connector rejects a second start`。老陳看得懂（至少看得懂 R1）。
 - 一個 `it` 只斷言一個 scenario 的 Then（可以有多個 `expect`，但都在講同一件事）。
-
-Python 同理：`class TestR1ConnectorOccupied:` + `def test_rejects_second_start_on_occupied_connector(self):`。
+- 每條規則綠了，在 `workshop/day4/test-report.md` 加一行：測試名、規則、commit hash。
 
 ---
 
-## 5. vitest / pytest 速查
+## 5. vitest / pytest 速查（starter 的實際指令）
 
 ### vitest（`starter/node`）
 
 ```bash
-npm test                    # 跑全部
-npx vitest run src/charging # 跑一個目錄
-npx vitest --watch          # 監看模式（TDD 主要用這個）
-npx vitest run -t "R1"      # 只跑名稱含 R1 的
+cd starter/node
+npm install
+npm test                           # vitest run（一次）
+npm run test:watch                 # 監看模式（TDD 主要用這個）
+npx vitest run -t "R1"             # 只跑名稱含 R1 的
+npm run typecheck                  # tsc --noEmit
 ```
 
+測試檔：`starter/node/test/charging/ChargingSession.test.ts`（Day 4）、`test/assetops/`、`test/billing/`、`test/adapters/`（Day 5–6 自己加）。
+
 ```ts
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from 'vitest';
 expect(x).toBe(1);                       // 嚴格相等
-expect(obj).toEqual({ a: 1 });           // 深相等
-expect(arr).toHaveLength(1);
-expect(events).toContainEqual(expect.objectContaining({ type: "ChargingStartRejected", reason: "ConnectorOccupied" }));
-expect(() => s.stop(...)).toThrow(InvalidSessionState);
-await expect(handler.handle(cmd)).resolves.toBeUndefined();
+expect(events).toEqual([{ type: 'ChargingStartRejected', ... }]);   // 深相等，starter 的斷言風格
+expect(events.filter(e => e.type === 'ChargingStarted')).toHaveLength(0);
+expect(() => session.stop('Local', T)).toThrow(InvalidStateError);
+it.skip('R2 ...', () => {});             // starter 用 skip 排隊下一條規則
 ```
 
 ### pytest（`starter/python`）
 
 ```bash
-pytest                      # 跑全部
-pytest tests/charging       # 一個目錄
-pytest -k "R1"              # 名稱含 R1
-pytest -x                   # 第一個失敗就停
-pytest --lf                 # 只跑上次失敗的
-ptw                         # pytest-watch（需另裝）
+cd starter/python
+python -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+pytest                             # pyproject 已設 pythonpath=src、testpaths=tests、-q
+pytest -k "R1"                     # 名稱含 R1
+pytest -x                          # 第一個失敗就停
+pytest --lf                        # 只跑上次失敗的
 ```
+
+測試檔：`starter/python/tests/charging/test_charging_session.py`。
 
 ```python
 import pytest
-assert x == 1
-assert events == [ChargingStartRejected(...)]        # dataclass 相等
-assert any(e.type == "ChargingStartRejected" and e.reason == "ConnectorOccupied" for e in events)
-with pytest.raises(InvalidSessionState):
-    s.stop(...)
-
-@pytest.fixture
-def repo(): return InMemoryChargingSessionRepository()
+assert session.pull_events() == [ChargingStartRejected(occurred_at=T, connector_id="CP-A12-2", id_tag="TAG-VISITOR-01", reason="ConnectorOccupied")]
+assert session.status is SessionStatus.CHARGING
+with pytest.raises(InvalidStateError):
+    session.stop("Local", T)
+@pytest.mark.skip(reason="TODO R2")
+def test_R2_unauthorized_id_tag_cannot_start_charging(): ...
 ```
 
 ---
 
-## 6. R1 的紅燈測試
+## 6. starter 附的 R1 紅燈測試
 
-兩份都假設 Day 4 的擺法：R1 由「應用層薄薄一層 + in-memory repo」保證（見 `ddd-tactical.md` §4.5）。如果你選擇把 R1 放進一個 `Connector` 聚合，測試形狀類似，只是主詞換掉。
+Day 4 B2 第一件事：**讀它**，對照你的 `rules.md`。名稱或數字不合就先改測試（測試是規格，規格是你的）。
 
-### 6.1 TypeScript（`starter/node/test/charging/r1.connector-occupied.test.ts`）
+### 6.1 TypeScript（`starter/node/test/charging/ChargingSession.test.ts`）
 
 ```ts
-import { describe, it, expect, beforeEach } from "vitest";
-import { ChargingSession } from "../../src/charging/domain/ChargingSession";
-import { Connector, IdTag, Energy } from "../../src/charging/domain/values";
-import { InMemoryChargingSessionRepository } from "../../src/adapters/outbound/memory/InMemoryChargingSessionRepository";
-import { StartCharging } from "../../src/app/StartCharging";
-import { FixedClock, SequenceIdGenerator, AllowListAuthorizer, SpyOutbox } from "../support/fakes";
+import { describe, expect, it } from 'vitest';
+import { ChargingSession, SessionStatus } from '../../src/charging/domain/ChargingSession.ts';
 
-const T1404 = new Date("2026-09-16T14:04:00+08:00");
-const T1412 = new Date("2026-09-16T14:12:00+08:00");
+// Canonical afternoon at SITE-TPE-01 (curriculum §1.6): CP-A12-2, TAG-MONTHLY-77, S-991, 12.4 kWh.
+const T_1404 = '2025-05-20T14:04:00+08:00';
+const T_1413 = '2025-05-20T14:13:00+08:00';
 
-describe("R1 連接器占用時拒絕第二次 Start", () => {
-  let repo: InMemoryChargingSessionRepository;
-  let outbox: SpyOutbox;
-  let handler: StartCharging;
-
-  beforeEach(() => {
-    repo = new InMemoryChargingSessionRepository();
-    outbox = new SpyOutbox();
-    handler = new StartCharging(repo, new AllowListAuthorizer(["TAG-MONTHLY-77", "TAG-FLEET-03"]),
-                                new SequenceIdGenerator("S", 991), new FixedClock(T1404), outbox);
-  });
-
-  it("占用中的連接器拒絕第二次 Start，發布 ChargingStartRejected(ConnectorOccupied)", async () => {
-    // Given 連接器 CP-A12-2 上有進行中的充電會話 S-991
-    await handler.handle({ connectorId: "CP-A12-2", idTag: "TAG-MONTHLY-77", meterStartWh: 105200, at: T1404 });
-    outbox.clear();
+describe('ChargingSession aggregate (Day 4)', () => {
+  it('R1 occupied connector rejects a second start', () => {
+    // Given 連接器 CP-A12-2 上有進行中的會話 S-991（TAG-MONTHLY-77，起始 100 Wh）
+    const session = ChargingSession.idle('CP-A12-2');
+    session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+    session.pullEvents();                                   // 清掉 ChargingStarted，只看接下來發生的事
 
     // When 另一張憑證嘗試 Start
-    const result = await handler.handle({ connectorId: "CP-A12-2", idTag: "TAG-FLEET-03", meterStartWh: 106000, at: T1412 });
+    session.start({ sessionId: 'S-992', idTag: 'TAG-VISITOR-01', authorized: true, meterStartWh: 4100, at: T_1413 });
 
-    // Then 發布 ChargingStartRejected(reason=ConnectorOccupied)
-    expect(result).toEqual({ outcome: "rejected", reason: "ConnectorOccupied" });
-    expect(outbox.domainEvents).toContainEqual(expect.objectContaining({
-      type: "ChargingStartRejected", connectorId: "CP-A12-2", idTag: "TAG-FLEET-03", reason: "ConnectorOccupied", at: T1412,
-    }));
-    // But 沒有發布 ChargingStarted
-    expect(outbox.domainEvents.filter(e => e.type === "ChargingStarted")).toHaveLength(0);
+    // Then 只有一個 ChargingStartRejected(ConnectorOccupied)，沒有 ChargingStarted
+    expect(session.pullEvents()).toEqual([
+      { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-VISITOR-01', reason: 'ConnectorOccupied', occurredAt: T_1413 },
+    ]);
+    // But 原會話不變
+    expect(session.sessionId).toBe('S-991');
+    expect(session.idTag).toBe('TAG-MONTHLY-77');
+    expect(session.status).toBe(SessionStatus.Charging);
   });
 
-  it("被拒後原會話不變", async () => {
-    await handler.handle({ connectorId: "CP-A12-2", idTag: "TAG-MONTHLY-77", meterStartWh: 105200, at: T1404 });
-    await handler.handle({ connectorId: "CP-A12-2", idTag: "TAG-FLEET-03", meterStartWh: 106000, at: T1412 });
-
-    const s = await repo.findById("S-991");
-    expect(s).not.toBeNull();
-    expect(s!.isActive()).toBe(true);
-    expect(s!.idTag.value).toBe("TAG-MONTHLY-77");
-    expect(s!.meterStart.wh).toBe(105200);
-    expect(await repo.findActiveByConnector("CP-A12-2")).toBe(s);
-  });
+  it.skip('R2 unauthorized idTag cannot start charging', () => { /* TODO */ });
+  it.skip('R3 meter values must be monotonic; a backwards value is rejected and recorded', () => { /* TODO */ });
+  it.skip('R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)', () => { /* TODO */ });
 });
 ```
 
-第一次跑，預期的紅燈：`Cannot find module '../../src/app/StartCharging'`。**這不是「正確的理由」**——它是缺檔案。先建一個空殼讓它變成「期望 rejected 得到 undefined」，那才是紅燈。`/tdd` 會要求你貼出失敗訊息。
+三個值得注意的設計：
 
-### 6.2 Python（`starter/python/tests/charging/test_r1_connector_occupied.py`）
+1. `toEqual([...])` 斷言**整個事件陣列**，所以「沒有發布 `ChargingStarted`」（GWT 的 `But` 行）自動被涵蓋。
+2. 第一次 `pullEvents()` 是為了清掉 Given 階段的事件。這也順便測了「pull 之後清空」。
+3. 「原會話不變」斷言了三個欄位：sessionId、idTag、status。少一個就可能漏掉「第二次 start 覆寫了 idTag」這種 bug。
+
+### 6.2 Python（`starter/python/tests/charging/test_charging_session.py`）
 
 ```python
-from datetime import datetime, timezone, timedelta
-import pytest
+from charging.domain.charging_session import ChargingSession, SessionStatus
+from charging.domain.events import ChargingStartRejected
 
-from charging.domain.charging_session import ChargingSession
-from charging.domain.values import Connector, IdTag, Energy
-from adapters.outbound.memory.charging_session_repository import InMemoryChargingSessionRepository
-from app.start_charging import StartCharging, StartChargingCommand
-from tests.support.fakes import FixedClock, SequenceIdGenerator, AllowListAuthorizer, SpyOutbox
+T_1404 = "2025-05-20T14:04:00+08:00"
+T_1413 = "2025-05-20T14:13:00+08:00"
 
-TPE = timezone(timedelta(hours=8))
-T1404 = datetime(2026, 9, 16, 14, 4, tzinfo=TPE)
-T1412 = datetime(2026, 9, 16, 14, 12, tzinfo=TPE)
+def test_R1_occupied_connector_rejects_a_second_start():
+    session = ChargingSession.idle("CP-A12-2")
+    session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+    session.pull_events()
 
+    session.start(session_id="S-992", id_tag="TAG-VISITOR-01", authorized=True, meter_start_wh=4100, at=T_1413)
 
-class TestR1ConnectorOccupied:
-    """R1 連接器占用時拒絕第二次 Start；發布 ChargingStartRejected(reason=ConnectorOccupied)，原會話不變。"""
-
-    @pytest.fixture
-    def repo(self):
-        return InMemoryChargingSessionRepository()
-
-    @pytest.fixture
-    def outbox(self):
-        return SpyOutbox()
-
-    @pytest.fixture
-    def handler(self, repo, outbox):
-        return StartCharging(
-            sessions=repo,
-            authorizer=AllowListAuthorizer({"TAG-MONTHLY-77", "TAG-FLEET-03"}),
-            ids=SequenceIdGenerator("S", 991),
-            clock=FixedClock(T1404),
-            outbox=outbox,
-        )
-
-    def test_rejects_second_start_on_occupied_connector(self, handler, outbox):
-        # Given 連接器 CP-A12-2 上有進行中的充電會話 S-991
-        handler.handle(StartChargingCommand(connector_id="CP-A12-2", id_tag="TAG-MONTHLY-77", meter_start_wh=105200, at=T1404))
-        outbox.clear()
-
-        # When 另一張憑證嘗試 Start
-        result = handler.handle(StartChargingCommand(connector_id="CP-A12-2", id_tag="TAG-FLEET-03", meter_start_wh=106000, at=T1412))
-
-        # Then 發布 ChargingStartRejected(reason=ConnectorOccupied)
-        assert result.outcome == "rejected" and result.reason == "ConnectorOccupied"
-        rejected = [e for e in outbox.domain_events if e.type == "ChargingStartRejected"]
-        assert len(rejected) == 1
-        assert rejected[0].connector_id == "CP-A12-2"
-        assert rejected[0].id_tag == "TAG-FLEET-03"
-        assert rejected[0].at == T1412
-        # But 沒有發布 ChargingStarted
-        assert not [e for e in outbox.domain_events if e.type == "ChargingStarted"]
-
-    def test_original_session_unchanged_after_rejection(self, handler, repo):
-        handler.handle(StartChargingCommand(connector_id="CP-A12-2", id_tag="TAG-MONTHLY-77", meter_start_wh=105200, at=T1404))
-        handler.handle(StartChargingCommand(connector_id="CP-A12-2", id_tag="TAG-FLEET-03", meter_start_wh=106000, at=T1412))
-
-        s = repo.find_by_id("S-991")
-        assert s is not None
-        assert s.is_active()
-        assert s.id_tag == IdTag("TAG-MONTHLY-77")
-        assert s.meter_start == Energy(105200)
-        assert repo.find_active_by_connector("CP-A12-2") is s
+    assert session.pull_events() == [
+        ChargingStartRejected(occurred_at=T_1413, connector_id="CP-A12-2", id_tag="TAG-VISITOR-01", reason="ConnectorOccupied")
+    ]
+    assert session.session_id == "S-991"
+    assert session.id_tag == "TAG-MONTHLY-77"
+    assert session.status is SessionStatus.CHARGING
 ```
 
-### 6.3 讓它變綠的最少程式碼（提示，不是答案）
+### 6.3 正確的紅
 
-1. `StartCharging.handle`：查 `findActiveByConnector` → 有就 `outbox.append([rejectedEvent])` 並回 `{outcome:"rejected", reason:"ConnectorOccupied"}`。
-2. 沒有就 `ChargingSession.start(...)` → `repo.save` → `outbox.append(session.pullEvents())` → 回 `{outcome:"started", sessionId}`。
-3. R2 的授權**先不要寫**（那是下一條規則）。`AllowListAuthorizer` 在 R1 的測試裡兩張卡都允許，所以你可以先 hard-code `true`。
+第一次跑：
+
+```
+FAIL  test/charging/ChargingSession.test.ts > R1 occupied connector rejects a second start
+Error: TODO R1
+```
+
+這是**正確的紅**：測試跑到了 `start()`，而 `start()` 還沒實作。如果你看到的是 `Cannot find module` 或 `SyntaxError`，那是環境問題，先修，不算紅燈。`/tdd` 會要求你把這段輸出貼給它。
+
+### 6.4 讓它變綠的最少程式碼（提示，不是答案）
+
+1. `start()`：如果 `this._status === 'Charging'` → `record(ChargingStartRejected(ConnectorOccupied))`，return。
+2. 否則設狀態、記欄位、`record(ChargingStarted)`。
+3. **R2 的 `authorized` 先不要判**——那是下一條規則。這個測試兩次都 `authorized: true`，所以你可以先忽略它。
+4. 綠了 → commit `R1 green: reject start on occupied connector` → 重構（例如把兩個 `record(...)` 的重複抽成 `reject(reason, idTag, at)`）→ 再跑 → commit。
+5. 把 R2 的 `it.skip` 改成 `it`，回到紅。
+
+### 6.5 接下來的紅燈（starter 註解裡已經給了數字）
+
+| 規則 | Given | When | Then |
+|---|---|---|---|
+| R2 | Idle 連接器 | `start(authorized=false)` | `ChargingStartRejected(Unauthorized)`，狀態仍 Idle；另寫 happy path |
+| R3 | Charging，lastMeterWh=4100 | `reportMeter(3900)` | `MeterValueRejected(NotMonotonic, meterWh=3900, lastMeterWh=4100)`，lastMeterWh 仍 4100；再 `reportMeter(8100)` → `EnergyMetered` |
+| R4 | start 100，讀 4100 / 8100 / 12500 | `stop('Local', 14:31)` | `ChargingCompleted(energyWh=12400, startedAt=14:04, endedAt=14:31, stopReason='Local')`，Completed；Idle / Completed 下 `stop` throw `InvalidStateError` |
+| R5 | `WorkOrder.open(WO-2208, CP-A12, GroundFailure, 18:10)` | `appendDuplicateReport(18:10:08)` | `duplicateReportCount === 1`，`DuplicateFaultReported`，狀態仍 Open |
 
 ---
 
@@ -293,15 +261,19 @@ class TestR1ConnectorOccupied:
 R8「聚合內不得直接發送到 broker」可以用一個測試守住：
 
 ```ts
-// test/arch/dependency-rule.test.ts
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-const forbidden = [/adapters\//, /infrastructure\//, /fastify/, /sqlite/, /\bws\b/, /broker/i, /publish\(/];
-function walk(dir: string): string[] { return readdirSync(dir, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(join(dir, d.name)) : [join(dir, d.name)]); }
-describe("R8 / 依賴規則：domain 與 app 不碰 I/O", () => {
-  for (const file of [...walk("src/charging/domain"), ...walk("src/assetops/domain")]) {
-    it(`${file} 沒有 I/O import`, () => {
-      const src = readFileSync(file, "utf8");
+// starter/node/test/arch/dependency-rule.test.ts（自己加）
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, it, expect } from 'vitest';
+
+const forbidden = [/adapters\//, /shared\/EventBus/, /shared\/Outbox/, /node:http/, /sqlite/, /publish\(/, /new Date\(/];
+const walk = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(join(dir, d.name)) : [join(dir, d.name)]);
+
+describe('R8 / dependency rule: domain has no I/O', () => {
+  for (const file of [...walk('src/charging/domain'), ...walk('src/assetops/domain')]) {
+    it(`${file} has no I/O import`, () => {
+      const src = readFileSync(file, 'utf8');
       for (const re of forbidden) expect(src, `${file} matches ${re}`).not.toMatch(re);
     });
   }
@@ -318,21 +290,20 @@ Python 版用 `ast` 掃 `import` 節點，或直接裝 `import-linter`。
 
 ```
 你：/tdd R1
-Claude：我們從 R1 開始。rules.md 裡 R1 有四個 scenario，先做哪一個？
-你：占用中拒絕第二次 Start
-Claude：好。請你先寫測試（或告訴我你想怎麼斷言「拒絕」與「原會話不變」），我不會先寫產品碼。
-你：（貼上測試）
-Claude：跑一下，把失敗訊息貼給我。
-你：Cannot find module '../../src/app/StartCharging'
-Claude：這是缺檔案，不是規則失敗。建一個只有 handle() 回 undefined 的空殼，再跑。
-你：expected { outcome: 'rejected', ... } received undefined
-Claude：這是正確的紅燈。現在寫最少的程式碼讓它過——你想先在 handle 裡怎麼查「連接器是否占用」？
-…
-Claude：綠了。重構：`connectorId` 到處是裸字串，要不要抽 Connector 值物件？改完跑一次。
-Claude：下一個最小步驟：scenario「被拒後原會話不變」。
+Claude：我們從 R1 開始。starter 已經附了紅燈測試；你的 rules.md 裡 R1 的例子跟它一致嗎？
+你：一致，我用 TAG-VISITOR-01。
+Claude：好。跑一下，把失敗訊息貼給我。我不會先寫產品碼。
+你：Error: TODO R1
+Claude：這是正確的紅燈——測試碰到了還沒實作的 start()。現在只做「占用時拒絕」這一件事：
+        你想在 start() 裡怎麼判斷「占用」？
+你：看 this._status === 'Charging'
+Claude：對。record 一個 ChargingStartRejected 然後 return。先不要碰 authorized。寫完跑。
+你：綠了。
+Claude：重構：兩段 record(...) 幾乎一樣，要不要抽成 reject(reason, idTag, at)？改完跑一次。
+Claude：下一個最小步驟：把 R2 的 it.skip 拿掉，跑，貼紅燈。
 ```
 
-### 8.2 Claude 不准做的事（寫在 `/tdd` 的 SKILL.md 裡）
+### 8.2 Claude 不准做的事（`.claude/skills/tdd/SKILL.md`）
 
 1. 在沒有紅燈測試的情況下產出 `src/` 下的程式碼。
 2. 一次給兩條規則的實作。
@@ -343,8 +314,9 @@ Claude：下一個最小步驟：scenario「被拒後原會話不變」。
 ### 8.3 你不該做的事
 
 - 貼整份 `rules.md` 說「幫我全部實作」。
-- 綠燈後跳過重構直接下一條（三條之後你會有三份重複的查詢碼）。
+- 綠燈後跳過重構直接下一條（三條之後你會有三份重複的 `record(...)`）。
 - 沒看失敗訊息就改程式碼。
+- 為了讓測試過把 `it.skip` 全拿掉——一次一條。
 
 ---
 
@@ -353,9 +325,9 @@ Claude：下一個最小步驟：scenario「被拒後原會話不變」。
 | Day | TDD 的影子 |
 |---|---|
 | 2 | `rules.md` 的每個 scenario 就是未來的一個 `it` |
-| 4 | R1 → R2 → R3 → R4 → R5，每條紅綠重構 |
-| 5 | 應用服務與消費者，同樣節奏；加「同一事件送兩次」測試 |
-| 6 | ACL 純函式測試；repo 契約測試（in-memory 與 SQLite 跑同一組） |
+| 4 | R1 → R2 → R3 → R4 → R5，每條紅綠重構；`test-report.md` 記錄 |
+| 5 | `ChargingService`、消費者、Process Manager 同樣節奏；加 `bus.redeliver(eventId)` 的冪等測試 |
+| 6 | `OcppAcl` 純函式測試；repo 契約測試（in-memory 與 SQLite 跑同一組） |
 | 7 | `/review` 看金字塔形狀、測試命名、有沒有測到 But 行 |
 
 ---
@@ -369,9 +341,10 @@ Claude：下一個最小步驟：scenario「被拒後原會話不變」。
 | 一個測試 30 個 `expect` | 一個 scenario 一個測試 |
 | 用 mock 驗證「有呼叫 repo.save」 | 用 fake repo 驗證「findById 找得到」 |
 | 在聚合測試裡起 SQLite | 聚合測試零 I/O |
-| 為了測試把 private 改 public | 用事件與查詢方法斷言，不用內部狀態 |
+| 為了測試把 private 改 public | 用事件與 getter 斷言，不用內部狀態 |
 | 紅燈是 import error 就開始寫產品碼 | 先讓紅燈「因為正確的理由」 |
 | 綠燈後不重構 | 每條規則後至少問一次「有重複嗎」 |
+| 一口氣把四個 `it.skip` 都拿掉 | 一次一條 |
 
 ---
 
@@ -389,8 +362,8 @@ Claude：下一個最小步驟：scenario「被拒後原會話不變」。
 
 ## 自我檢查
 
-1. 紅燈「因為正確的理由失敗」是什麼意思？`Cannot find module` 算嗎？
+1. 「正確的紅」是什麼意思？`Error: TODO R1` 算嗎？`Cannot find module` 算嗎？
 2. 本專案為什麼用 inside-out？什麼情況下 outside-in 比較好？
-3. R1 測試裡「被拒後原會話不變」斷言了哪四件事？少一件會漏掉什麼 bug？
+3. starter 的 R1 測試裡「原會話不變」斷言了哪三件事？`toEqual([...])` 為什麼同時涵蓋了 `But` 行？
 4. `/tdd` 不准 Claude 做的五件事是什麼？你認為哪一件最容易被違反？
-5. 用 R3 寫一個紅燈測試的名稱與三行 Given / When / Then 註解（不用寫程式碼）。
+5. 用 R3 寫一個測試的名稱與 Given / When / Then 註解（用 starter 註解裡的數字 4100 / 3900 / 8100）。

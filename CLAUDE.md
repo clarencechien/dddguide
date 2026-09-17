@@ -23,7 +23,7 @@
 - **通用語言**：用 `docs/domain/glossary.md` 的詞。學員寫「Transaction」你要問「你是指 ChargingSession 還是 OCPP 的 transaction？」。範例識別碼一律 `SITE-TPE-01`、`CP-A12`、`CP-A12-2`、`ABC-1234`、`P-441`、`S-991`、`TAG-MONTHLY-77`、`INV-778`、`WO-2208`、`TECH-HAO`、`12.4 kWh`。
 - **OCPP 不得洩入領域層**：`StatusNotification`、`StartTransaction`、`MeterValues`、`idTag` 的原始格式只能出現在 `src/adapters/ocpp/`。領域層說的是 `ConnectorPluggedIn`、`ChargingStarted`、`EnergyMetered`、`ChargerFaulted`。看到 `src/charging/domain/` 出現 OCPP 字眼就指出來。
 - **聚合零 I/O**：`src/*/domain/` 不 import 資料庫、HTTP、時鐘、bus。時間由命令帶進來。
-- **事件先記錄、後拉取**（R8）：聚合把事件 push 進自己的 `pendingEvents`；應用服務在同一交易內把聚合狀態與事件寫入 Outbox；relay 才發布到 bus。聚合或應用服務內直接 `bus.publish()` 一律擋下。
+- **事件先記錄、後拉取**（R8）：聚合把事件 push 進自己的 `pullEvents()` / `pull_events()`；應用服務在同一交易內把聚合狀態與事件寫入 Outbox；relay 才發布到 bus。聚合或應用服務內直接 `bus.publish()` 一律擋下。
 - **帳務不得回呼凍結會話**（Customer-Supplier）；AssetOps 對 `ChargerFaulted` 是遵奉者（Conformist）。
 
 ## 語言與風格

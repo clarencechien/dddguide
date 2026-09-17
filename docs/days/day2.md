@@ -147,8 +147,8 @@ glossary 草稿：
    Then  發布 ChargingStartRejected(connectorId=CP-A12-2, reason=ConnectorOccupied)
          且 S-991 狀態不變、起始計量不變
    ```
-3. R3 一定要寫**邊界例子**：計量值相等算不算倒退？（決定並寫下來。）R4 一定要有**數字**：起始 1000 Wh、最後 13400 Wh → `energyWh = 12400`。
-4. R5 的例子要有「工單開放期間」的時間：18:10 第一次申告 `E42` → 開 `WO-2208`；18:15 再申告 `E42` → 不開新單、`WO-2208` 附加「重複申告」；18:15 申告 `E17` → 開新單。
+3. R3 一定要寫**邊界例子**：計量值相等算不算倒退？（決定並寫下來。）R4 一定要有**數字**：起始 100 Wh、最後 12500 Wh → `energyWh = 12400`。
+4. R5 的例子要有「工單開放期間」的時間：18:10 第一次申告 `GroundFailure` → 開 `WO-2208`；18:15 再申告 `GroundFailure` → 不開新單、`WO-2208` 附加「重複申告」；18:15 申告 `E17` → 開新單。
 5. R6、R7、R8 不一定要寫成測試（MVP1 不實作 Parking 與 Billing 完整版），但至少各寫一個例子，因為 Day 3 切邊界要用。
 6. **（40 分）** 用 `/rules-check` 驗收。它會逐條挑：缺 context？缺拒絕事件？例子沒數字？改完再跑。
 7. **（20 分）** 把每條規則寫的「問題卡」（你不確定的地方）收進 `rules.md` 末尾的「待決問題」。
@@ -187,7 +187,7 @@ Day 2 Block 3。這是我的 workshop/day2/rules.md（請直接讀檔）。
 1. 「後台收到 `StatusNotification(Faulted)`」為什麼不能當黃貼？正確的黃貼是什麼？
 2. `ChargingBayOccupied`（T1）和 `ChargingStarted`（T3）之間隔了什麼事實？把它們合併成一張會犯 §1.7 的哪個耦合？
 3. 「每當充電已結束，就呼叫總部工單 API 建單」——這是政策還是同步呼叫？如果總部掛了，充電還能結束嗎？
-4. R4 的例子：起始計量 1000 Wh、最後計量 13400 Wh，`ChargingCompleted.energyWh` 是多少？如果最後計量是 900 Wh 呢（R3）？
+4. R4 的例子：起始計量 100 Wh、最後計量 12500 Wh，`ChargingCompleted.energyWh` 是多少？如果最後計量是 900 Wh 呢（R3）？
 5. 你的聚合候選裡，哪一個守 R1？它需要知道「這根樁的韌體版本」嗎？
 
 <details>

@@ -89,11 +89,11 @@ Evans 在《Domain-Driven Design》第二章的核心主張：**模型、程式�
 |---|---|---|---|---|---|
 | 39 | 工單 | WorkOrder | 總部對一根故障的承諾，例 `WO-2208` | 一通值班電話；一則故障訊息 | AssetOps |
 | 40 | 根因工單 | Root-cause WorkOrder | 同一樁同一故障碼在開放期間唯一的那張工單（R5） | 每次申告一張 | AssetOps |
-| 41 | 重複申告 | Duplicate Report | 工單開放期間再次收到同樁同碼的申告，附加到根因工單 | 新工單 | AssetOps |
+| 41 | 重複申告 | Duplicate Report（事件 `DuplicateFaultReported`） | 工單開放期間再次收到同樁同碼的申告，附加到根因工單；AssetOps 內部事件，不對外 | 新工單；broker 重送同一則事件（那靠 `eventId` 擋） | AssetOps |
 | 42 | 工單已開立 / 已關閉 | WorkOrderOpened / WorkOrderClosed | 工單生命週期的兩端；對外為 `ops.work_order.opened.v1` / `closed.v1` | 技術員的到場打卡 | AssetOps |
 | 43 | 恢復可售 | Back in Service | 修復驗證後樁重新可以賣電 | 樁回 `Available` 這則訊息本身 | AssetOps（宣告）/ Charging（在乎） |
 | 44 | 技術員 | Technician | 能被派工的人，例 `TECH-HAO` | 值班長 | Dispatch |
-| 45 | 派工 | Dispatch | 把工單指派給主責技術員並規劃路線 | 開工單 | Dispatch |
+| 45 | 派工 | Dispatch（事件 `TechnicianAssigned`） | 把工單指派給主責技術員並規劃路線；MVP1 是 stub 固定回 `TECH-HAO` | 開工單；「技術員已出發」不是對帳務的整合事件 | Dispatch |
 | 46 | 備品 | Spare Part | 修某類故障需要的零件，可預留 | 資產 | Dispatch |
 | 47 | SLA | Service Level Agreement | 故障到恢復可售的承諾時限 | 技術員出發時間 | Dispatch（追蹤）/ AssetOps（起算） |
 | 48 | 遠端重啟 | Remote Reset | 技術員或營運從遠端重啟樁的動作 | 故障已修復 | AssetOps |

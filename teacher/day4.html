@@ -1,0 +1,2975 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="imitator-style" content="v3">
+<meta name="imitator-register" content="教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況">
+<meta name="imitator-reference" content="1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙、灰底參考答案框、頁緣批註欄">
+<meta name="imitator-paper" content="hsl(350 22% 95%)">
+<meta name="imitator-accent" content="hsl(176 52% 26%)">
+<title>教師版 D4 · 戰術設計與 TDD</title>
+<meta name="description" content="Day 4 全程跑完會留下什麼：model.md、ChargingSession 與 WorkOrder 聚合、R1–R5 紅綠重構實況、Repository port、test-report.md、/aggregate-review 判定與 check-out。">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* imitator report chassis — v3
+ *
+ * Source: https://github.com/clarencechien/imitator/blob/main/style/report.css
+ * How to use it: https://github.com/clarencechien/imitator/blob/main/style/STYLE.md
+ *
+ * This is NOT a house style. A report here is an essay with a point of view —
+ * it should look like someone made it, not like it came off a line. So this
+ * file fixes only what every report must get right no matter its voice:
+ * readability, structure, responsiveness, dark mode, motion hygiene, print.
+ *
+ * Everything that carries voice — paper and ink colours, the accent, which
+ * typefaces do which job, how big the headline is, how sections are signposted
+ * — is yours to choose per report. The tokens in §1 are the seams: override
+ * them in a <style> block AFTER this one and the whole chassis follows.
+ *
+ * Paste this file verbatim. Do not link it at runtime.
+ */
+
+/* ── §1 Tokens ───────────────────────────────────────────────────────────
+ *
+ * Override any of these per report. The defaults are a plain warm neutral —
+ * deliberately unremarkable, so a report that overrides nothing is readable
+ * but obviously unfinished. Redefine BOTH modes: dark is chosen, never an
+ * automatic flip.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- voice: expect to override every one of these --- */
+  --paper: #fbfbfa;        /* page */
+  --card: #ffffff;         /* raised surface */
+  --ink: #1a1a19;          /* primary text */
+  --ink-2: #4a4a46;        /* secondary text */
+  --mist: #6b6b68;         /* labels, captions, axis ticks */
+  --rule: #e6e6e3;         /* hairlines */
+  --rule-hard: #d3d3ce;    /* the one heavy rule per section */
+  --accent: #b0552b;       /* links, the coloured word, section numbers */
+  --accent-soft: #efe7df;  /* accent at wash strength — chips, marks */
+
+  /* --- faces: four jobs. Give them real families; --disp and --serif may be
+         the same as --sans if the report's voice is plain. --- */
+  --sans:  ui-sans-serif, system-ui, -apple-system, "Noto Sans TC",
+           "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "Noto Serif TC", "Songti TC", "PMingLiU", Georgia, serif;
+  --disp:  var(--sans);    /* headlines */
+  --mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* --- type scale ---
+     Body is deliberately large: this is long-form prose in Chinese, read on a
+     phone as often as a laptop. 17px is the floor, not the target. */
+  --fs-body: clamp(1.0625rem, 1.01rem + .28vw, 1.1875rem);   /* 17 → 19 */
+  --fs-sm:   clamp(.875rem, .85rem + .12vw, .9375rem);       /* 14 → 15 */
+  --fs-xs:   .8125rem;                                        /* 13 — labels only */
+  --lh-body: 1.85;         /* CJK needs more leading than Latin */
+
+  --fs-display: clamp(2.6rem, 1.4rem + 5.4vw, 5.25rem);      /* the one big headline */
+  --fs-1: clamp(1.85rem, 1.45rem + 1.9vw, 2.75rem);
+  --fs-2: clamp(1.4rem, 1.24rem + .78vw, 1.85rem);
+  --fs-3: clamp(1.14rem, 1.08rem + .3vw, 1.32rem);
+
+  /* --- spacing --- */
+  --sp-1: .25rem; --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1.15rem;
+  --sp-5: 1.75rem; --sp-6: 2.75rem; --sp-7: 4.5rem;
+
+  --radius: 10px;
+  --measure: 34em;         /* prose column ≈ 34 CJK characters */
+  --page: 46rem;           /* text column */
+  --page-wide: 66rem;      /* wide devices: tables, figures, tile rows */
+
+  /* How far a wide device spills into the gutter on each side. Bounded by the
+     gutter that actually exists, so it can never push the page sideways. */
+  --bleed: min((var(--page-wide) - var(--page)) / 2, max(0px, (100vw - var(--page)) / 2));
+
+  /* --- motion ---
+     Strong curves only. The built-in CSS easings are too weak to read as
+     intentional, and ease-in on anything a reader is watching feels sluggish. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;       /* entrances only — never a UI response */
+}
+
+/* Dark is a second set of choices, not an inversion. Declared under both
+   scopes so an in-page toggle wins either way. A report that overrides the
+   light tokens MUST override these too. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: #191917; --card: #222220;
+    --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+    --rule: #333331; --rule-hard: #454542;
+    --accent: #e08a5c; --accent-soft: #3a2f28;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #191917; --card: #222220;
+  --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+  --rule: #333331; --rule-hard: #454542;
+  --accent: #e08a5c; --accent-soft: #3a2f28;
+}
+
+/* Chart series colours are NOT part of the voice. They are the one palette a
+   report must not re-pick: the order is what keeps adjacent series apart under
+   colour blindness, and it was validated with a tool rather than an eye. Use
+   them in order, never cycle past --c6. */
+:root {
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a;
+  --c4: #eda100; --c5: #e87ba4; --c6: #008300;
+  --good: #0ca30c; --warn: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+    --c4: #c98500; --c5: #d55181; --c6: #008300;
+  }
+}
+:root[data-theme="dark"] {
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+  --c4: #c98500; --c5: #d55181; --c6: #008300;
+}
+
+/* ── §2 Base & readability ───────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--fs-body)/var(--lh-body) var(--sans);
+  overflow-wrap: break-word;
+  line-break: strict;
+  -webkit-text-size-adjust: 100%;
+  /* Progressive: tightens CJK punctuation where the browser supports it. */
+  text-spacing-trim: trim-start;
+}
+
+p { text-wrap: pretty; }
+h1, h2, h3, h4, .display { text-wrap: balance; }
+
+img, svg, video, canvas { max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: .2em; text-decoration-thickness: from-font; }
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px;
+}
+::selection { background: var(--accent-soft); }
+
+/* ── §3 Layout ───────────────────────────────────────────────────────────── */
+
+.report {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: clamp(2rem, 1.2rem + 3.5vw, 5rem) clamp(1.15rem, .7rem + 2.4vw, 2.5rem) 6rem;
+}
+.report > * { max-width: var(--measure); }
+/* Figures, tables and full-width devices opt out of the prose measure. A
+   <section> or <article> is a pass-through: it must not inherit the measure,
+   or every table inside it is trapped at 34em — so the prose cap is re-applied
+   to its children instead. */
+.report :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+.report > :is(section, article) { max-width: none; }
+.report > :is(section, article) > * { max-width: var(--measure); }
+.report > :is(section, article) > :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+/* Grid items get min-width: 0 so one unbreakable string cannot widen the track.
+   Any grid you write yourself needs the same — see STYLE.md. */
+.cols > *, .tiles > * { min-width: 0; }
+.cols  { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.tiles { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin-block: var(--sp-5); }
+.card  { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-5); }
+
+/* The text column stays narrow; the wide devices breathe out into the gutter.
+   Tables get this by default — a table trapped at the prose measure is the
+   single most common way a report becomes unusable on a desktop. .wide opts
+   anything else in (a tile row, a chart, a figure).
+
+   It widens by whatever gutter actually exists and no more, so it can never
+   push the page sideways — which the obvious `width + 50% margin` breakout
+   does the moment its percentage resolves against the wrong box.
+   Declared last on purpose: any component using the `margin` shorthand would
+   otherwise zero out the inline margins this depends on. */
+.wide, .table-scroll { margin-inline: calc(-1 * var(--bleed)); }
+
+/* ── §4 Structure & editorial devices ────────────────────────────────────── */
+
+/* The headline. .display is the one oversized thing in the document; a
+   coloured <em> inside it is the report's signature — use it once. */
+.display {
+  font-family: var(--disp);
+  font-size: var(--fs-display);
+  line-height: 1.04;
+  letter-spacing: -.025em;
+  font-weight: 700;
+  margin: 0 0 var(--sp-4);
+}
+.display em { font-style: normal; color: var(--accent); }
+
+h1, h2, h3 { font-family: var(--disp); line-height: 1.25; letter-spacing: -.012em; margin: 0; font-weight: 680; }
+h1 { font-size: var(--fs-1); }
+h2 { font-size: var(--fs-2); margin: var(--sp-7) 0 var(--sp-4); }
+h3 { font-size: var(--fs-3); margin: var(--sp-5) 0 var(--sp-2); }
+h2 + h3 { margin-top: var(--sp-4); }
+p, ul, ol { margin: 0 0 var(--sp-4); }
+li + li { margin-top: var(--sp-2); }
+
+/* The signpost. Mono, letterspaced, small — it gives a document a spine:
+   序幕 · PROLOGUE / 01 · VOCABULARY / 第一幕 · 1973 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin: var(--sp-7) 0 var(--sp-2);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.eyebrow + h2 { margin-top: 0; }
+
+.lede { font-size: 1.15em; line-height: 1.7; color: var(--ink-2); }
+.byline { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); }
+
+/* A sentence worth stopping on. Not a highlighter pen on a whole paragraph. */
+.mark { background: var(--accent-soft); box-shadow: 0 0 0 .18em var(--accent-soft); border-radius: 2px; }
+
+/* An inverted label that interrupts the column: 接回 VOL.1 */
+.chip {
+  display: inline-block; background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em;
+  padding: .2em .55em; border-radius: 3px; vertical-align: .08em;
+}
+.chip.soft { background: var(--accent-soft); color: var(--ink-2); }
+
+/* A line pulled out of the argument, set large. Never a repeat of the lede. */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.9rem);
+  line-height: 1.5; color: var(--ink);
+  border-left: 3px solid var(--accent);
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-5);
+  margin-block: var(--sp-6);
+}
+
+blockquote { margin-block: var(--sp-5); padding-left: var(--sp-5); border-left: 2px solid var(--rule-hard); color: var(--ink-2); }
+.note { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-5); margin-block: var(--sp-6); }
+.note > :last-child { margin-bottom: 0; }
+.note .head { font-weight: 680; margin-bottom: var(--sp-2); }
+.note.good { border-left-color: var(--good); }
+.note.warn { border-left-color: var(--warn); }
+.note.critical { border-left-color: var(--critical); }
+
+code, kbd, samp { font-family: var(--mono); font-size: .88em; }
+/* A URL or a scope string inside <code> has no break opportunity, so it becomes
+   the min-content width of everything containing it. Inside a grid track — whose
+   default min-width is auto, i.e. min-content — that one string widens the track
+   past the viewport and the whole page scrolls sideways. Breaking it here fixes
+   the cause; see also the note on custom grids in STYLE.md. */
+:not(pre) > code {
+  background: var(--accent-soft); padding: .12em .4em; border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+pre {
+  background: var(--card); border: 1px solid var(--rule);
+  border-top: 3px solid var(--accent); border-radius: var(--radius);
+  padding: var(--sp-5); overflow-x: auto;
+  font-size: var(--fs-sm); line-height: 1.7;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin-block: var(--sp-7); }
+
+/* ── §5 Figures, charts, tables ──────────────────────────────────────────── */
+
+.stat { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); }
+.stat .label { font-size: var(--fs-xs); color: var(--mist); margin: 0 0 var(--sp-1); }
+.stat .value { font-family: var(--disp); font-size: 1.75rem; font-weight: 680; line-height: 1.15; letter-spacing: -.02em; }
+.stat .delta { font-size: var(--fs-xs); color: var(--ink-2); margin-top: var(--sp-1); display: flex; align-items: center; gap: .3em; }
+.delta.up::before   { content: "▲"; font-size: .8em; color: var(--good); }
+.delta.down::before { content: "▼"; font-size: .8em; color: var(--critical); }
+
+/* At most one per report. */
+.hero { font-family: var(--disp); font-size: clamp(3rem, 2rem + 4vw, 5rem); font-weight: 700; line-height: 1; letter-spacing: -.03em; margin: var(--sp-2) 0; }
+
+figure { margin-block: var(--sp-6); }
+figure > .title { font-family: var(--disp); font-size: var(--fs-3); font-weight: 680; margin: 0 0 var(--sp-1); }
+figure > .subtitle, figure > figcaption { font-size: var(--fs-sm); color: var(--mist); }
+figure > .subtitle { margin: 0 0 var(--sp-4); }
+figure > figcaption { margin-top: var(--sp-3); }
+
+/* A viewBox scales the TEXT too: let a chart shrink freely to a 375px screen
+   and its 12px labels render at 6px. So the rendered width is bounded and the
+   chart scrolls in its own box below the floor, like a wide table.
+   Author charts on a 640-unit viewBox with font-size 12. */
+.chart { width: 100%; overflow-x: auto; }
+.chart svg { display: block; height: auto; width: 100%; min-width: 34rem; max-width: 44rem; overflow: visible; }
+.chart .grid  { stroke: var(--rule); stroke-width: 1; }
+.chart .axis  { fill: var(--mist); font-size: 12px; font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.chart .label { fill: var(--ink-2); font-size: 12px; font-family: var(--sans); }
+.chart .line  { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dot   { stroke: var(--card); stroke-width: 2; }
+.chart .bar   { rx: 4; }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-sm); color: var(--ink-2); margin-top: var(--sp-3); }
+.legend .key { display: inline-flex; align-items: center; gap: .45em; }
+.legend .swatch { width: .7em; height: .7em; border-radius: 2px; flex: none; }
+
+.datatable > summary {
+  cursor: pointer; font-size: var(--fs-sm); color: var(--mist);
+  padding: var(--sp-2) 0; min-height: 44px;
+  display: flex; align-items: center; gap: .4em; list-style: none;
+}
+.datatable > summary::-webkit-details-marker { display: none; }
+.datatable > summary::before { content: "▸"; transition: transform var(--dur-fast) var(--ease-out); }
+.datatable[open] > summary::before { transform: rotate(90deg); }
+
+/* Every table lives in this wrapper: it scrolls itself instead of widening
+   the page. On a desktop it should never need to — cells wrap and the wrapper
+   widens into the gutter. On a phone a table with real columns still has to
+   scroll, and that is the correct trade: a model number broken across three
+   lines is worse than a swipe. `overscroll-behavior-inline` keeps that swipe
+   inside the table instead of dragging the page or triggering back-navigation. */
+.table-scroll { overflow-x: auto; overscroll-behavior-inline: contain; margin-block: var(--sp-5); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); }
+
+/* Phone: the first column is the row's label — pin it, so what you are reading
+   the specs OF stays on screen while you swipe through them, and the shadow at
+   its edge says there is more to the right. Add .plain to opt a table out (a
+   two-column table, or one whose first column is not a label). Semantics are
+   untouched: nothing here changes `display`, so the table is still a table to
+   a screen reader. */
+@media (max-width: 40rem) {
+  .table-scroll:not(.plain) :is(th, td):first-child {
+    position: sticky; left: 0; z-index: 1; background: var(--card);
+    box-shadow: 1px 0 0 var(--rule), 7px 0 7px -7px rgb(0 0 0 / .22);
+  }
+  .table-scroll:not(.plain) th:first-child { z-index: 2; }
+}
+table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); }
+th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 620; color: var(--ink-2); background: var(--card); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Cells wrap by default: nowrap makes a table's min-content width the sum of
+   every cell's longest unbroken line, which is what forces the horizontal
+   scroll. Opt individual cells out — a model number, a date, a figure — with
+   .nowrap. (`.wrap` is the old opt-in, kept so it stays a no-op.) */
+.nowrap, td.nowrap, th.nowrap { white-space: nowrap; }
+td.wrap { white-space: normal; }
+/* A mono sub-label under a term, the way a glossary sets it. */
+td .sub { display: block; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); text-transform: uppercase; margin-top: .15em; }
+
+/* ── §6 Motion ───────────────────────────────────────────────────────────────
+ *
+ * A report is read, not operated, so motion here has exactly one job: mark
+ * arrival. Entrances only, on the reader's own scroll, and only for elements
+ * that carry a beat — a section opening, a figure, a pulled line. Never on
+ * body paragraphs, and never anything that has to finish before the reader
+ * can read.
+ *
+ * All of it is progressive: without scroll-driven animation support every
+ * element is simply already visible. Nothing is gated behind motion.
+ */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    /* Group entrance: 30–80ms between items reads as one gesture. Longer
+       feels slow, and it is decorative — nothing waits for it. */
+    .stagger > * { animation: reveal-in var(--dur-slow) var(--ease-out) both; }
+    .stagger > :nth-child(2) { animation-delay: 60ms; }
+    .stagger > :nth-child(3) { animation-delay: 120ms; }
+    .stagger > :nth-child(4) { animation-delay: 180ms; }
+    .stagger > :nth-child(n+5) { animation-delay: 240ms; }
+  }
+}
+
+/* The theme toggle: one fixed button that flips data-theme on <html>. It exists
+   because a reader whose every device is dark can otherwise never see the light
+   palette a report designed — and vice versa. State lives in a variable (storage
+   APIs throw in the sandbox), so it resets on reload; that is the correct trade.
+   Until the reader clicks, <html> stays un-stamped and the page follows the
+   system. Markup and the five-line script are in STYLE.md, floor item 5. */
+.theme-toggle {
+  position: fixed; top: 1rem; right: 1rem; z-index: 20;
+  min-height: 44px; padding: .4rem .85rem;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  font: var(--fs-xs)/1 var(--mono); letter-spacing: .06em; cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--ink); }
+@media (max-width: 40rem) { .theme-toggle { top: auto; bottom: 1rem; } }
+
+/* Reading progress, drawn by the scroll position itself — no JS, no listener. */
+.progress {
+  position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 10;
+  background: var(--accent); transform-origin: 0 50%; transform: scaleX(0);
+}
+@supports (animation-timeline: scroll()) {
+  .progress { animation: progress linear both; animation-timeline: scroll(root block); }
+  @keyframes progress { to { transform: scaleX(1); } }
+}
+@media (prefers-reduced-motion: reduce) { .progress { display: none; } }
+
+/* Pressable things acknowledge the press. Hover motion is gated — a touch
+   device fires :hover on tap and the animation reads as a glitch. */
+@media (hover: hover) and (pointer: fine) {
+  a[href], .chip, summary { transition: color var(--dur-fast) var(--ease-out); }
+}
+button:active, summary:active { transform: scale(.98); }
+button, summary { transition: transform var(--dur-fast) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Gentler, not zero: colour and opacity stay, movement goes. */
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ── §7 Print & forced colours ───────────────────────────────────────────── */
+
+@media print {
+  :root { --paper: #fff; --card: #fff; --ink: #000; --ink-2: #333; --mist: #555; --rule: #ccc; }
+  .report { max-width: none; padding: 0; }
+  .report > * { max-width: none; }
+  .progress, .theme-toggle, .datatable > summary { display: none; }
+  .datatable { display: block; }
+  /* A scroll-driven entrance never runs on paper — without this, everything
+     marked .reveal prints as blank space. Content is never gated behind
+     motion; this is the rule that keeps that true. */
+  .reveal, .stagger > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  figure, .card, .stat, .table-scroll, .note, pre { break-inside: avoid; }
+  h2, h3, .eyebrow { break-after: avoid; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #555; }
+}
+
+@media (forced-colors: active) {
+  .card, .stat, .table-scroll, .note, pre, .chip { border: 1px solid CanvasText; }
+  .mark { background: Mark; color: MarkText; box-shadow: none; }
+}
+
+
+/* REGISTER:  教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況，給講師與助教對照教材完整性。
+   REFERENCE: 1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙與學生課本區隔、每課固定的「教學目標／教學活動／評量」欄、灰底的「參考答案」框、頁緣的批註欄。
+   PAPER:     教師手冊的淡粉紅道林紙 — hsl(350 22% 95%)。粉紅是為了讓人一眼知道「這本不是給學生的」。
+   VOICE:     襯線體標題（Plex Serif 帶 Noto）、審核章的藍綠印泥只給裁決、單元編號與連結；參考答案一律放灰底框；批註走頁緣。
+   NOT:       主控台、儀表板、學員版的銅橙。沒有要學員按的按鈕，只有講師要看的實況重播。
+   RECENT:    paper 48° 152° 36° · accent 16° 292° 210° — 350° 與 176° 都離得夠遠。 */
+
+:root {
+  --paper: hsl(350 22% 95%);
+  --card: hsl(350 30% 98%);
+  --ink: hsl(340 12% 12%);
+  --ink-2: hsl(340 7% 32%);
+  --mist: hsl(340 5% 44%);
+  --rule: hsl(350 14% 86%);
+  --rule-hard: hsl(350 12% 72%);
+  --accent: hsl(176 52% 26%);      /* 審核章的藍綠印泥 */
+  --accent-soft: hsl(176 30% 90%);
+  --answer: hsl(350 8% 92%);       /* 參考答案的灰底 */
+  --disp: "IBM Plex Serif", "Noto Sans TC", "PingFang TC", serif;
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "IBM Plex Serif", "Noto Sans TC", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* 便利貼：Event Storming 的標準色。這組不是 voice，是 Brandolini 的慣例，深淺兩版都要辨得出來 */
+  --st-evt: hsl(42 95% 72%);   --st-cmd: hsl(210 80% 82%);  --st-pol: hsl(272 45% 84%);
+  --st-agg: hsl(48 60% 92%);   --st-act: hsl(48 90% 62%);   --st-hot: hsl(352 85% 78%);
+  --st-read: hsl(120 40% 84%); --st-ext: hsl(330 55% 86%);  --st-rej: hsl(352 30% 90%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+    --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+    --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+    --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+    --answer: hsl(345 8% 15%);
+    --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+    --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+    --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+  --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+  --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+  --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+  --answer: hsl(345 8% 15%);
+  --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+  --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+  --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+}
+
+/* ── 教師版元件 ─────────────────────────────────────────────── */
+
+/* 七天導覽列：頁首一條，每頁都有 */
+.tnav { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-6); }
+.tnav a { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; text-decoration: none; color: var(--ink-2);
+  border: 1px solid var(--rule); background: var(--card); padding: .35em .7em; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.tnav a:hover { border-color: var(--accent); color: var(--accent); }
+.tnav a.here { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* 課次資訊列 */
+.meta-strip { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); margin: var(--sp-3) 0 var(--sp-5); }
+.meta-strip b { color: var(--ink-2); font-weight: 500; }
+
+/* 頁緣批註：講師註 */
+.teach { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.teach > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--sp-2); }
+.teach > :last-child { margin-bottom: 0; }
+
+/* 參考答案：灰底框 — 教師手冊的核心裝置 */
+.answer { background: var(--answer); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.answer > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--mist); margin: 0 0 var(--sp-3); display: flex; gap: var(--sp-3); align-items: center; }
+.answer > .head::after { content: ""; flex: 1; height: 1px; background: var(--rule-hard); }
+.answer > :last-child { margin-bottom: 0; }
+
+/* 產出檔案卡：路徑 + 內容。這是「跑完會留下什麼」的主要載體 */
+.file { border: 1px solid var(--rule-hard); border-radius: var(--radius); background: var(--card); margin-block: var(--sp-5); overflow: hidden; }
+.file > .path { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-2) var(--sp-4); background: var(--answer); border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; color: var(--ink-2); }
+.file > .path .chip { margin-left: auto; }
+.file > .body { padding: var(--sp-4) var(--sp-5); }
+.file > .body > :last-child { margin-bottom: 0; }
+.file > .body > pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: 0; }
+.file > .body h4 { font-family: var(--disp); font-size: 1.05em; margin: var(--sp-4) 0 var(--sp-2); }
+.file > .body h4:first-child { margin-top: 0; }
+.file .table-scroll { margin-block: var(--sp-3); }
+
+/* 終端輸出 */
+.term { background: hsl(340 10% 10%); color: hsl(350 12% 90%); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); font: var(--fs-xs)/1.7 var(--mono); overflow-x: auto; margin-block: var(--sp-4); white-space: pre; }
+.term .red { color: hsl(4 80% 68%); } .term .green { color: hsl(140 55% 62%); } .term .dim { color: hsl(350 6% 55%); } .term .yel { color: hsl(45 90% 65%); }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .term { background: hsl(345 12% 5%); } }
+:root[data-theme="dark"] .term { background: hsl(345 12% 5%); }
+
+/* 全幅圖：diagram 用 .wide 破出文字欄，SVG 以 960 寬 viewBox 作圖、字級 13 */
+.diagram { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin: var(--sp-4) 0; }
+.diagram svg { display: block; width: 100%; min-width: 40rem; max-width: 66rem; height: auto; overflow: visible; font-family: var(--sans); margin: 0 auto; }
+.diagram .box { fill: var(--card); stroke: var(--rule-hard); stroke-width: 1.2; }
+.diagram .box.core { stroke: var(--accent); stroke-width: 2; }
+.diagram .box.ext { stroke-dasharray: 4 3; }
+.diagram .box.dim { fill: var(--answer); }
+.diagram .zone { fill: var(--accent-soft); fill-opacity: .5; stroke: none; }
+.diagram .zone.plain { fill: var(--answer); fill-opacity: .7; }
+.diagram .t { fill: var(--ink); font-size: 13px; }
+.diagram .t.b { font-weight: 700; font-size: 14px; }
+.diagram .t.s { fill: var(--mist); font-size: 11.5px; }
+.diagram .t.a { fill: var(--accent); font-size: 11.5px; font-family: var(--mono); }
+.diagram .t.m { font-family: var(--mono); font-size: 11.5px; }
+.diagram .ar { fill: none; stroke: var(--ink-2); stroke-width: 1.4; marker-end: url(#arr); }
+.diagram .ar.ev { stroke: var(--accent); stroke-dasharray: 5 3; marker-end: url(#arr-a); }
+.diagram .ar.bad { stroke: var(--critical); marker-end: url(#arr-x); }
+.diagram .ar.thin { stroke-width: 1; }
+.diagram .st { fill: var(--card); stroke: var(--ink-2); stroke-width: 1.2; }
+.diagram .st.hot { stroke: var(--critical); } .diagram .st.good { stroke: var(--good); }
+.diagram .life { stroke: var(--rule-hard); stroke-width: 1; stroke-dasharray: 3 3; }
+.diagram .sticky { stroke: none; }
+.diagram .sticky.evt { fill: var(--st-evt); } .diagram .sticky.cmd { fill: var(--st-cmd); } .diagram .sticky.pol { fill: var(--st-pol); }
+.diagram .sticky.agg { fill: var(--st-agg); stroke: var(--rule-hard); } .diagram .sticky.act { fill: var(--st-act); } .diagram .sticky.hot { fill: var(--st-hot); }
+figure.wide > .title { padding-inline: var(--bleed); }
+figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed); }
+@media (max-width: 40rem) { figure.wide > .title, figure.wide > .subtitle, figure.wide > figcaption { padding-inline: 0; } }
+
+/* Event Storming 牆：HTML 便利貼，逐步揭露 */
+.wall { --cols: 8; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; align-items: start; }
+.wall > * { min-width: 0; }
+.wall .lane { grid-column: 1 / -1; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); padding: var(--sp-2) 0 2px; border-bottom: 1px solid var(--rule); margin-top: var(--sp-2); }
+.sticky { border-radius: 2px; padding: .45em .55em; font-size: .78rem; line-height: 1.35; color: hsl(340 12% 12%); box-shadow: 1px 1px 0 rgb(0 0 0 / .12); min-height: 3.6em; position: relative; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); } }
+:root[data-theme="dark"] .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); }
+.sticky .k { display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; opacity: .7; margin-bottom: .15em; }
+.sticky.evt { background: var(--st-evt); } .sticky.cmd { background: var(--st-cmd); } .sticky.pol { background: var(--st-pol); }
+.sticky.agg { background: var(--st-agg); border: 1px solid var(--rule-hard); } .sticky.act { background: var(--st-act); border-radius: 50% / 40%; text-align: center; }
+.sticky.hot { background: var(--st-hot); transform: rotate(-2deg); } .sticky.read { background: var(--st-read); } .sticky.ext { background: var(--st-ext); }
+.sticky.rej { background: var(--st-rej); text-decoration: line-through; opacity: .8; }
+.sticky.pivot { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sticky .fix { display: block; margin-top: .3em; font-size: .7rem; color: var(--accent); text-decoration: none; }
+.wall-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: var(--sp-2); }
+.wall-scroll .wall { min-width: 56rem; }
+/* 逐步揭露：容器 data-step=N；便利貼 data-from=N（第 N 步出現）/ data-until=N（第 N 步後消失）。
+   未到的貼紙不佔位（display:none），出現時播一次進場動畫。 */
+@keyframes sticky-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+[data-step-target] [data-from] { animation: sticky-in var(--dur) var(--ease-out) both; }
+[data-step-target] .sticky.hot[data-from] { animation-name: sticky-in-hot; }
+@keyframes sticky-in-hot { from { opacity: 0; transform: rotate(-2deg) translateY(6px) scale(.96); } to { opacity: 1; transform: rotate(-2deg); } }
+[data-step="1"] [data-from]:not([data-from="1"]),
+[data-step="2"] :is([data-from="3"],[data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="3"] :is([data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="4"] :is([data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="5"] :is([data-from="6"],[data-from="7"]),
+[data-step="6"] [data-from="7"],
+[data-step="2"] [data-until="1"],
+[data-step="3"] :is([data-until="1"],[data-until="2"]),
+[data-step="4"] :is([data-until="1"],[data-until="2"],[data-until="3"]),
+[data-step="5"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"]),
+[data-step="6"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"]),
+[data-step="7"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"],[data-until="6"]) { display: none; }
+@media (prefers-reduced-motion: reduce) { [data-step-target] [data-from] { animation: none; } }
+
+/* 步驟控制列 */
+.stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-3) 0; }
+.stepper button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.stepper button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper .cap { font-family: var(--mono); font-size: var(--fs-xs); color: var(--mist); }
+.steps { list-style: none; padding: 0; margin: var(--sp-3) 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.steps > * { min-width: 0; }
+.steps li { font-size: var(--fs-xs); font-family: var(--mono); letter-spacing: .03em; padding: .5em .6em; border: 1px solid var(--rule); border-radius: 3px; color: var(--mist); background: var(--card); }
+.steps li.on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.steps li.done { color: var(--ink-2); }
+.step-note { border-left: 3px solid var(--accent); padding: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0; background: var(--card); font-size: var(--fs-sm); }
+.step-note > p { margin: 0; }
+.step-note[hidden] { display: none; }
+
+/* 分頁 */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-3); }
+.tabs button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.tabs button.on { border-color: var(--accent); background: var(--accent-soft); }
+.pane { display: none; } .pane.on { display: block; }
+
+/* 交付物清單（靜態勾） */
+.dod { list-style: none; padding: 0; margin: var(--sp-3) 0; }
+.dod li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: .4em; padding: .4em 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.dod li::before { content: "✓"; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li.partial::before { content: "◐"; color: var(--warn); }
+.dod li.no::before { content: "✗"; color: var(--critical); }
+.dod li:last-child { border-bottom: 0; }
+
+/* 時間線 */
+.timeline { list-style: none; padding: 0; margin: var(--sp-4) 0; border-left: 2px solid var(--rule-hard); }
+.timeline li { position: relative; padding: 0 0 var(--sp-3) var(--sp-5); font-size: var(--fs-sm); }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--accent); }
+.timeline li .t { font-family: var(--mono); font-size: var(--fs-xs); color: var(--accent); letter-spacing: .06em; margin-right: .5em; }
+.timeline li.hot::before { border-color: var(--critical); }
+
+/* GWT */
+.gwt { font-family: var(--mono); font-size: var(--fs-xs); line-height: 1.7; background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: var(--sp-3) var(--sp-4); margin: var(--sp-3) 0; white-space: pre-wrap; }
+.gwt b { color: var(--accent); font-weight: 600; }
+
+/* 表格：severity 記號 */
+td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; margin-right: .3em; vertical-align: -1px; }
+.sev.crit { background: var(--critical); } .sev.warn { background: var(--warn); } .sev.ok { background: var(--good); } .sev.info { background: var(--mist); }
+
+/* 對話重播 */
+.chat { display: grid; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.chat > * { min-width: 0; }
+.msg { border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); background: var(--card); max-width: 44rem; }
+.msg.stu { border-left: 3px solid var(--ink); }
+.msg.ta { border-left: 3px solid var(--accent); margin-left: var(--sp-5); }
+.msg .who { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); margin: 0 0 .3em; text-transform: uppercase; }
+.msg p { margin: 0 0 .5em; } .msg p:last-child { margin: 0; }
+
+.end { margin-top: var(--sp-7); color: var(--mist); font-size: var(--fs-sm); }
+.kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--rule-hard); border-bottom-width: 2px; border-radius: 3px; padding: 0 .35em; }
+@media (hover: hover) and (pointer: fine) {
+  .tnav a, .tabs button, .stepper button { transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+}
+
+/* 讀的欄位維持 34em；工作物件（產出卡、終端、對話、牆、圖）用整個頁寬，牆與 .wide 再破出到 66rem */
+.report :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tnav, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > .pane > *, .report > .pane > * { max-width: none; }
+.wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
+.wall-scroll .wall { padding-inline: 2px; }
+
+/* 長路徑與識別碼沒有斷點：給有可能塞進 mono 字串的容器一個斷字機會，免得 375px 被撐寬 */
+.meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
+/* SVG 裡借用 sticky 色票的 rect 不要吃到 HTML 便利貼的旋轉 */
+.diagram .sticky, .diagram .sticky.hot { transform: none; }
+
+</style>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">theme · auto</button>
+<main class="report">
+<nav class="tnav" aria-label="七天導覽">
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher" data-day="0">教師版 · 總覽</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day1" data-day="1">D1 進場</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day2" data-day="2">D2 風暴</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day3" data-day="3">D3 戰略</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day4" data-day="4" class="here" aria-current="page">D4 TDD</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day5" data-day="5">D5 事件</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day6" data-day="6">D6 MVP</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day7" data-day="7">D7 收尾</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">學員主控台 ↗</a>
+</nav>
+
+<!-- title: 教師版 D4 · 戰術設計與 TDD -->
+<!-- description: Day 4 全程跑完會留下什麼：model.md、ChargingSession 與 WorkOrder 聚合、R1–R5 紅綠重構實況、Repository port、test-report.md、/aggregate-review 判定與 check-out。 -->
+<p class="eyebrow">DAY 4 · TACTICAL DDD + TDD</p>
+<h1 class="display">規則有<br>唯一的<em>家</em><br>測試是規格</h1>
+<p class="lede">前三天的 <code>rules.md</code> 今天變成測試，<code>storm-board.md</code> 的聚合候選變成 class，事件變成 record。沒有新的領域知識要學，只有紀律：一次一條規則、沒有紅燈不寫產品碼、領域層一行 I/O 都沒有。這一頁假設學員把 Block 1–3 全程跑完，桌上會留下 <code>model.md</code>、兩個活著的聚合、R1–R5 全綠的測試、一份 <code>test-report.md</code>，以及 <code>/aggregate-review</code> 無 High 的判定。講師拿這一頁對照學員交的東西。</p>
+<div class="meta-strip"><span><b>方法論</b> Aggregate / VO / Domain Event · 六角架構 · 紅綠重構</span><span><b>時長</b> kickoff 15 分 + 先讀 30 分 + 3 × 90 分 + check-out 30 分</span><span><b>交付物</b> model.md · test-report.md · src/charging/** · src/assetops/domain/** 全綠</span><span><b>skills</b> /aggregate-review · /tdd · /checkout</span></div>
+
+<h2 id="s00">00 · 跑完會留下什麼</h2>
+<ul class="dod">
+  <li><code>workshop/day4/model.md</code> — ChargingSession 狀態機、R1–R4 對應方法、命令 / 成功事件 / 拒絕事件表、三個 VO 的驗證規則、WorkOrder 形狀、Repository port 簽名、六角目錄對照、四個取捨（授權位置、stop 失敗方式、R3 相等、R5 分層）。</li>
+  <li><code>starter/&lt;lang&gt;/src/charging/domain/**</code> — <code>ChargingSession</code>（idle / start / reportMeter / stop / reportFault / pullEvents）、<code>Connector</code> / <code>Energy</code> / <code>IdTag</code> 值物件、<code>events</code>、<code>errors</code>。零 I/O import。</li>
+  <li><code>starter/&lt;lang&gt;/src/assetops/domain/**</code> — <code>WorkOrder</code>（open / appendDuplicateReport / assign / close / pullEvents）、<code>duplicateReportCount</code>、事件。</li>
+  <li><code>src/charging/application/ports.ts</code>、<code>src/assetops/application/ports.ts</code>（Python：<code>ports.py</code>）— <code>ChargingSessionRepository</code>、<code>WorkOrderRepository.findOpenByFault</code> 兩個 port；<code>src/adapters/persistence/</code> 兩個 in-memory adapter。</li>
+  <li><code>starter/node/test/**</code> 或 <code>starter/python/tests/**</code> — R1 ×1、R2 ×2、R3 ×2、R4 ×2、R5 ×2、ChargerFaulted ×1、repository 契約 ×2；<code>npm test</code> / <code>pytest</code> 全綠（15 passed）。</li>
+  <li><code>workshop/day4/test-report.md</code> — 指令、最後 20 行輸出、每條規則一行（測試名 / 規則 / 紅→綠 commit）、重構紀錄。</li>
+  <li><code>git log</code> 在 <code>workshop/&lt;name&gt;</code> 分支上看得出 R1 red → R1 green → R1 refactor → R2 red … 的粒度（至少 5 個 green commit）。</li>
+</ul>
+<p>講師視角：這一天最容易失真的地方不在程式碼，在<b>順序</b>。學員會在紅燈是 <code>Error: TODO R1</code> 的那一刻就想把整個 <code>start()</code> 寫完（包括 R2 的 <code>authorized</code>），或者乾脆貼整份 <code>rules.md</code> 叫 Claude 一次生完聚合。程式碼最後看起來會跟這一頁一模一樣——差別只在 <code>git log</code> 有沒有紅綠交替、以及學員能不能回答「第 40 行為什麼在那」。第二個失真點是<b>拒絕用 throw</b>：學員用 <code>throw new Error('occupied')</code> 表示 R1，測試就斷言不到 <code>ChargingStartRejected</code>，事件流 Day 5 也就斷了。第三個是<b>聚合越畫越大</b>：把費率、車牌、樁韌體塞進 <code>ChargingSession</code>。驗收時只看三處：<code>git log --oneline</code> 的粒度、<code>grep -rn "publish\|StatusNotification\|new Date" src/*/domain</code> 是不是空的、隨機抽一行問為什麼。</p>
+
+<p class="eyebrow">BLOCK 1 · 戰術建模（90 分）</p>
+<h2 id="b1">01 · 先決定形狀，再寫一行邏輯</h2>
+<p><b>實況。</b>09:15–09:45 學員先讀 <code>ddd-tactical.md</code>、<code>hexagonal.md</code>、<code>tdd.md</code>，把自己的 <code>rules.md</code> R1–R5 印出來放旁邊。09:45–10:00 不開 Claude，在 <code>workshop/day4/model.md</code> 徒手畫狀態機與方法表——這 15 分鐘是整天最重要的 15 分鐘，因為接下來的每個測試都在斷言這張表。10:00–10:45 用 <code>/aggregate-review</code> 審 <code>model.md</code>（還沒有程式碼，審的是模型）；助教會逼學員回答「R2 的授權判斷放哪裡」與「stop 在 Idle 是 throw 還是事件」。10:45–11:15 打開 starter 看骨架：<code>ChargingSession.ts</code> 已經有欄位、getter、<code>pullEvents()</code>、<code>record()</code>，只有四個方法是 <code>throw new Error('TODO Rx')</code>；跑一次測試確認 R1 是紅的。助教在這個 Block 只提問，不畫圖、不寫碼。</p>
+
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /aggregate-review ChargingSession</p><p>Day 4 Block 1。我還沒寫程式碼，這是我的 workshop/day4/model.md（請直接讀檔）：ChargingSession 狀態機、命令方法與事件、三個 VO 的驗證、目錄對照。請審查模型而不是替我寫：R1–R4 各問我「在哪個方法、哪一行判斷會守住」；檢查聚合有沒有塞不屬於這個邊界的東西；授權放聚合裡還是外面請問我兩個問題；事件是不是「聚合記錄、應用層拉取」。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀了 <code>workshop/.config</code>（LANG=node）與你的 <code>model.md</code>。先問三個問題：</p><p>1. 你的狀態機有 <code>Idle → Charging → Completed</code> 與 <code>Faulted</code>。R1「連接器占用時拒絕第二次 Start」——你的聚合是<b>一個會話</b>還是<b>一把槍</b>？如果聚合是 <code>S-991</code> 這個會話，它怎麼知道 <code>CP-A12-2</code> 上有沒有別的會話？</p><p>2. 你的方法表第 3 列 <code>stop(lastMeterWh, at, stopReason)</code> 帶了 <code>lastMeterWh</code>。R3 說計量要單調遞增——這個 <code>lastMeterWh</code> 有經過 R3 的檢查嗎？還是 stop 自己偷偷寫了一次計量？</p><p>3. 欄位清單第 6 個是 <code>tariffPerKwh</code>。R1–R4 哪一條需要它？</p><p><b>下一個最小步驟：</b>在 <code>model.md</code>「聚合根 / 識別」那兩行寫清楚：聚合的身份是 <code>connectorId</code> 還是 <code>sessionId</code>，並用一句話說 R1 因此在哪裡判斷。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改成聚合身份是連接器：<code>ChargingSession.idle('CP-A12-2')</code>，<code>S-991</code> 是它的一段狀態。這樣第二次 start 看 <code>this._status === 'Charging'</code> 就知道占用，不用查 repository。stop 拿掉 <code>lastMeterWh</code>：ACL 收到 StopTransaction 時先呼叫 <code>reportMeter(meterStop)</code> 再 <code>stop()</code>。<code>tariffPerKwh</code> 刪掉，那是 Billing 的。但授權我還是不知道放哪——聚合裡查白名單也算 I/O 嗎？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>三個改動都對，而且你自己講出了 R1 為什麼是純聚合內的不變條件。授權的兩個問題：</p><p>1. 「<code>TAG-MONTHLY-77</code> 今天有沒有效」這件事的答案在哪裡？在聚合的記憶裡，還是在一張總部同步下來的白名單（斷線時場站本地那份）？</p><p>2. 如果答案在聚合外面，聚合要收到的是「一張卡」還是「一個已經判斷好的 yes / no」？收 yes / no 的話，R2 的測試需要 mock 任何東西嗎？</p><p><b>下一個最小步驟：</b>在「取捨」小節寫下你的答案，並把 <code>start()</code> 的簽名改成含 <code>authorized: boolean</code>（或寫下你不這麼做的理由）。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>寫了：授權是領域服務 <code>AuthorizationService</code> 的 port，Day 5 由應用服務先問，把 <code>authorized: boolean</code> 當參數傳進 <code>start()</code>。聚合仍然守 R2（<code>!authorized</code> → <code>ChargingStartRejected(Unauthorized)</code>），但不查任何東西，測試零 mock。另外決定：R1 / R2 / R3 的拒絕是事件，<code>stop()</code> 在非 Charging 是 throw <code>InvalidStateError</code>，因為那是呼叫端的 bug 不是業務上的「不」。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>這個「事件 vs 例外」的判準（利害關係人在乎的「不」是事件；呼叫端的錯是例外）請原封不動抄進 <code>model.md</code>，Day 6 的 HTTP 回應碼會依它決定 202 還是 409。事件那一段我看到 <code>events: []</code> 加 <code>pullEvents()</code>，沒有 bus——R8 過。模型審查沒有 High；一個 Low：<code>Energy</code> 你寫「number」，建議至少有 <code>wattHours()</code> 驗證非負整數，B2 的 R3 測試會用到。</p><p><b>下一個最小步驟：</b><code>cd starter/node &amp;&amp; npm install &amp;&amp; npm test</code>，確認只有 R1 紅、原因是 <code>Error: TODO R1</code>，把最後 20 行貼進 <code>test-report.md</code> 的「起點」。</p></div>
+</div>
+
+<figure class="wide">
+  <p class="title">ChargingSession 狀態機</p><p class="subtitle">聚合身份是連接器 CP-A12-2；S-991 是它的一段狀態。守衛上的 R 標籤 = 那條規則唯一的家。</p>
+  <div class="diagram"><svg viewBox="0 0 960 400" role="img" aria-label="ChargingSession 狀態機：Idle、Charging、Completed、Faulted 四個狀態與 R1–R4 守衛">
+    <rect class="st" x="40" y="150" width="150" height="56" rx="28"/><text class="t b" x="115" y="174" text-anchor="middle">Idle</text><text class="t s" x="115" y="192" text-anchor="middle">idle('CP-A12-2')</text>
+    <rect class="st good" x="380" y="150" width="190" height="56" rx="28"/><text class="t b" x="475" y="174" text-anchor="middle">Charging</text><text class="t s" x="475" y="192" text-anchor="middle">S-991 · TAG-MONTHLY-77</text>
+    <rect class="st" x="770" y="150" width="160" height="56" rx="28"/><text class="t b" x="850" y="174" text-anchor="middle">Completed</text><text class="t s" x="850" y="192" text-anchor="middle">energyWh 12400</text>
+    <rect class="st hot" x="400" y="320" width="150" height="56" rx="28"/><text class="t b" x="475" y="344" text-anchor="middle">Faulted</text><text class="t s" x="475" y="362" text-anchor="middle">CP-A12 GroundFailure</text>
+    <path class="ar" d="M190 178 L378 178"/>
+    <text class="t m" x="284" y="132" text-anchor="middle">start(authorized=true)</text>
+    <text class="t a" x="284" y="148" text-anchor="middle">R1 status ≠ Charging</text>
+    <text class="t a" x="284" y="162" text-anchor="middle">R2 authorized</text>
+    <text class="t s" x="284" y="196" text-anchor="middle">→ ChargingStarted</text>
+    <path class="ar" d="M430 150 C 400 100, 550 100, 520 150"/>
+    <text class="t m" x="475" y="62" text-anchor="middle">reportMeter(meterWh, at)</text>
+    <text class="t a" x="475" y="78" text-anchor="middle">R3 meterWh ≥ lastMeterWh</text>
+    <text class="t s" x="475" y="94" text-anchor="middle">→ EnergyMetered · 否則 MeterValueRejected(NotMonotonic)</text>
+    <path class="ar" d="M570 178 L768 178"/>
+    <text class="t m" x="669" y="132" text-anchor="middle">stop(stopReason, at)</text>
+    <text class="t a" x="669" y="148" text-anchor="middle">R4 只有 Charging 可 Stop</text>
+    <text class="t s" x="669" y="196" text-anchor="middle">→ ChargingCompleted(energyWh)</text>
+    <text class="t s" x="669" y="210" text-anchor="middle">energyWh = last − start = 12400</text>
+    <path class="ar bad" d="M100 206 C 60 260, 170 260, 130 206"/>
+    <text class="t s" x="135" y="278" text-anchor="middle">start(authorized=false)</text>
+    <text class="t a" x="135" y="292" text-anchor="middle">R2 → ChargingStartRejected</text>
+    <text class="t a" x="135" y="306" text-anchor="middle">(Unauthorized)</text>
+    <text class="t s" x="135" y="322" text-anchor="middle">stop() → throw InvalidStateError</text>
+    <path class="ar bad" d="M600 206 C 640 260, 700 260, 660 206"/>
+    <text class="t s" x="680" y="278" text-anchor="middle">第二次 start(S-992)</text>
+    <text class="t a" x="680" y="292" text-anchor="middle">R1 → ChargingStartRejected</text>
+    <text class="t a" x="680" y="306" text-anchor="middle">(ConnectorOccupied)</text>
+    <text class="t s" x="680" y="322" text-anchor="middle">原會話 S-991 不變</text>
+    <path class="ar ev" d="M475 206 L475 318"/>
+    <text class="t m" x="330" y="250" text-anchor="middle">reportFault(faultCode, at)</text>
+    <text class="t s" x="330" y="266" text-anchor="middle">→ ChargerFaulted(stillEnergized=true)</text>
+    <path class="ar ev" d="M190 190 C 250 340, 330 352, 398 352"/>
+    <text class="t s" x="270" y="372" text-anchor="middle">reportFault（Idle 時 stillEnergized=false）</text>
+    <path class="ar bad" d="M820 150 C 780 100, 900 100, 870 150"/>
+    <text class="t s" x="836" y="62" text-anchor="middle">stop() 再一次</text>
+    <text class="t a" x="836" y="78" text-anchor="middle">throw InvalidStateError</text>
+    <text class="t a" x="836" y="92" text-anchor="middle">('Completed')</text>
+    <text class="t s" x="20" y="394">實線 = 命令；虛線 = 故障；紅 = 拒絕（事件或例外）。Preparing / SuspendedEV 是 OCPP 狀態，不在領域層。</text>
+  </svg></div>
+  <figcaption>Idle → Charging 的守衛有兩條（R1 看自己的 status、R2 看傳進來的 authorized）；R3 是 Charging 內的自迴圈；R4 是唯一離開 Charging 的正常路徑。所有拒絕都畫回原狀態——狀態不變是三條規則共同的 Then。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>從</th><th>命令</th><th>守衛（規則）</th><th>到</th><th>記錄的事件 / 例外</th></tr>
+<tr><td>Idle</td><td class="nowrap">start(authorized=true)</td><td>R2 authorized</td><td>Charging</td><td>ChargingStarted{sessionId S-991, connectorId CP-A12-2, idTag TAG-MONTHLY-77, meterStartWh 100, occurredAt 14:04}</td></tr>
+<tr><td>Idle</td><td class="nowrap">start(authorized=false)</td><td>R2</td><td>Idle</td><td>ChargingStartRejected{reason Unauthorized}</td></tr>
+<tr><td>Charging</td><td class="nowrap">start(…)</td><td>R1 status === Charging</td><td>Charging（S-991 不變）</td><td>ChargingStartRejected{reason ConnectorOccupied}</td></tr>
+<tr><td>Charging</td><td class="nowrap">reportMeter(8100)</td><td>R3 8100 ≥ 4100</td><td>Charging</td><td>EnergyMetered{meterWh 8100}</td></tr>
+<tr><td>Charging</td><td class="nowrap">reportMeter(3900)</td><td>R3 3900 &lt; 4100</td><td>Charging（lastMeterWh 仍 4100）</td><td>MeterValueRejected{reason NotMonotonic, meterWh 3900, lastMeterWh 4100}</td></tr>
+<tr><td>Idle / Completed</td><td class="nowrap">reportMeter(…)</td><td>R3 非 Charging</td><td>不變</td><td>MeterValueRejected{reason NotCharging}</td></tr>
+<tr><td>Charging</td><td class="nowrap">stop('Local', 14:31)</td><td>R4</td><td>Completed</td><td>ChargingCompleted{energyWh 12400, startedAt 14:04, endedAt 14:31, stopReason Local}</td></tr>
+<tr><td>Idle / Completed</td><td class="nowrap">stop(…)</td><td>R4</td><td>不變</td><td>throw InvalidStateError('stop', status)</td></tr>
+<tr><td>任何</td><td class="nowrap">reportFault('GroundFailure', 18:10)</td><td>—</td><td>Faulted</td><td>ChargerFaulted{chargerId CP-A12, connectorId CP-A12-2, faultCode, stillEnergized = 之前是 Charging}</td></tr>
+</table></div></details>
+
+<figure class="wide">
+  <p class="title">六角架構：starter 的實際檔案放進四個環</p><p class="subtitle">依賴規則一句話：箭頭永遠指向核心。domain 不 import application，application 不 import adapters；測試是合法的 inbound adapter。</p>
+  <div class="diagram"><svg viewBox="0 0 960 480" role="img" aria-label="六角架構四環：domain、application、adapters、test，標出 starter 的實際檔案">
+    <rect class="zone plain" x="20" y="20" width="920" height="450" rx="14"/>
+    <text class="t b" x="36" y="44">test/**（vitest）· tests/**（pytest）— 驅動核心的 inbound adapter：直接 new 聚合、呼叫方法、斷言 pullEvents()</text>
+    <text class="t m" x="36" y="62">test/charging/ChargingSession.test.ts · test/assetops/WorkOrder.test.ts · test/adapters/persistence/InMemoryRepositories.test.ts</text>
+    <rect class="zone" x="40" y="80" width="880" height="382" rx="12"/>
+    <text class="t b" x="56" y="104">src/adapters/**（今天只有 outbound in-memory；Day 6 加 http / ocpp / sqlite）</text>
+    <rect class="box" x="56" y="116" width="270" height="52" rx="6"/><text class="t m" x="191" y="137" text-anchor="middle">adapters/persistence/</text><text class="t m" x="191" y="153" text-anchor="middle">InMemoryChargingSessionRepository.ts</text>
+    <rect class="box" x="345" y="116" width="250" height="52" rx="6"/><text class="t m" x="470" y="137" text-anchor="middle">adapters/persistence/</text><text class="t m" x="470" y="153" text-anchor="middle">InMemoryWorkOrderRepository.ts</text>
+    <rect class="box ext" x="615" y="116" width="140" height="52" rx="6"/><text class="t m" x="685" y="137" text-anchor="middle">adapters/ocpp/</text><text class="t s" x="685" y="153" text-anchor="middle">OcppAcl（Day 6）</text>
+    <rect class="box ext" x="770" y="116" width="134" height="52" rx="6"/><text class="t m" x="837" y="137" text-anchor="middle">adapters/http/</text><text class="t s" x="837" y="153" text-anchor="middle">Fastify（Day 6）</text>
+    <rect class="zone plain" x="60" y="184" width="840" height="236" rx="10"/>
+    <text class="t b" x="76" y="206">src/*/application/（今天只寫 port 介面；命令處理器明天）</text>
+    <rect class="box dim" x="76" y="216" width="250" height="52" rx="6"/><text class="t m" x="201" y="237" text-anchor="middle">charging/application/ports.ts</text><text class="t s" x="201" y="253" text-anchor="middle">ChargingSessionRepository · AuthorizationService</text>
+    <rect class="box dim" x="345" y="216" width="250" height="52" rx="6"/><text class="t m" x="470" y="237" text-anchor="middle">assetops/application/ports.ts</text><text class="t s" x="470" y="253" text-anchor="middle">WorkOrderRepository.findOpenByFault</text>
+    <rect class="box ext" x="615" y="216" width="280" height="52" rx="6"/><text class="t m" x="755" y="232" text-anchor="middle">shared/{DomainEvent, Outbox,</text><text class="t m" x="755" y="246" text-anchor="middle">EventBus, Clock, Ids}</text><text class="t s" x="755" y="261" text-anchor="middle">domain 只准 import DomainEvent</text>
+    <rect class="box core" x="80" y="286" width="800" height="124" rx="10"/>
+    <text class="t b" x="96" y="308">src/charging/domain/ · src/assetops/domain/ — 核心，零 I/O，時間由 at 參數帶進來</text>
+    <rect class="box" x="92" y="320" width="188" height="72" rx="6"/><text class="t m" x="186" y="340" text-anchor="middle">ChargingSession.ts</text><text class="t s" x="186" y="355" text-anchor="middle">idle · start · reportMeter</text><text class="t s" x="186" y="369" text-anchor="middle">stop · reportFault</text><text class="t s" x="186" y="383" text-anchor="middle">pullEvents</text>
+    <rect class="box" x="288" y="320" width="200" height="72" rx="6"/><text class="t m" x="388" y="340" text-anchor="middle">Connector.ts · Energy.ts</text><text class="t m" x="388" y="355" text-anchor="middle">IdTag.ts</text><text class="t s" x="388" y="369" text-anchor="middle">parseConnectorId · chargerIdOf</text><text class="t s" x="388" y="383" text-anchor="middle">wattHours · parseIdTag</text>
+    <rect class="box" x="496" y="320" width="188" height="72" rx="6"/><text class="t m" x="590" y="340" text-anchor="middle">events.ts · errors.ts</text><text class="t s" x="590" y="355" text-anchor="middle">ChargingStarted …</text><text class="t s" x="590" y="369" text-anchor="middle">ChargerFaulted</text><text class="t s" x="590" y="383" text-anchor="middle">DomainError · InvalidStateError</text>
+    <rect class="box" x="692" y="320" width="182" height="72" rx="6"/><text class="t m" x="783" y="340" text-anchor="middle">assetops/domain/</text><text class="t m" x="783" y="355" text-anchor="middle">WorkOrder.ts · events.ts</text><text class="t s" x="783" y="369" text-anchor="middle">open · appendDuplicateReport</text><text class="t s" x="783" y="383" text-anchor="middle">assign · close · pullEvents</text>
+    <path class="ar ev" d="M191 168 L191 214"/><text class="t a" x="200" y="196">implements</text>
+    <path class="ar ev" d="M470 168 L470 214"/><text class="t a" x="479" y="196">implements</text>
+    <path class="ar" d="M201 268 L201 318"/><text class="t a" x="210" y="288">型別</text>
+    <path class="ar" d="M470 268 L470 318"/><text class="t a" x="479" y="288">型別</text>
+    <path class="ar" d="M700 268 L640 318"/><text class="t a" x="690" y="296">DomainEvent</text>
+    <text class="t s" x="56" y="436">禁止方向：domain → adapters · domain → shared/EventBus · domain → shared/Outbox · 任何 domain 檔出現 new Date() / publish( / StatusNotification</text>
+    <text class="t s" x="56" y="454">Python 同構、snake_case：charging_session.py · connector.py · energy.py · id_tag.py · events.py · errors.py · work_order.py · in_memory_*.py</text>
+  </svg></div>
+  <figcaption>今天實際會碰的檔案只有核心環（六個 domain 檔 + WorkOrder）、兩個 port、兩個 in-memory adapter、三個測試檔。灰底的 application 與虛線的 http / ocpp 是明天與後天的事——但今天就要決定它們依賴的方向。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>環</th><th>Node 檔案</th><th>Python 檔案</th><th>可以 import</th><th>不可以 import</th></tr>
+<tr><td>domain（核心）</td><td class="nowrap">src/charging/domain/{ChargingSession,Connector,Energy,IdTag,events,errors}.ts · src/assetops/domain/{WorkOrder,events}.ts</td><td class="nowrap">src/charging/domain/{charging_session,connector,energy,id_tag,events,errors}.py · src/assetops/domain/{work_order,events}.py</td><td>同 context 的 domain、shared/DomainEvent</td><td>adapters、shared/EventBus、shared/Outbox、任何 DB / HTTP / 時鐘</td></tr>
+<tr><td>application（port）</td><td class="nowrap">src/charging/application/ports.ts · src/assetops/application/ports.ts</td><td class="nowrap">src/charging/application/ports.py · src/assetops/application/ports.py（Protocol）</td><td>任何 domain、shared/*</td><td>adapters、框架</td></tr>
+<tr><td>adapters（outbound）</td><td class="nowrap">src/adapters/persistence/InMemoryChargingSessionRepository.ts · InMemoryWorkOrderRepository.ts</td><td class="nowrap">src/adapters/persistence/in_memory_charging_session_repository.py · in_memory_work_order_repository.py</td><td>application ports、domain 型別</td><td>其他 adapter</td></tr>
+<tr><td>test（inbound）</td><td class="nowrap">test/charging/ChargingSession.test.ts · test/assetops/WorkOrder.test.ts · test/adapters/persistence/InMemoryRepositories.test.ts</td><td class="nowrap">tests/charging/test_charging_session.py · tests/assetops/test_work_order.py · tests/adapters/persistence/test_in_memory.py</td><td>全部</td><td>—（但聚合測試不起任何 I/O）</td></tr>
+</table></div></details>
+
+<div class="file"><p class="path">workshop/day4/model.md <span class="chip">交付物</span></p><div class="body">
+<h4>戰術模型（Tactical Model）— Charging 與 AssetOps</h4>
+<p>語言：node（<code>workshop/.config</code>）。規則原文：<code>docs/curriculum.md</code> §1.9；我的 GWT：<code>workshop/day2/rules.md</code>。</p>
+
+<h4>1. ChargingSession 聚合</h4>
+<ul>
+  <li><b>聚合根</b>：<code>ChargingSession</code>，也是聚合的全部（沒有子實體）。</li>
+  <li><b>識別</b>：<code>connectorId</code>（<code>CP-A12-2</code>）。一把槍一個聚合；<code>sessionId</code>（<code>S-991</code>）是它進入 Charging 後的一段狀態。這樣 R1「一個連接器同時只有一個進行中會話」是純聚合內的不變條件：第二次 <code>start</code> 看自己的 <code>status</code> 就知道占用，不用查 repository。代價：一把槍的歷史會話不在這個聚合裡（那是查詢 / 事件的事）。</li>
+  <li><b>狀態機</b>（Mermaid，與上圖一致）：</li>
+</ul>
+<pre>stateDiagram-v2
+  [*] --> Idle : idle('CP-A12-2')
+  Idle --> Charging : start(authorized=true) [R2]
+  Idle --> Idle : start(authorized=false) → ChargingStartRejected(Unauthorized) [R2]
+  Charging --> Charging : start(...) → ChargingStartRejected(ConnectorOccupied), S-991 不變 [R1]
+  Charging --> Charging : reportMeter(≥ last) → EnergyMetered [R3]
+  Charging --> Charging : reportMeter(&lt; last) → MeterValueRejected(NotMonotonic), last 不變 [R3]
+  Charging --> Completed : stop(stopReason, at) → ChargingCompleted(energyWh = last − start) [R4]
+  Idle --> Idle : stop() → throw InvalidStateError [R4]
+  Completed --> Completed : stop() → throw InvalidStateError [R4]
+  Charging --> Faulted : reportFault → ChargerFaulted(stillEnergized=true)
+  Idle --> Faulted : reportFault → ChargerFaulted(stillEnergized=false)</pre>
+<ul>
+  <li><b>不變條件 → 方法 → 判斷行</b>：</li>
+</ul>
+<div class="table-scroll"><table>
+<tr><th>規則</th><th>不變條件</th><th>方法</th><th>判斷</th><th>守不住時</th></tr>
+<tr><td>R1</td><td>一個連接器同時最多一個 Charging 會話</td><td class="nowrap">start()</td><td class="nowrap">this._status === Charging</td><td>記錄 ChargingStartRejected(ConnectorOccupied)，return，欄位全部不動</td></tr>
+<tr><td>R2</td><td>未授權憑證不得開始</td><td class="nowrap">start()</td><td class="nowrap">!input.authorized</td><td>記錄 ChargingStartRejected(Unauthorized)，狀態仍 Idle</td></tr>
+<tr><td>R3</td><td>計量單調遞增</td><td class="nowrap">reportMeter()</td><td class="nowrap">value &lt; this._lastMeterWh</td><td>記錄 MeterValueRejected(NotMonotonic, meterWh, lastMeterWh)，lastMeterWh 不變；非 Charging 記錄 NotCharging</td></tr>
+<tr><td>R4</td><td>只有 Charging 可 Stop；energyWh = last − start</td><td class="nowrap">stop()</td><td class="nowrap">this._status !== Charging</td><td>throw InvalidStateError（呼叫端錯誤，不是業務拒絕）</td></tr>
+</table></div>
+<ul>
+  <li><b>命令方法與事件</b>：</li>
+</ul>
+<div class="table-scroll"><table>
+<tr><th>方法（英文祈使）</th><th>成功事件</th><th>拒絕事件 / 例外</th></tr>
+<tr><td class="nowrap">idle(connectorId)</td><td>—（工廠，不記錄事件）</td><td>DomainError（connectorId 格式錯）</td></tr>
+<tr><td class="nowrap">start({ sessionId, idTag, authorized, meterStartWh, at })</td><td>ChargingStarted{ sessionId, connectorId, idTag, meterStartWh, occurredAt }</td><td>ChargingStartRejected{ connectorId, idTag, reason: ConnectorOccupied | Unauthorized, occurredAt }</td></tr>
+<tr><td class="nowrap">reportMeter(meterWh, at)</td><td>EnergyMetered{ sessionId, connectorId, meterWh, occurredAt }</td><td>MeterValueRejected{ sessionId, connectorId, meterWh, lastMeterWh, reason: NotMonotonic | NotCharging, occurredAt }</td></tr>
+<tr><td class="nowrap">stop(stopReason, at)</td><td>ChargingCompleted{ sessionId, connectorId, energyWh, startedAt, endedAt, stopReason, occurredAt }</td><td>throw InvalidStateError('stop', status)</td></tr>
+<tr><td class="nowrap">reportFault(faultCode, at)</td><td>ChargerFaulted{ chargerId, connectorId?, faultCode, stillEnergized, occurredAt }</td><td>—（任何狀態都接受）</td></tr>
+<tr><td class="nowrap">pullEvents()</td><td>回傳並清空 events（R8）</td><td>—</td></tr>
+</table></div>
+<p>事件欄位對齊 §1.8 契約：<code>sessionId</code>、<code>connectorId</code>、<code>energyWh</code>、<code>startedAt</code>、<code>endedAt</code>、<code>stopReason</code>、<code>chargerId</code>、<code>faultCode</code>、<code>stillEnergized</code>。沒有 <code>transactionId</code>、<code>meterStart</code>、<code>sampledValue</code>。</p>
+<ul>
+  <li><b>聚合不該知道的事</b>：費率與金額（Billing）；工單、技術員（AssetOps / Dispatch）；OCPP 的 <code>StatusNotification</code> / <code>StartTransaction</code> / <code>MeterValues</code> / <code>transactionId</code>（<code>adapters/ocpp/</code>）；車牌與停車會話（Parking）；現在幾點（<code>at</code> 由命令帶進來）；有沒有別的會話存在（repository 的事）。</li>
+</ul>
+
+<h4>2. 值物件（Value Objects）</h4>
+<div class="table-scroll"><table>
+<tr><th>VO</th><th>starter 實作</th><th>驗證規則</th><th>為什麼是 VO 不是 Entity</th></tr>
+<tr><td class="nowrap">ConnectorId</td><td class="nowrap">parseConnectorId('CP-A12-2') · chargerIdOf() → 'CP-A12' · connectorIdOf('CP-A12', 2)</td><td>格式 <code>&lt;chargerId&gt;-&lt;n&gt;</code>；不符 throw DomainError</td><td>兩個 'CP-A12-2' 就是同一把槍，沒有各自的生命週期；在 Charging 只在乎「哪一把」，它的歷史是 AssetOps 的事</td></tr>
+<tr><td class="nowrap">Energy（WattHours）</td><td class="nowrap">wattHours(12400) · toKwh(12400) === 12.4</td><td>非負整數 Wh；小數、負數、NaN throw DomainError</td><td>12400 Wh 就是 12400 Wh，用值比較；整數 Wh 避免浮點；12.4 kWh 只在顯示時出現</td></tr>
+<tr><td class="nowrap">IdTag</td><td class="nowrap">parseIdTag('TAG-MONTHLY-77')</td><td>trim 後非空、≤ 20 字</td><td>憑證的「值」；<b>有沒有授權不是 VO 的事</b>——那需要查白名單（I/O），由 AuthorizationService port 回答</td></tr>
+</table></div>
+<p>starter 用 <code>type + parse 函式</code> 而不是 class：VO 的重點是「不可變 + 有驗證 + 以值相等」，字串與整數天生不可變。如果要 <code>Energy.wh(12400).minus(...)</code> 的 class 版，寫進取捨；我先不做。</p>
+
+<h4>3. WorkOrder 聚合（R5）</h4>
+<ul>
+  <li><b>識別</b>：<code>workOrderId</code>（<code>WO-2208</code>）。持有 <code>chargerId</code>（<code>CP-A12</code>）與 <code>faultCode</code>（<code>GroundFailure</code>）字串，不持有 Charger 物件。</li>
+  <li><b>狀態</b>：<code>Open → Assigned → Closed</code>；「開放期間」= <code>isOpen</code> = 非 Closed。</li>
+  <li><b>欄位</b>：<code>workOrderId, chargerId, faultCode, connectorId?, openedAt, reports: string[]</code>（每次申告的 occurredAt，含第一次）、<code>status, technicianId?, outcome?</code>。<code>duplicateReportCount = reports.length − 1</code>。</li>
+  <li><b>方法 / 事件</b>：<code>open()</code> → WorkOrderOpened；<code>appendDuplicateReport(at)</code> → DuplicateFaultReported（R5，只在 isOpen；關單後 throw）；<code>assign(TECH-HAO, at)</code> → TechnicianAssigned；<code>close(outcome, at)</code> → WorkOrderClosed；<code>pullEvents()</code>。</li>
+  <li><b>R5 的分層</b>：「同樁同碼、開放期間、是否已有工單」需要<b>查</b>其他工單 = I/O，聚合做不到。所以：port <code>WorkOrderRepository.findOpenByFault(chargerId, faultCode)</code> 負責查；應用層（Day 5 的 FaultProcessManager）決定開新單或呼叫既有單的 <code>appendDuplicateReport</code>；聚合只負責「開放期間才能附加」與記錄事件。去重鍵 = <code>chargerId + faultCode</code>（§1.8）。</li>
+</ul>
+
+<h4>4. Repository port 簽名</h4>
+<pre>// src/charging/application/ports.ts
+interface ChargingSessionRepository {
+  findById(sessionId: string): Promise&lt;ChargingSession | undefined&gt;;
+  findActiveByConnector(connectorId: string): Promise&lt;ChargingSession | undefined&gt;;  // status === Charging；明天 StartCharging 用
+  save(session: ChargingSession): Promise&lt;void&gt;;
+}
+interface AuthorizationService { isAuthorized(idTag: string): Promise&lt;boolean&gt;; }      // R2 的領域服務 port
+
+// src/assetops/application/ports.ts
+interface WorkOrderRepository {
+  findById(workOrderId: string): Promise&lt;WorkOrder | undefined&gt;;
+  findOpenByFault(chargerId: string, faultCode: string): Promise&lt;WorkOrder | undefined&gt;;  // R5；明天 ReportFault 用
+  save(workOrder: WorkOrder): Promise&lt;void&gt;;
+}</pre>
+<p>回傳型別統一 <code>| undefined</code>（Python：<code>| None</code>），不混用 null。簽名只用領域型別，沒有 row / dict / SQL。</p>
+
+<h4>5. 六角目錄對照</h4>
+<pre>starter/node/src/charging/domain/          ← 聚合、VO、事件、errors（今天 B1–B2）        核心
+starter/node/src/charging/application/     ← ports.ts（今天只寫介面）、命令處理器（明天）  核心
+starter/node/src/assetops/domain/          ← WorkOrder、events（今天 B3）                 核心
+starter/node/src/assetops/application/     ← ports.ts（今天）、FaultProcessManager（明天）  核心
+starter/node/src/billing/                  ← 草稿帳單消費者（明天）                        核心（另一個 context）
+starter/node/src/shared/                   ← DomainEvent（domain 可 import）、IntegrationEvent、Outbox、EventBus、Clock、Ids（明天）
+starter/node/src/adapters/persistence/     ← InMemory*Repository（今天）、SQLite（Day 6）   outbound adapter
+starter/node/src/adapters/http/            ← Fastify（Day 6）                              inbound adapter
+starter/node/src/adapters/ocpp/            ← OcppAcl（Day 6）                              inbound adapter（ACL）
+starter/node/test/**                       ← 測試（inbound adapter）；Python：starter/python/tests/**</pre>
+<p>與教材差異：starter 沒有 <code>infrastructure/</code>，組裝點是 <code>src/app.ts</code>。目錄名字不重要，依賴方向才重要。</p>
+
+<h4>6. 我做過的取捨</h4>
+<div class="table-scroll"><table>
+<tr><th>題目</th><th>選擇</th><th>理由</th><th>影響</th></tr>
+<tr><td>授權判斷放哪</td><td>聚合外（AuthorizationService port），結果以 <code>authorized: boolean</code> 傳進 <code>start()</code></td><td>「這張卡今天有沒有效」的答案在白名單（斷線時場站本地那份），查它是 I/O；聚合零 I/O</td><td>R2 仍在聚合裡守；測試零 mock；Day 5 應用服務先問 port 再呼叫聚合</td></tr>
+<tr><td>拒絕是事件還是例外</td><td>R1 / R2 / R3 記錄拒絕事件；<code>stop()</code> 在非 Charging throw InvalidStateError</td><td>利害關係人在乎的「不」（小美要看到被拒的 Start）是事實；對 Idle 會話喊 Stop 是呼叫端 bug</td><td>Day 6 API：拒絕事件 → 409 或 202；InvalidStateError → 409 / 400</td></tr>
+<tr><td>R3 相等的計量值</td><td>接受（<code>value &lt; last</code> 才拒）</td><td>樁重送同一筆讀數很常見（OCPP 重試）；相等不是倒退</td><td>測試名寫 backwards value is rejected；EnergyMetered 可能重複，Billing 用最後值不用累加</td></tr>
+<tr><td>stop 帶不帶最後計量</td><td>不帶；ACL 收 StopTransaction 先 <code>reportMeter(meterStop)</code> 再 <code>stop()</code></td><td>一個方法一件事；meterStop 也要受 R3 約束</td><td>R4 測試用 100 → 4100 → 8100 → 12500 → stop = 12400</td></tr>
+<tr><td>R5 判斷分層</td><td>port 查、應用層決策、聚合記錄</td><td>聚合查不到其他聚合（零 I/O）</td><td>今天測聚合兩個行為 + port 查詢；FaultProcessManager 明天</td></tr>
+<tr><td>Energy 是 class 還是 type</td><td>type + wattHours() 驗證</td><td>聚合好讀；不可變性由整數天生保證</td><td>要單位安全（kWh / Wh）時再升級成 class，寫進延伸</td></tr>
+</table></div>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 1</p>
+<p><b>驗收看哪一行：</b><code>model.md</code>「識別」那一行——寫 <code>connectorId</code> 還是 <code>sessionId</code>。寫 <code>sessionId</code> 的學員，R1 一定會在 B2 想去 repository 查「有沒有別的會話」，然後聚合就有 I/O 了；那不是錯，但要在取捨寫出「R1 靠 repository 查詢 + DB 唯一約束」兩道防線。第二行看「取捨」表有沒有<b>授權位置</b>與<b>stop 失敗方式</b>兩列；缺一列，B2 的 R2 / R4 測試會沒有依據。</p>
+<p><b>常見失真：</b>(1) 狀態機畫了 Preparing / SuspendedEV / Finishing——那是 OCPP 的狀態，問「小美說過這些字嗎？」；(2) 欄位表塞了 <code>tariff</code>、<code>plate</code>、<code>firmwareVersion</code>——問「R1–R4 哪一條需要它？」；(3) 跳過徒手畫直接 <code>/aggregate-review</code>，Claude 就替他畫了——攔法是要求先看到 <code>model.md</code> 的 mtime 早於對話開始；(4) 聚合直接 <code>bus.publish</code>——B1 就攔，不要等 Day 5。</p>
+<p><b>怎麼攔：</b>10:45 走一圈，只問每人一句：「你的 <code>start()</code> 在占用時做什麼？」答 throw 的，讓他打開 <code>rules.md</code> R1 唸 Then 那一行（「發布 ChargingStartRejected，原會話不變」）。</p>
+</div>
+
+<p class="eyebrow">BLOCK 2 · TDD：R1 → R2 → R3 → R4（90 分）</p>
+<h2 id="b2">02 · 沒有紅燈，Claude 不准寫 src</h2>
+<p><b>實況。</b>11:30 開始，學員先跑 <code>npm test</code>（或 <code>pytest</code>），看到 starter 附的 R1 紅燈：<code>Error: TODO R1</code>。這是「正確的紅」——測試跑到了 <code>start()</code>，而它還沒實作；如果看到的是 <code>Cannot find module</code>，那是環境問題，先修，不算紅燈。接下來四條規則、至少六個循環，每個循環 5–15 分鐘：寫（或讀）一個以規則命名的測試 → 跑 → 貼紅燈給 <code>/tdd</code> → Claude 只描述「改哪個方法、大概幾行」→ 學員自己打字 → 跑 → 綠 → commit → 問一個重構問題 → 再跑 → commit。R1 用 starter 給的測試；R2 起學員自己寫，資料用 starter 註解與 <code>rules.md</code> 的數字（100 / 4100 / 3900 / 8100 / 12500 → 12400）。13:00 前 R1–R4 全綠是正常進度；只到 R3 也可以，R4 下午補。助教全程做一件事：沒看到貼上來的紅燈輸出，不建議任何產品碼。</p>
+
+<figure class="wide">
+  <p class="title">一個循環的節奏，四條規則跑四圈</p><p class="subtitle">每一圈的停止條件都寫在圈上；每一圈結束一個 commit。時間軸是 Day 4 B2 實際的 90 分鐘。</p>
+  <div class="diagram"><svg viewBox="0 0 960 400" role="img" aria-label="紅綠重構循環與 R1–R4 四圈的時間軸">
+    <rect class="st hot" x="50" y="40" width="200" height="60" rx="30"/><text class="t b" x="150" y="64" text-anchor="middle">紅 RED</text><text class="t s" x="150" y="82" text-anchor="middle">一個以規則命名的測試，跑，看它紅</text>
+    <rect class="st good" x="380" y="40" width="200" height="60" rx="30"/><text class="t b" x="480" y="64" text-anchor="middle">綠 GREEN</text><text class="t s" x="480" y="82" text-anchor="middle">最少的碼讓它過，允許醜</text>
+    <rect class="st" x="710" y="40" width="200" height="60" rx="30"/><text class="t b" x="810" y="64" text-anchor="middle">重構 REFACTOR</text><text class="t s" x="810" y="82" text-anchor="middle">測試不動、碼變乾淨、再跑</text>
+    <path class="ar" d="M250 70 L378 70"/><text class="t a" x="314" y="60" text-anchor="middle">貼紅燈輸出給 /tdd</text>
+    <path class="ar" d="M580 70 L708 70"/><text class="t a" x="644" y="60" text-anchor="middle">commit "R1 green: …"</text>
+    <text class="t s" x="150" y="18" text-anchor="middle">停止條件：紅的原因是「行為缺」</text>
+    <text class="t s" x="150" y="32" text-anchor="middle">（TODO Rx 或斷言差異），不是 import 錯</text>
+    <text class="t s" x="480" y="18" text-anchor="middle">停止條件：這個測試過，</text>
+    <text class="t s" x="480" y="32" text-anchor="middle">之前的測試沒壞</text>
+    <text class="t s" x="810" y="18" text-anchor="middle">停止條件：10 秒內說得出</text>
+    <text class="t s" x="810" y="32" text-anchor="middle">「改了什麼、行為沒變」</text>
+    <path class="ar ev" d="M810 100 C 810 190, 150 190, 150 100"/>
+    <text class="t a" x="480" y="185" text-anchor="middle">un-skip 下一個 it / 拿掉下一個 @pytest.mark.skip</text>
+    <path class="life" d="M40 250 L920 250"/>
+    <text class="t s" x="40" y="240">11:30</text><text class="t s" x="920" y="240" text-anchor="end">13:00</text>
+    <rect class="box" x="40" y="258" width="150" height="50" rx="6"/><text class="t b" x="115" y="278" text-anchor="middle">R1</text><text class="t s" x="115" y="296" text-anchor="middle">starter 的紅 · 1 圈 · 15 分</text>
+    <rect class="box" x="210" y="258" width="190" height="50" rx="6"/><text class="t b" x="305" y="278" text-anchor="middle">R2</text><text class="t s" x="305" y="296" text-anchor="middle">拒絕 + happy path · 2 圈 · 20 分</text>
+    <rect class="box" x="420" y="258" width="210" height="50" rx="6"/><text class="t b" x="525" y="278" text-anchor="middle">R3</text><text class="t s" x="525" y="296" text-anchor="middle">倒退 + NotCharging · 2 圈 · 25 分</text>
+    <rect class="box" x="650" y="258" width="200" height="50" rx="6"/><text class="t b" x="750" y="278" text-anchor="middle">R4</text><text class="t s" x="750" y="296" text-anchor="middle">energyWh + only Charging · 2 圈 · 25 分</text>
+    <rect class="box dim" x="866" y="258" width="60" height="50" rx="6"/><text class="t b" x="896" y="278" text-anchor="middle">R8</text><text class="t s" x="896" y="296" text-anchor="middle">前哨</text>
+    <text class="t m" x="40" y="336">git log --oneline（由新到舊）</text>
+    <text class="t m" x="40" y="354">e4f21c0 R4 refactor: rejection base object · 9b7d3aa R4 green: stop yields energyWh 12400 · 51c0e8d R4 red</text>
+    <text class="t m" x="40" y="370">3d9a1f2 R3 green: reject backwards meter · c7e55b1 R3 red · a02c9de R2 green: reject unauthorized idTag · 7f3e6b4 R2 red</text>
+    <text class="t m" x="40" y="386">6c1d2a9 R1 refactor: chargingSession() builder · 2b8f0e1 R1 green: reject start on occupied connector</text>
+  </svg></div>
+  <figcaption>三個「不准」：不准一次寫兩個測試、不准在紅燈時重構、不准在綠燈時順便加 R2。一圈超過 20 分鐘沒綠，代表測試太大，拆。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>圈</th><th>測試名</th><th>紅的原因</th><th>最少的碼</th><th>重構</th><th>commit</th></tr>
+<tr><td>R1</td><td class="nowrap">R1 occupied connector rejects a second start</td><td>Error: TODO R1</td><td>start()：status === Charging → record Rejected(ConnectorOccupied) return；否則設欄位、record Started</td><td>測試抽 chargingSession() builder</td><td class="nowrap">2b8f0e1 · 6c1d2a9</td></tr>
+<tr><td>R2</td><td class="nowrap">R2 unauthorized idTag cannot start charging</td><td>收到 ChargingStarted，期望 Rejected(Unauthorized)</td><td>start()：!authorized → record Rejected(Unauthorized) return</td><td>parseIdTag / wattHours 進 start()</td><td class="nowrap">7f3e6b4 · a02c9de</td></tr>
+<tr><td>R3</td><td class="nowrap">R3 meter values must be monotonic; a backwards value is rejected and recorded</td><td>TODO R3 → 然後 [Metered, Metered, Metered] vs [Metered, Rejected, Metered]</td><td>reportMeter()：value &lt; last → record Rejected(NotMonotonic) return；否則更新 last、record Metered</td><td>NotCharging 分支 + base 物件</td><td class="nowrap">c7e55b1 · 3d9a1f2</td></tr>
+<tr><td>R4</td><td class="nowrap">R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)</td><td>TODO R4 → 然後 energyWh 12500 vs 12400</td><td>stop()：status !== Charging → throw；Completed；record Completed(energyWh = last − start)</td><td>InvalidStateError 訊息含狀態</td><td class="nowrap">51c0e8d · 9b7d3aa · e4f21c0</td></tr>
+</table></div></details>
+
+<section data-replay>
+  <div class="stepper"><button data-next class="primary">下一步</button><button data-all>全部</button><button data-reset>重來</button><span class="cap"></span></div>
+  <ol class="timeline">
+    <li data-item><span class="t">R1 · 讀測試</span> starter 已附紅燈測試。學員對照自己的 <code>rules.md</code> R1（TAG-VISITOR-01、4100 Wh）——一致，不改。注意三件事：<code>toEqual([...])</code> 斷言整個事件陣列，所以「沒有 ChargingStarted」自動被涵蓋；第一次 <code>pullEvents()</code> 清掉 Given 的事件；「原會話不變」斷言三個欄位。
+<pre>it('R1 occupied connector rejects a second start', () =&gt; {
+  const session = ChargingSession.idle('CP-A12-2');
+  session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+  session.pullEvents();
+
+  session.start({ sessionId: 'S-992', idTag: 'TAG-VISITOR-01', authorized: true, meterStartWh: 4100, at: T_1413 });
+
+  expect(session.pullEvents()).toEqual([
+    { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-VISITOR-01', reason: 'ConnectorOccupied', occurredAt: T_1413 },
+  ]);
+  expect(session.sessionId).toBe('S-991');
+  expect(session.idTag).toBe('TAG-MONTHLY-77');
+  expect(session.status).toBe(SessionStatus.Charging);
+});</pre></li>
+    <li data-item class="hot"><span class="t">R1 · 紅</span> <code>cd starter/node &amp;&amp; npm test</code>。正確的紅：測試碰到了 <code>start()</code> 的 <code>throw new Error('TODO R1')</code>。
+<pre class="term">$ npm test
+
+ RUN  v2.1.9 /Users/you/dddguide/starter/node
+
+ ↓ test/assetops/WorkOrder.test.ts (1 test | 1 skipped)
+ <span class="green">✓</span> test/shared/EventBus.test.ts (1 test) 4ms
+ <span class="red">❯</span> test/charging/ChargingSession.test.ts (4 tests | 1 failed | 3 skipped) 6ms
+   <span class="red">✗ ChargingSession aggregate (Day 4) &gt; R1 occupied connector rejects a second start</span> 5ms
+     → TODO R1
+
+ FAIL  test/charging/ChargingSession.test.ts &gt; ChargingSession aggregate (Day 4) &gt; R1 occupied connector rejects a second start
+<span class="red">Error: TODO R1</span>
+ ❯ ChargingSession.start src/charging/domain/ChargingSession.ts:72:11
+     71|   start(input: StartInput): void {
+     72|     throw new Error('TODO R1');
+       |           ^
+ ❯ test/charging/ChargingSession.test.ts:12:13
+
+ Test Files  <span class="red">1 failed</span> | 1 passed | 1 skipped (3)
+      Tests  <span class="red">1 failed</span> | 1 passed | 4 skipped (6)</pre></li>
+    <li data-item><span class="t">R1 · 常見歧路</span> 學員第一版只寫 happy path（設欄位、record ChargingStarted），沒有占用守衛。這時的紅才是 TDD 真正在教的東西——斷言差異直接用業務語言告訴你少了什麼：
+<pre class="term"><span class="red">AssertionError</span>: expected [ { type: 'ChargingStarted', …(5) } ] to deeply equal [ { …(5) } ]
+
+<span class="red">- Expected</span>
+<span class="green">+ Received</span>
+
+  Array [
+    Object {
+      "connectorId": "CP-A12-2",
+      "idTag": "TAG-VISITOR-01",
+<span class="green">+     "meterStartWh": 4100,</span>
+      "occurredAt": "2025-05-20T14:13:00+08:00",
+<span class="red">-     "reason": "ConnectorOccupied",</span>
+<span class="red">-     "type": "ChargingStartRejected",</span>
+<span class="green">+     "sessionId": "S-992",</span>
+<span class="green">+     "type": "ChargingStarted",</span>
+    },
+  ]</pre></li>
+    <li data-item><span class="t">R1 · 最少的碼</span> 只做「占用時拒絕」這一件事，<b>先不要碰 <code>authorized</code></b>（那是 R2）。
+<pre>start(input: StartInput): void {
+  if (this._status === SessionStatus.Charging) {
+    this.record({ type: 'ChargingStartRejected', connectorId: this.connectorId, idTag: input.idTag, reason: 'ConnectorOccupied', occurredAt: input.at });
+    return;                                   // R1: the original session stays untouched
+  }
+  this._sessionId = input.sessionId;
+  this._idTag = input.idTag;
+  this._meterStartWh = input.meterStartWh;
+  this._lastMeterWh = input.meterStartWh;
+  this._startedAt = input.at;
+  this._status = SessionStatus.Charging;
+  this.record({ type: 'ChargingStarted', sessionId: input.sessionId, connectorId: this.connectorId, idTag: input.idTag, meterStartWh: input.meterStartWh, occurredAt: input.at });
+}</pre></li>
+    <li data-item><span class="t">R1 · 綠</span>
+<pre class="term">$ npm test
+
+ ↓ test/assetops/WorkOrder.test.ts (1 test | 1 skipped)
+ <span class="green">✓</span> test/shared/EventBus.test.ts (1 test) 4ms
+ <span class="green">✓</span> test/charging/ChargingSession.test.ts (4 tests | 3 skipped) 5ms
+
+ Test Files  <span class="green">2 passed</span> | 1 skipped (3)
+      Tests  <span class="green">2 passed</span> | 4 skipped (6)
+
+$ git commit -am "R1 green: reject start on occupied connector"</pre></li>
+    <li data-item><span class="t">R1 · 重構</span> 助教問：「接下來每個測試的 Given 都是『S-991 已在 CP-A12-2 上充電』，你打算複製那三行幾次？」學員把 Arrange 抽成測試 builder；產品碼不動。再跑，仍綠，commit <code>R1 refactor: chargingSession() builder</code>。
+<pre>function chargingSession(): ChargingSession {
+  const session = ChargingSession.idle('CP-A12-2');
+  session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+  session.pullEvents();
+  return session;
+}</pre></li>
+    <li data-item><span class="t">R2 · 寫測試</span> 把 <code>it.skip</code> 改成 <code>it</code>，照 starter 註解的 GWT 自己打字：Idle 連接器、<code>authorized: false</code>、期望 <code>Unauthorized</code> 且狀態仍 Idle。
+<pre>it('R2 unauthorized idTag cannot start charging', () =&gt; {
+  const session = ChargingSession.idle('CP-A12-2');
+
+  session.start({ sessionId: 'S-991', idTag: 'TAG-EXPIRED-99', authorized: false, meterStartWh: 100, at: T_1404 });
+
+  expect(session.pullEvents()).toEqual([
+    { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-EXPIRED-99', reason: 'Unauthorized', occurredAt: T_1404 },
+  ]);
+  expect(session.status).toBe(SessionStatus.Idle);
+});</pre></li>
+    <li data-item class="hot"><span class="t">R2 · 紅</span> 因為 R1 那圈刻意沒碰 <code>authorized</code>，這裡的紅是斷言差異，不是 TODO：
+<pre class="term"> <span class="red">❯</span> test/charging/ChargingSession.test.ts (4 tests | 1 failed | 2 skipped) 9ms
+   <span class="red">✗ ChargingSession aggregate (Day 4) &gt; R2 unauthorized idTag cannot start charging</span> 7ms
+     → expected [ { type: 'ChargingStarted', …(5) } ] to deeply equal [ { …(5) } ]
+
+<span class="red">- Expected</span>
+<span class="green">+ Received</span>
+
+  Array [
+    Object {
+      "connectorId": "CP-A12-2",
+      "idTag": "TAG-EXPIRED-99",
+<span class="green">+     "meterStartWh": 100,</span>
+      "occurredAt": "2025-05-20T14:04:00+08:00",
+<span class="red">-     "reason": "Unauthorized",</span>
+<span class="red">-     "type": "ChargingStartRejected",</span>
+<span class="green">+     "sessionId": "S-991",</span>
+<span class="green">+     "type": "ChargingStarted",</span>
+    },
+  ]
+
+ Test Files  <span class="red">1 failed</span> (1)
+      Tests  <span class="red">1 failed</span> | 1 passed | 2 skipped (4)</pre></li>
+    <li data-item><span class="t">R2 · 最少的碼</span> 在 R1 守衛之後、設欄位之前加三行：
+<pre>  if (!input.authorized) {                  // R2
+    this.record({ type: 'ChargingStartRejected', connectorId: this.connectorId, idTag: input.idTag, reason: 'Unauthorized', occurredAt: input.at });
+    return;
+  }</pre></li>
+    <li data-item><span class="t">R2 · 綠 + happy path</span> 綠了，commit <code>R2 green: reject unauthorized idTag</code>。助教再問：「R2 的成功路徑有測試嗎？」學員加 <code>R2 authorized idTag starts charging and records ChargingStarted</code>——一寫就綠。助教：「一寫就綠的測試要驗證：把 <code>record(ChargingStarted)</code> 註解掉再跑，還綠就是測試錯。」學員照做，紅了（少一個事件），恢復，綠。這條測試存在的價值是 <code>meterStartWh: 100</code> 與 <code>occurredAt</code> 欄位名被釘住。
+<pre class="term"> <span class="green">✓</span> test/charging/ChargingSession.test.ts (5 tests | 2 skipped) 6ms
+      Tests  <span class="green">3 passed</span> | 2 skipped (5)</pre></li>
+    <li data-item><span class="t">R2 · 重構</span> 助教：「<code>input.idTag</code> 與 <code>input.meterStartWh</code> 進來時有驗證嗎？<code>Connector.ts</code> 旁邊有 <code>parseIdTag</code> 與 <code>wattHours</code>。」學員在 <code>start()</code> 第一行加 <code>const idTag = parseIdTag(input.idTag)</code>，欄位設定改用 <code>wattHours(input.meterStartWh)</code>。再跑，綠；commit <code>R2 refactor: validate idTag and meterStartWh at the boundary</code>。</li>
+    <li data-item><span class="t">R3 · 寫測試</span> 用 starter 註解的數字：4100 → 3900（拒）→ 8100。斷言事件型別序列、拒絕事件的四個欄位、<code>lastMeterWh</code> 最後是 8100（不是 3900）。
+<pre>it('R3 meter values must be monotonic; a backwards value is rejected and recorded', () =&gt; {
+  const session = chargingSession();
+
+  session.reportMeter(4100, T_1413);
+  session.reportMeter(3900, T_1422); // register went backwards -&gt; reject
+  session.reportMeter(8100, T_1422);
+
+  const events = session.pullEvents();
+  expect(events.map((e) =&gt; e.type)).toEqual(['EnergyMetered', 'MeterValueRejected', 'EnergyMetered']);
+  expect(events[1]).toMatchObject({ reason: 'NotMonotonic', meterWh: 3900, lastMeterWh: 4100, sessionId: 'S-991' });
+  expect(session.lastMeterWh).toBe(8100);
+});</pre></li>
+    <li data-item class="hot"><span class="t">R3 · 紅（兩次）</span> 第一次是 <code>Error: TODO R3</code>。學員寫了「更新 lastMeterWh、record EnergyMetered」兩行就跑——第二次紅才是 R3 的本體：
+<pre class="term">   <span class="red">✗ ChargingSession aggregate (Day 4) &gt; R3 meter values must be monotonic; a backwards value is rejected and recorded</span> 5ms
+     → expected [ 'EnergyMetered', …(2) ] to deeply equal [ 'EnergyMetered', …(2) ]
+
+<span class="red">- Expected</span>
+<span class="green">+ Received</span>
+
+  Array [
+    "EnergyMetered",
+<span class="red">-   "MeterValueRejected",</span>
+<span class="green">+   "EnergyMetered",</span>
+    "EnergyMetered",
+  ]
+
+ ❯ test/charging/ChargingSession.test.ts:55:39
+     55|     expect(events.map((e) =&gt; e.type)).toEqual(['EnergyMetered', 'Meter…
+       |                                       ^</pre></li>
+    <li data-item><span class="t">R3 · 最少的碼</span>
+<pre>reportMeter(meterWh: WattHours, at: string): void {
+  if (meterWh &lt; this._lastMeterWh) {
+    this.record({ type: 'MeterValueRejected', sessionId: this._sessionId!, connectorId: this.connectorId, meterWh, lastMeterWh: this._lastMeterWh, reason: 'NotMonotonic', occurredAt: at });
+    return;
+  }
+  this._lastMeterWh = meterWh;
+  this.record({ type: 'EnergyMetered', sessionId: this._sessionId!, connectorId: this.connectorId, meterWh, occurredAt: at });
+}</pre>
+綠。commit <code>R3 green: reject backwards meter value</code>。</li>
+    <li data-item><span class="t">R3 · 第二個情境 + 重構</span> 助教：「Idle 的連接器收到計量值會怎樣？<code>this._sessionId!</code> 那個驚嘆號在 Idle 時是什麼？」學員加 <code>R3 a meter value on a session that is not charging is rejected</code>（紅：收到 EnergyMetered、sessionId undefined）→ 加 <code>status !== Charging → NotCharging</code> 分支 → 綠。重構：兩個拒絕事件只差 <code>reason</code>，抽成 <code>base</code> 物件展開；<code>wattHours(meterWh)</code> 驗證進來的值。commit <code>R3 refactor: rejection base object</code>。</li>
+    <li data-item><span class="t">R4 · 寫測試</span> Given 起始 100、讀 4100 / 8100 / 12500；When <code>stop('Local', 14:31)</code>；Then <code>energyWh 12400</code>（12.4 kWh）、<code>startedAt 14:04</code>、<code>endedAt 14:31</code>、狀態 Completed。
+<pre>it('R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)', () =&gt; {
+  const session = chargingSession();
+  session.reportMeter(4100, T_1413);
+  session.reportMeter(8100, T_1422);
+  session.reportMeter(12500, T_1431);
+  session.pullEvents();
+
+  session.stop('Local', T_1431);
+
+  expect(session.pullEvents()).toEqual([
+    { type: 'ChargingCompleted', sessionId: 'S-991', connectorId: 'CP-A12-2', energyWh: 12400, startedAt: T_1404, endedAt: T_1431, stopReason: 'Local', occurredAt: T_1431 },
+  ]);
+  expect(session.status).toBe(SessionStatus.Completed);
+});</pre></li>
+    <li data-item class="hot"><span class="t">R4 · 紅（兩次）</span> 第一次 <code>Error: TODO R4</code>。學員第一版 <code>energyWh: this._lastMeterWh</code>——忘了減起始計量。這個紅是全日最有教育意義的一個：
+<pre class="term">   <span class="red">✗ ChargingSession aggregate (Day 4) &gt; R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)</span> 7ms
+     → expected [ { type: 'ChargingCompleted', …(7) } ] to deeply equal [ { type: 'ChargingCompleted', …(7) } ]
+
+  Array [
+    Object {
+      "connectorId": "CP-A12-2",
+      "endedAt": "2025-05-20T14:31:00+08:00",
+<span class="red">-     "energyWh": 12400,</span>
+<span class="green">+     "energyWh": 12500,</span>
+      "occurredAt": "2025-05-20T14:31:00+08:00",
+      "sessionId": "S-991",
+      "startedAt": "2025-05-20T14:04:00+08:00",
+      "stopReason": "Local",
+      "type": "ChargingCompleted",
+    },
+  ]</pre>
+老陳的隱藏事實（帳單多算 100 Wh）就是這一行。</li>
+    <li data-item><span class="t">R4 · 最少的碼</span>
+<pre>stop(stopReason: string, at: string): void {
+  if (this._status !== SessionStatus.Charging) throw new InvalidStateError('stop', this._status);
+  this._status = SessionStatus.Completed;
+  this.record({
+    type: 'ChargingCompleted', sessionId: this._sessionId!, connectorId: this.connectorId,
+    energyWh: this._lastMeterWh - this._meterStartWh,
+    startedAt: this._startedAt!, endedAt: at, stopReason, occurredAt: at,
+  });
+}</pre>
+綠。commit <code>R4 green: stop yields energyWh 12400</code>。</li>
+    <li data-item><span class="t">R4 · 第二個情境</span> <code>R4 only a Charging session can be stopped</code>：Idle 的 <code>stop</code> throw <code>InvalidStateError</code>；Completed 再 <code>stop</code> throw 且訊息含 <code>Completed</code>。這條是「例外 vs 事件」判準的測試化——B1 的取捨在這裡兌現。綠，commit。</li>
+    <li data-item><span class="t">R8 · 前哨 + 收尾</span> 助教問最後一題：「<code>ChargingSession</code> 的建構子與六個方法，有哪一個收 bus 或 repository？<code>pullEvents()</code> 第二次呼叫回什麼？」學員用 R1 測試已經證明了第二點（第一次 pull 清掉 Given 的事件）。<code>reportFault</code> 也順手補一條 <code>a fault during charging marks the session Faulted and reports stillEnergized</code>。跑全部：
+<pre class="term">$ npm test
+
+ ↓ test/assetops/WorkOrder.test.ts (1 test | 1 skipped)
+ <span class="green">✓</span> test/charging/ChargingSession.test.ts (8 tests) 9ms
+ <span class="green">✓</span> test/shared/EventBus.test.ts (1 test) 4ms
+
+ Test Files  <span class="green">2 passed</span> | 1 skipped (3)
+      Tests  <span class="green">9 passed</span> | 1 skipped (10)</pre>
+<code>test-report.md</code> 表格填到 R4。午餐。</li>
+  </ol>
+</section>
+
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /tdd R1</p><p>Day 4 Block 2，語言見 workshop/.config。我要用紅綠重構做 R1「連接器占用時拒絕第二次 Start」。規則：你不可以在我沒有紅燈之前寫任何 src/ 底下的碼；我貼測試你只回「這個測試會因為什麼原因失敗」；我貼結果之後你才可以建議最少的碼，只描述改哪個方法、大概幾行。這是我的測試：（貼上 starter 的 R1 測試）。可以先幫我把 <code>start()</code> 寫好嗎？我大概知道要怎麼寫。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R1 / 情境 1（拒絕）</b> · Step 2</p><p>還沒看到紅燈，不寫產品碼——也不寫「大概」的產品碼。先回答你貼的測試：它會在第 12 行第一次 <code>session.start(...)</code> 就失敗，原因是 <code>start()</code> 目前是 <code>throw new Error('TODO R1')</code>；根本走不到 <code>expect</code>。這是「行為缺」的紅，不是 import 錯，所以算數。</p><p>一個問題：這個測試的 Then 斷言了 <code>pullEvents()</code> 整個陣列等於一個 <code>ChargingStartRejected</code>。如果你的 <code>start()</code> 用 throw 表示占用，這個測試會怎麼死？</p><p><b>下一個最小步驟：</b>跑 <code>cd starter/node &amp;&amp; npm test</code>，把最後 20 行貼給我。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>用 throw 的話第二次 start 就炸了，走不到 expect。貼紅燈：</p><p><code>FAIL test/charging/ChargingSession.test.ts &gt; ChargingSession aggregate (Day 4) &gt; R1 occupied connector rejects a second start</code><br><code>Error: TODO R1</code><br><code>❯ ChargingSession.start src/charging/domain/ChargingSession.ts:72:11</code><br><code>Test Files 1 failed | 1 passed | 1 skipped (3) · Tests 1 failed | 1 passed | 4 skipped (6)</code></p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R1 / 情境 1</b> · Step 4</p><p>正確的紅：只有 R1 紅，EventBus 那條綠，其餘 skip。現在只做「占用時拒絕」這一件事。要讓它綠，最少要動哪個檔案的哪個方法？你打算怎麼判斷「占用」？</p><p>提示範圍：<code>ChargingSession.start()</code> 一個 if（看 <code>this._status</code>）+ 一個 <code>this.record(...)</code> + <code>return</code>，然後是設六個欄位與 <code>record(ChargingStarted)</code>。大約 12 行。<b>先不要判 <code>authorized</code></b>——這個測試兩次都是 true，那是 R2 的紅。</p><p><b>下一個最小步驟：</b>寫完跑 <code>npm test</code>，綠了貼給我，然後 <code>git commit -am "R1 green: reject start on occupied connector"</code>。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>綠了：<code>Test Files 2 passed | 1 skipped (3) · Tests 2 passed | 4 skipped (6)</code>。已 commit。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R1 / 情境 1</b> · Step 6</p><p>一個重構問題（選做）：R2、R3、R4 的測試 Given 都是「S-991 已在 CP-A12-2 上充電、清掉事件」——同樣三行你會複製四次。要不要抽成 <code>chargingSession()</code> builder？產品碼不動。改完再跑一次，仍綠才 commit。</p><p><b>下一個最小步驟：</b>把 R2 的 <code>it.skip</code> 改成 <code>it</code>，自己打測試（<code>TAG-EXPIRED-99</code>、<code>authorized: false</code>、期望 <code>Unauthorized</code> 且狀態 Idle），跑，貼紅燈——這次的紅應該是斷言差異，不是 TODO。</p></div>
+</div>
+<h3 id="b2-code">B2 結束時的完整程式碼</h3>
+<p>下面是 <code>solutions/</code> 的參考版本，也就是學員跑完 R1–R4 + 重構後 <code>src/charging/domain/</code> 應有的樣子。學員的版本可以長得不一樣（例如 <code>Energy</code> 做成 class、拒絕事件抽成 <code>reject()</code> 方法），但六件事必須一致：拒絕是事件、<code>stop</code> 非 Charging 是 throw、時間由 <code>at</code> 帶入、<code>pullEvents()</code> 清空、import 只來自 domain 與 <code>shared/DomainEvent</code>、沒有 OCPP 字眼。</p>
+<div class="file"><p class="path">starter/node/src/charging/domain/ChargingSession.ts · starter/python/src/charging/domain/charging_session.py <span class="chip">交付物</span></p><div class="body">
+<p><code>rehydrate()</code> 是 Day 6 repository 重建狀態用的，今天不需要；starter 骨架沒有它，學員不寫也不扣分。</p>
+<div class="tabs" data-tabs><button data-pane="agg-node" class="on">Node</button><button data-pane="agg-py">Python</button></div>
+<div class="pane on" id="agg-node"><pre>import type { ChargingEvent } from './events.ts';
+import { chargerIdOf, parseConnectorId, type ConnectorId } from './Connector.ts';
+import { parseIdTag, type IdTag } from './IdTag.ts';
+import { wattHours, type WattHours } from './Energy.ts';
+import { InvalidStateError } from './errors.ts';
+
+export const SessionStatus = {
+  Idle: 'Idle',
+  Charging: 'Charging',
+  Completed: 'Completed',
+  Faulted: 'Faulted',
+} as const;
+export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus];
+
+export interface StartInput {
+  sessionId: string;
+  idTag: IdTag;
+  authorized: boolean; // decided by the AuthorizationService port, passed in (aggregate does no I/O)
+  meterStartWh: WattHours;
+  at: string;
+}
+
+// Aggregate root of the Charging context.
+// Invariant: one connector has at most one session in status Charging.
+// The aggregate only records events (R8); it never touches a repository, bus or clock.
+export class ChargingSession {
+  readonly connectorId: ConnectorId;
+  private _status: SessionStatus;
+  private _sessionId?: string;
+  private _idTag?: IdTag;
+  private _meterStartWh: WattHours;
+  private _lastMeterWh: WattHours;
+  private _startedAt?: string;
+  private events: ChargingEvent[] = [];
+
+  private constructor(
+    connectorId: ConnectorId,
+    status: SessionStatus,
+    sessionId?: string,
+    idTag?: IdTag,
+    meterStartWh: WattHours = 0,
+    lastMeterWh: WattHours = 0,
+    startedAt?: string,
+  ) {
+    this.connectorId = connectorId;
+    this._status = status;
+    this._sessionId = sessionId;
+    this._idTag = idTag;
+    this._meterStartWh = meterStartWh;
+    this._lastMeterWh = lastMeterWh;
+    this._startedAt = startedAt;
+  }
+
+  // A fresh, not-yet-started session for a connector.
+  static idle(connectorId: string): ChargingSession {
+    return new ChargingSession(parseConnectorId(connectorId), SessionStatus.Idle);
+  }
+
+  // Used by repositories to rebuild state (Day 6). No events are recorded.
+  static rehydrate(state: {
+    connectorId: string;
+    status: SessionStatus;
+    sessionId?: string;
+    idTag?: string;
+    meterStartWh: number;
+    lastMeterWh: number;
+    startedAt?: string;
+  }): ChargingSession {
+    return new ChargingSession(
+      state.connectorId,
+      state.status,
+      state.sessionId,
+      state.idTag,
+      state.meterStartWh,
+      state.lastMeterWh,
+      state.startedAt,
+    );
+  }
+
+  get status(): SessionStatus {
+    return this._status;
+  }
+  get sessionId(): string | undefined {
+    return this._sessionId;
+  }
+  get idTag(): IdTag | undefined {
+    return this._idTag;
+  }
+  get meterStartWh(): WattHours {
+    return this._meterStartWh;
+  }
+  get lastMeterWh(): WattHours {
+    return this._lastMeterWh;
+  }
+  get startedAt(): string | undefined {
+    return this._startedAt;
+  }
+
+  // R1 + R2
+  start(input: StartInput): void {
+    const idTag = parseIdTag(input.idTag);
+    if (this._status === SessionStatus.Charging) {
+      // R1: the original session stays untouched; we only record the rejection.
+      this.record({
+        type: 'ChargingStartRejected',
+        connectorId: this.connectorId,
+        idTag,
+        reason: 'ConnectorOccupied',
+        occurredAt: input.at,
+      });
+      return;
+    }
+    if (!input.authorized) {
+      // R2
+      this.record({
+        type: 'ChargingStartRejected',
+        connectorId: this.connectorId,
+        idTag,
+        reason: 'Unauthorized',
+        occurredAt: input.at,
+      });
+      return;
+    }
+    this._sessionId = input.sessionId;
+    this._idTag = idTag;
+    this._meterStartWh = wattHours(input.meterStartWh);
+    this._lastMeterWh = this._meterStartWh;
+    this._startedAt = input.at;
+    this._status = SessionStatus.Charging;
+    this.record({
+      type: 'ChargingStarted',
+      sessionId: input.sessionId,
+      connectorId: this.connectorId,
+      idTag,
+      meterStartWh: this._meterStartWh,
+      occurredAt: input.at,
+    });
+  }
+
+  // R3: meter readings must be monotonic (a register never goes backwards).
+  reportMeter(meterWh: WattHours, at: string): void {
+    const value = wattHours(meterWh);
+    const base = {
+      sessionId: this._sessionId ?? '',
+      connectorId: this.connectorId,
+      meterWh: value,
+      lastMeterWh: this._lastMeterWh,
+      occurredAt: at,
+    };
+    if (this._status !== SessionStatus.Charging) {
+      this.record({ type: 'MeterValueRejected', ...base, reason: 'NotCharging' });
+      return;
+    }
+    if (value &lt; this._lastMeterWh) {
+      this.record({ type: 'MeterValueRejected', ...base, reason: 'NotMonotonic' });
+      return;
+    }
+    this._lastMeterWh = value;
+    this.record({
+      type: 'EnergyMetered',
+      sessionId: this._sessionId!,
+      connectorId: this.connectorId,
+      meterWh: value,
+      occurredAt: at,
+    });
+  }
+
+  // R4: only a Charging session can be stopped; energy = last meter - start meter.
+  stop(stopReason: string, at: string): void {
+    if (this._status !== SessionStatus.Charging) throw new InvalidStateError('stop', this._status);
+    this._status = SessionStatus.Completed;
+    this.record({
+      type: 'ChargingCompleted',
+      sessionId: this._sessionId!,
+      connectorId: this.connectorId,
+      energyWh: this._lastMeterWh - this._meterStartWh,
+      startedAt: this._startedAt!,
+      endedAt: at,
+      stopReason,
+      occurredAt: at,
+    });
+  }
+
+  // The charger declared it cannot deliver energy per contract. A charging session is interrupted.
+  reportFault(faultCode: string, at: string): void {
+    const stillEnergized = this._status === SessionStatus.Charging;
+    this._status = SessionStatus.Faulted;
+    this.record({
+      type: 'ChargerFaulted',
+      chargerId: chargerIdOf(this.connectorId),
+      connectorId: this.connectorId,
+      faultCode,
+      stillEnergized,
+      occurredAt: at,
+    });
+  }
+
+  // Application service calls this once, after the command succeeded, to hand events to the Outbox.
+  pullEvents(): ChargingEvent[] {
+    const pulled = this.events;
+    this.events = [];
+    return pulled;
+  }
+
+  private record(event: ChargingEvent): void {
+    this.events.push(event);
+  }
+}
+</pre></div>
+<div class="pane" id="agg-py"><pre>"""Aggregate root of the Charging context.
+
+Invariant: one connector has at most one session in status Charging.
+The aggregate only records events (R8); it never touches a repository, bus or clock.
+"""
+from enum import Enum
+
+from charging.domain.connector import charger_id_of, parse_connector_id
+from charging.domain.energy import watt_hours
+from charging.domain.errors import InvalidStateError
+from charging.domain.events import (
+    ChargerFaulted,
+    ChargingCompleted,
+    ChargingEvent,
+    ChargingStarted,
+    ChargingStartRejected,
+    EnergyMetered,
+    MeterValueRejected,
+)
+from charging.domain.id_tag import parse_id_tag
+
+
+class SessionStatus(str, Enum):
+    IDLE = "Idle"
+    CHARGING = "Charging"
+    COMPLETED = "Completed"
+    FAULTED = "Faulted"
+
+
+class ChargingSession:
+    def __init__(self, connector_id: str, status: SessionStatus = SessionStatus.IDLE) -&gt; None:
+        self.connector_id = parse_connector_id(connector_id)
+        self.status = status
+        self.session_id: str | None = None
+        self.id_tag: str | None = None
+        self.meter_start_wh: int = 0
+        self.last_meter_wh: int = 0
+        self.started_at: str | None = None
+        self._events: list[ChargingEvent] = []
+
+    @classmethod
+    def idle(cls, connector_id: str) -&gt; "ChargingSession":
+        """A fresh, not-yet-started session for a connector."""
+        return cls(connector_id)
+
+    # R1 + R2
+    def start(self, *, session_id: str, id_tag: str, authorized: bool, meter_start_wh: int, at: str) -&gt; None:
+        tag = parse_id_tag(id_tag)
+        if self.status is SessionStatus.CHARGING:
+            # R1: the original session stays untouched; we only record the rejection.
+            self._record(ChargingStartRejected(occurred_at=at, connector_id=self.connector_id, id_tag=tag, reason="ConnectorOccupied"))
+            return
+        if not authorized:  # R2
+            self._record(ChargingStartRejected(occurred_at=at, connector_id=self.connector_id, id_tag=tag, reason="Unauthorized"))
+            return
+        self.session_id = session_id
+        self.id_tag = tag
+        self.meter_start_wh = watt_hours(meter_start_wh)
+        self.last_meter_wh = self.meter_start_wh
+        self.started_at = at
+        self.status = SessionStatus.CHARGING
+        self._record(
+            ChargingStarted(occurred_at=at, session_id=session_id, connector_id=self.connector_id, id_tag=tag, meter_start_wh=self.meter_start_wh)
+        )
+
+    # R3: meter readings must be monotonic (a register never goes backwards).
+    def report_meter(self, meter_wh: int, at: str) -&gt; None:
+        value = watt_hours(meter_wh)
+        rejected = dict(occurred_at=at, session_id=self.session_id or "", connector_id=self.connector_id, meter_wh=value, last_meter_wh=self.last_meter_wh)
+        if self.status is not SessionStatus.CHARGING:
+            self._record(MeterValueRejected(reason="NotCharging", **rejected))
+            return
+        if value &lt; self.last_meter_wh:
+            self._record(MeterValueRejected(reason="NotMonotonic", **rejected))
+            return
+        self.last_meter_wh = value
+        self._record(EnergyMetered(occurred_at=at, session_id=self.session_id or "", connector_id=self.connector_id, meter_wh=value))
+
+    # R4: only a Charging session can be stopped; energy = last meter - start meter.
+    def stop(self, stop_reason: str, at: str) -&gt; None:
+        if self.status is not SessionStatus.CHARGING:
+            raise InvalidStateError("stop", self.status.value)
+        self.status = SessionStatus.COMPLETED
+        self._record(
+            ChargingCompleted(
+                occurred_at=at,
+                session_id=self.session_id or "",
+                connector_id=self.connector_id,
+                energy_wh=self.last_meter_wh - self.meter_start_wh,
+                started_at=self.started_at or "",
+                ended_at=at,
+                stop_reason=stop_reason,
+            )
+        )
+
+    def report_fault(self, fault_code: str, at: str) -&gt; None:
+        """The charger declared it cannot deliver energy per contract. A charging session is interrupted."""
+        still_energized = self.status is SessionStatus.CHARGING
+        self.status = SessionStatus.FAULTED
+        self._record(
+            ChargerFaulted(
+                occurred_at=at,
+                charger_id=charger_id_of(self.connector_id),
+                connector_id=self.connector_id,
+                fault_code=fault_code,
+                still_energized=still_energized,
+            )
+        )
+
+    def pull_events(self) -&gt; list[ChargingEvent]:
+        """Application service calls this once, after the command succeeded, to hand events to the Outbox."""
+        pulled, self._events = self._events, []
+        return pulled
+
+    def _record(self, event: ChargingEvent) -&gt; None:
+        self._events.append(event)
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/charging/domain/Connector.ts · starter/python/src/charging/domain/connector.py <span class="chip">值物件</span></p><div class="body">
+<div class="tabs" data-tabs><button data-pane="vo-conn-node" class="on">Node</button><button data-pane="vo-conn-py">Python</button></div>
+<div class="pane on" id="vo-conn-node"><pre>import { DomainError } from './errors.ts';
+
+// Connector id = "&lt;chargerId&gt;-&lt;connector number&gt;", e.g. "CP-A12-2" is connector 2 of charger CP-A12.
+// Keeping it a string (not a class) keeps the aggregate readable; the helpers below are the "value object".
+export type ConnectorId = string;
+export type ChargerId = string;
+
+const PATTERN = /^(.+)-(\d+)$/;
+
+export function parseConnectorId(raw: string): ConnectorId {
+  if (!PATTERN.test(raw)) throw new DomainError(`Invalid connector id: ${raw}`);
+  return raw;
+}
+
+export function chargerIdOf(connectorId: ConnectorId): ChargerId {
+  const match = PATTERN.exec(connectorId);
+  if (!match) throw new DomainError(`Invalid connector id: ${connectorId}`);
+  return match[1];
+}
+
+export function connectorIdOf(chargerId: ChargerId, connectorNumber: number): ConnectorId {
+  return `${chargerId}-${connectorNumber}`;
+}
+</pre></div>
+<div class="pane" id="vo-conn-py"><pre>"""Connector id = "&lt;charger_id&gt;-&lt;connector number&gt;", e.g. "CP-A12-2" is connector 2 of charger CP-A12.
+Kept as a plain str; these helpers are the "value object" behaviour."""
+import re
+
+from charging.domain.errors import DomainError
+
+_PATTERN = re.compile(r"^(.+)-(\d+)$")
+
+
+def parse_connector_id(raw: str) -&gt; str:
+    if not _PATTERN.match(raw):
+        raise DomainError(f"Invalid connector id: {raw}")
+    return raw
+
+
+def charger_id_of(connector_id: str) -&gt; str:
+    match = _PATTERN.match(connector_id)
+    if not match:
+        raise DomainError(f"Invalid connector id: {connector_id}")
+    return match.group(1)
+
+
+def connector_id_of(charger_id: str, connector_number: int) -&gt; str:
+    return f"{charger_id}-{connector_number}"
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/charging/domain/Energy.ts · starter/python/src/charging/domain/energy.py <span class="chip">值物件</span></p><div class="body">
+<div class="tabs" data-tabs><button data-pane="vo-energy-node" class="on">Node</button><button data-pane="vo-energy-py">Python</button></div>
+<div class="pane on" id="vo-energy-node"><pre>import { DomainError } from './errors.ts';
+
+// Energy is stored in whole watt-hours (integer) to avoid floating point surprises.
+// 12.4 kWh == 12400 Wh.
+export type WattHours = number;
+
+export function wattHours(value: number): WattHours {
+  if (!Number.isInteger(value) || value &lt; 0) throw new DomainError(`Invalid energy: ${value} Wh`);
+  return value;
+}
+
+export function toKwh(wh: WattHours): number {
+  return wh / 1000;
+}
+</pre></div>
+<div class="pane" id="vo-energy-py"><pre>"""Energy is stored in whole watt-hours (int) to avoid floating point surprises. 12.4 kWh == 12400 Wh."""
+from charging.domain.errors import DomainError
+
+
+def watt_hours(value: int) -&gt; int:
+    if not isinstance(value, int) or isinstance(value, bool) or value &lt; 0:
+        raise DomainError(f"Invalid energy: {value} Wh")
+    return value
+
+
+def to_kwh(wh: int) -&gt; float:
+    return wh / 1000
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/charging/domain/IdTag.ts · starter/python/src/charging/domain/id_tag.py <span class="chip">值物件</span></p><div class="body">
+<div class="tabs" data-tabs><button data-pane="vo-idtag-node" class="on">Node</button><button data-pane="vo-idtag-py">Python</button></div>
+<div class="pane on" id="vo-idtag-node"><pre>import { DomainError } from './errors.ts';
+
+// The credential presented to start charging (RFID card, app token). "TAG-MONTHLY-77".
+export type IdTag = string;
+
+export function parseIdTag(raw: string): IdTag {
+  const value = raw.trim();
+  if (value.length === 0 || value.length &gt; 20) throw new DomainError(`Invalid idTag: "${raw}"`);
+  return value;
+}
+</pre></div>
+<div class="pane" id="vo-idtag-py"><pre>"""The credential presented to start charging (RFID card, app token): "TAG-MONTHLY-77"."""
+from charging.domain.errors import DomainError
+
+
+def parse_id_tag(raw: str) -&gt; str:
+    value = raw.strip()
+    if not value or len(value) &gt; 20:
+        raise DomainError(f'Invalid idTag: "{raw}"')
+    return value
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/charging/domain/events.ts · starter/python/src/charging/domain/events.py <span class="chip">領域事件</span></p><div class="body">
+<p>starter 已附，學員不改。看的是欄位名：<code>sessionId</code>、<code>connectorId</code>、<code>energyWh</code>、<code>stopReason</code>、<code>faultCode</code>、<code>stillEnergized</code>——與 §1.8 契約一致；Python 用 <code>frozen=True</code> 保證不可變。</p>
+<div class="tabs" data-tabs><button data-pane="events-node" class="on">Node</button><button data-pane="events-py">Python</button></div>
+<div class="pane on" id="events-node"><pre>import type { DomainEvent } from '../../shared/DomainEvent.ts';
+
+// Domain events of the Charging context. Field names are ubiquitous language,
+// NOT OCPP (no transactionId / meterStart / sampledValue here — that is the ACL's job).
+
+export interface ChargingStarted extends DomainEvent {
+  type: 'ChargingStarted';
+  sessionId: string;
+  connectorId: string;
+  idTag: string;
+  meterStartWh: number;
+}
+
+export type StartRejectReason = 'ConnectorOccupied' | 'Unauthorized';
+
+export interface ChargingStartRejected extends DomainEvent {
+  type: 'ChargingStartRejected';
+  connectorId: string;
+  idTag: string;
+  reason: StartRejectReason;
+}
+
+export interface EnergyMetered extends DomainEvent {
+  type: 'EnergyMetered';
+  sessionId: string;
+  connectorId: string;
+  meterWh: number;
+}
+
+export type MeterRejectReason = 'NotMonotonic' | 'NotCharging';
+
+export interface MeterValueRejected extends DomainEvent {
+  type: 'MeterValueRejected';
+  sessionId: string;
+  connectorId: string;
+  meterWh: number;
+  lastMeterWh: number;
+  reason: MeterRejectReason;
+}
+
+export interface ChargingCompleted extends DomainEvent {
+  type: 'ChargingCompleted';
+  sessionId: string;
+  connectorId: string;
+  energyWh: number; // last meter - start meter (R4)
+  startedAt: string;
+  endedAt: string;
+  stopReason: string;
+}
+
+export interface ChargerFaulted extends DomainEvent {
+  type: 'ChargerFaulted';
+  chargerId: string;
+  connectorId?: string;
+  faultCode: string;
+  stillEnergized: boolean; // true when a session was charging at the moment of the fault
+}
+
+export type ChargingEvent =
+  | ChargingStarted
+  | ChargingStartRejected
+  | EnergyMetered
+  | MeterValueRejected
+  | ChargingCompleted
+  | ChargerFaulted;
+</pre></div>
+<div class="pane" id="events-py"><pre>"""Domain events of the Charging context. Field names are ubiquitous language,
+NOT OCPP (no transaction_id / meter_start / sampled_value here — that is the ACL's job)."""
+from dataclasses import dataclass, field
+from typing import Literal, Union
+
+from shared.domain_event import DomainEvent
+
+
+@dataclass(frozen=True)
+class ChargingStarted(DomainEvent):
+    session_id: str
+    connector_id: str
+    id_tag: str
+    meter_start_wh: int
+    type: str = field(default="ChargingStarted", init=False)
+
+
+@dataclass(frozen=True)
+class ChargingStartRejected(DomainEvent):
+    connector_id: str
+    id_tag: str
+    reason: Literal["ConnectorOccupied", "Unauthorized"]
+    type: str = field(default="ChargingStartRejected", init=False)
+
+
+@dataclass(frozen=True)
+class EnergyMetered(DomainEvent):
+    session_id: str
+    connector_id: str
+    meter_wh: int
+    type: str = field(default="EnergyMetered", init=False)
+
+
+@dataclass(frozen=True)
+class MeterValueRejected(DomainEvent):
+    session_id: str
+    connector_id: str
+    meter_wh: int
+    last_meter_wh: int
+    reason: Literal["NotMonotonic", "NotCharging"]
+    type: str = field(default="MeterValueRejected", init=False)
+
+
+@dataclass(frozen=True)
+class ChargingCompleted(DomainEvent):
+    session_id: str
+    connector_id: str
+    energy_wh: int  # last meter - start meter (R4)
+    started_at: str
+    ended_at: str
+    stop_reason: str
+    type: str = field(default="ChargingCompleted", init=False)
+
+
+@dataclass(frozen=True)
+class ChargerFaulted(DomainEvent):
+    charger_id: str
+    fault_code: str
+    still_energized: bool  # True when a session was charging at the moment of the fault
+    connector_id: str | None = None
+    type: str = field(default="ChargerFaulted", init=False)
+
+
+ChargingEvent = Union[
+    ChargingStarted, ChargingStartRejected, EnergyMetered, MeterValueRejected, ChargingCompleted, ChargerFaulted
+]
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/charging/domain/errors.ts · starter/python/src/charging/domain/errors.py <span class="chip">例外</span></p><div class="body">
+<div class="tabs" data-tabs><button data-pane="errors-node" class="on">Node</button><button data-pane="errors-py">Python</button></div>
+<div class="pane on" id="errors-node"><pre>// Errors are for programming / protocol mistakes (calling Stop on an Idle session).
+// Business "no"s that stakeholders care about are *events* (ChargingStartRejected, MeterValueRejected).
+export class DomainError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DomainError';
+  }
+}
+
+export class InvalidStateError extends DomainError {
+  constructor(action: string, status: string) {
+    super(`Cannot ${action}: session is ${status}`);
+    this.name = 'InvalidStateError';
+  }
+}
+</pre></div>
+<div class="pane" id="errors-py"><pre>"""Errors are for programming / protocol mistakes (calling stop on an Idle session).
+Business "no"s that stakeholders care about are *events* (ChargingStartRejected, MeterValueRejected)."""
+
+
+class DomainError(Exception):
+    pass
+
+
+class InvalidStateError(DomainError):
+    def __init__(self, action: str, status: str) -&gt; None:
+        super().__init__(f"Cannot {action}: session is {status}")
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/test/charging/ChargingSession.test.ts · starter/python/tests/charging/test_charging_session.py <span class="chip">測試 · 8 條</span></p><div class="body">
+<p>八條測試、每條名字是規則句。R2、R3、R4 各兩條（拒絕 + 成功 / 邊界）。Python 的測試名把符號拿掉但保留 <code>R1_</code> 前綴，<code>pytest -k R3</code> 仍可篩。</p>
+<div class="tabs" data-tabs><button data-pane="test-node" class="on">Node</button><button data-pane="test-py">Python</button></div>
+<div class="pane on" id="test-node"><pre>import { describe, expect, it } from 'vitest';
+import { ChargingSession, SessionStatus } from '../../src/charging/domain/ChargingSession.ts';
+import { InvalidStateError } from '../../src/charging/domain/errors.ts';
+
+// Canonical afternoon at SITE-TPE-01 (curriculum §1.6): CP-A12-2, TAG-MONTHLY-77, S-991, 12.4 kWh.
+const T_1404 = '2025-05-20T14:04:00+08:00';
+const T_1413 = '2025-05-20T14:13:00+08:00';
+const T_1422 = '2025-05-20T14:22:00+08:00';
+const T_1431 = '2025-05-20T14:31:00+08:00';
+
+function chargingSession(): ChargingSession {
+  const session = ChargingSession.idle('CP-A12-2');
+  session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+  session.pullEvents();
+  return session;
+}
+
+describe('ChargingSession aggregate', () =&gt; {
+  it('R1 occupied connector rejects a second start', () =&gt; {
+    const session = chargingSession();
+
+    session.start({ sessionId: 'S-992', idTag: 'TAG-VISITOR-01', authorized: true, meterStartWh: 4100, at: T_1413 });
+
+    expect(session.pullEvents()).toEqual([
+      { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-VISITOR-01', reason: 'ConnectorOccupied', occurredAt: T_1413 },
+    ]);
+    // the original session is unchanged
+    expect(session.sessionId).toBe('S-991');
+    expect(session.idTag).toBe('TAG-MONTHLY-77');
+    expect(session.status).toBe(SessionStatus.Charging);
+  });
+
+  it('R2 unauthorized idTag cannot start charging', () =&gt; {
+    const session = ChargingSession.idle('CP-A12-2');
+
+    session.start({ sessionId: 'S-991', idTag: 'TAG-EXPIRED-99', authorized: false, meterStartWh: 100, at: T_1404 });
+
+    expect(session.pullEvents()).toEqual([
+      { type: 'ChargingStartRejected', connectorId: 'CP-A12-2', idTag: 'TAG-EXPIRED-99', reason: 'Unauthorized', occurredAt: T_1404 },
+    ]);
+    expect(session.status).toBe(SessionStatus.Idle);
+  });
+
+  it('R2 authorized idTag starts charging and records ChargingStarted', () =&gt; {
+    const session = ChargingSession.idle('CP-A12-2');
+    session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+
+    expect(session.pullEvents()).toEqual([
+      { type: 'ChargingStarted', sessionId: 'S-991', connectorId: 'CP-A12-2', idTag: 'TAG-MONTHLY-77', meterStartWh: 100, occurredAt: T_1404 },
+    ]);
+    expect(session.status).toBe(SessionStatus.Charging);
+  });
+
+  it('R3 meter values must be monotonic; a backwards value is rejected and recorded', () =&gt; {
+    const session = chargingSession();
+
+    session.reportMeter(4100, T_1413);
+    session.reportMeter(3900, T_1422); // register went backwards -&gt; reject
+    session.reportMeter(8100, T_1422);
+
+    const events = session.pullEvents();
+    expect(events.map((e) =&gt; e.type)).toEqual(['EnergyMetered', 'MeterValueRejected', 'EnergyMetered']);
+    expect(events[1]).toMatchObject({ reason: 'NotMonotonic', meterWh: 3900, lastMeterWh: 4100, sessionId: 'S-991' });
+    expect(session.lastMeterWh).toBe(8100);
+  });
+
+  it('R3 a meter value on a session that is not charging is rejected', () =&gt; {
+    const session = ChargingSession.idle('CP-A12-2');
+    session.reportMeter(4100, T_1413);
+    expect(session.pullEvents()[0]).toMatchObject({ type: 'MeterValueRejected', reason: 'NotCharging' });
+  });
+
+  it('R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)', () =&gt; {
+    const session = chargingSession();
+    session.reportMeter(4100, T_1413);
+    session.reportMeter(8100, T_1422);
+    session.reportMeter(12500, T_1431);
+    session.pullEvents();
+
+    session.stop('Local', T_1431);
+
+    expect(session.pullEvents()).toEqual([
+      {
+        type: 'ChargingCompleted',
+        sessionId: 'S-991',
+        connectorId: 'CP-A12-2',
+        energyWh: 12400,
+        startedAt: T_1404,
+        endedAt: T_1431,
+        stopReason: 'Local',
+        occurredAt: T_1431,
+      },
+    ]);
+    expect(session.status).toBe(SessionStatus.Completed);
+  });
+
+  it('R4 only a Charging session can be stopped', () =&gt; {
+    const idle = ChargingSession.idle('CP-A12-2');
+    expect(() =&gt; idle.stop('Local', T_1431)).toThrow(InvalidStateError);
+
+    const completed = chargingSession();
+    completed.stop('Local', T_1431);
+    expect(() =&gt; completed.stop('Local', T_1431)).toThrow(/Completed/);
+  });
+
+  it('a fault during charging marks the session Faulted and reports stillEnergized', () =&gt; {
+    const session = chargingSession();
+    session.reportFault('GroundFailure', '2025-05-20T18:10:00+08:00');
+
+    expect(session.status).toBe(SessionStatus.Faulted);
+    expect(session.pullEvents()).toEqual([
+      { type: 'ChargerFaulted', chargerId: 'CP-A12', connectorId: 'CP-A12-2', faultCode: 'GroundFailure', stillEnergized: true, occurredAt: '2025-05-20T18:10:00+08:00' },
+    ]);
+  });
+});
+</pre></div>
+<div class="pane" id="test-py"><pre>import pytest
+
+from charging.domain.charging_session import ChargingSession, SessionStatus
+from charging.domain.errors import InvalidStateError
+from charging.domain.events import ChargerFaulted, ChargingCompleted, ChargingStarted, ChargingStartRejected, MeterValueRejected
+
+# Canonical afternoon at SITE-TPE-01 (curriculum §1.6): CP-A12-2, TAG-MONTHLY-77, S-991, 12.4 kWh.
+T_1404 = "2025-05-20T14:04:00+08:00"
+T_1413 = "2025-05-20T14:13:00+08:00"
+T_1422 = "2025-05-20T14:22:00+08:00"
+T_1431 = "2025-05-20T14:31:00+08:00"
+
+
+def charging_session() -&gt; ChargingSession:
+    session = ChargingSession.idle("CP-A12-2")
+    session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+    session.pull_events()
+    return session
+
+
+def test_R1_occupied_connector_rejects_a_second_start():
+    session = charging_session()
+
+    session.start(session_id="S-992", id_tag="TAG-VISITOR-01", authorized=True, meter_start_wh=4100, at=T_1413)
+
+    assert session.pull_events() == [
+        ChargingStartRejected(occurred_at=T_1413, connector_id="CP-A12-2", id_tag="TAG-VISITOR-01", reason="ConnectorOccupied")
+    ]
+    # the original session is unchanged
+    assert session.session_id == "S-991"
+    assert session.id_tag == "TAG-MONTHLY-77"
+    assert session.status is SessionStatus.CHARGING
+
+
+def test_R2_unauthorized_id_tag_cannot_start_charging():
+    session = ChargingSession.idle("CP-A12-2")
+
+    session.start(session_id="S-991", id_tag="TAG-EXPIRED-99", authorized=False, meter_start_wh=100, at=T_1404)
+
+    assert session.pull_events() == [
+        ChargingStartRejected(occurred_at=T_1404, connector_id="CP-A12-2", id_tag="TAG-EXPIRED-99", reason="Unauthorized")
+    ]
+    assert session.status is SessionStatus.IDLE
+
+
+def test_R2_authorized_id_tag_starts_charging_and_records_ChargingStarted():
+    session = ChargingSession.idle("CP-A12-2")
+    session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+
+    assert session.pull_events() == [
+        ChargingStarted(occurred_at=T_1404, session_id="S-991", connector_id="CP-A12-2", id_tag="TAG-MONTHLY-77", meter_start_wh=100)
+    ]
+    assert session.status is SessionStatus.CHARGING
+
+
+def test_R3_meter_values_must_be_monotonic_backwards_value_is_rejected_and_recorded():
+    session = charging_session()
+
+    session.report_meter(4100, T_1413)
+    session.report_meter(3900, T_1422)  # register went backwards -&gt; reject
+    session.report_meter(8100, T_1422)
+
+    events = session.pull_events()
+    assert [e.type for e in events] == ["EnergyMetered", "MeterValueRejected", "EnergyMetered"]
+    assert events[1] == MeterValueRejected(occurred_at=T_1422, session_id="S-991", connector_id="CP-A12-2", meter_wh=3900, last_meter_wh=4100, reason="NotMonotonic")
+    assert session.last_meter_wh == 8100
+
+
+def test_R3_meter_value_on_a_session_that_is_not_charging_is_rejected():
+    session = ChargingSession.idle("CP-A12-2")
+    session.report_meter(4100, T_1413)
+    event = session.pull_events()[0]
+    assert isinstance(event, MeterValueRejected) and event.reason == "NotCharging"
+
+
+def test_R4_stop_completes_the_session_with_energy_wh_last_minus_start_12_4_kwh():
+    session = charging_session()
+    session.report_meter(4100, T_1413)
+    session.report_meter(8100, T_1422)
+    session.report_meter(12500, T_1431)
+    session.pull_events()
+
+    session.stop("Local", T_1431)
+
+    assert session.pull_events() == [
+        ChargingCompleted(occurred_at=T_1431, session_id="S-991", connector_id="CP-A12-2", energy_wh=12400, started_at=T_1404, ended_at=T_1431, stop_reason="Local")
+    ]
+    assert session.status is SessionStatus.COMPLETED
+
+
+def test_R4_only_a_charging_session_can_be_stopped():
+    idle = ChargingSession.idle("CP-A12-2")
+    with pytest.raises(InvalidStateError):
+        idle.stop("Local", T_1431)
+
+    completed = charging_session()
+    completed.stop("Local", T_1431)
+    with pytest.raises(InvalidStateError, match="Completed"):
+        completed.stop("Local", T_1431)
+
+
+def test_fault_during_charging_marks_session_faulted_and_reports_still_energized():
+    session = charging_session()
+    session.report_fault("GroundFailure", "2025-05-20T18:10:00+08:00")
+
+    assert session.status is SessionStatus.FAULTED
+    assert session.pull_events() == [
+        ChargerFaulted(occurred_at="2025-05-20T18:10:00+08:00", charger_id="CP-A12", connector_id="CP-A12-2", fault_code="GroundFailure", still_energized=True)
+    ]
+</pre></div>
+</div></div>
+<div class="teach"><p class="head">講師註 · Block 2</p>
+<p><b>驗收看哪一行：</b>不是程式碼，是 <code>git log --oneline</code>。要看到 <code>R1 green</code> → <code>R1 refactor</code> → <code>R2 red</code>（或 <code>R2 green</code>）→ … 至少五個 green commit；只有一個 <code>"day4 done"</code> 的學員，就是「先寫完再補測試」，問他：「你的 <code>ChargingStartRejected</code> 是怎麼被斷言的？」（用 throw 的人答不出來）。第二行看 <code>start()</code> 的第一個 if：是 <code>this._status === Charging</code>，還是 <code>await repo.findActiveByConnector(...)</code>——後者代表 B1 的「聚合身份」沒定好。第三行看 <code>stop()</code>：<code>energyWh: this._lastMeterWh - this._meterStartWh</code>——忘了減的人，帳單多 100 Wh。</p>
+<p><b>學員最常想跳過紅燈的三個時刻：</b>(1) R1 的紅是 <code>TODO R1</code>，太「無聊」，學員覺得不用貼直接寫——但貼了才會被 <code>/tdd</code> 提醒「先不要碰 authorized」；(2) R2 happy path 一寫就綠，學員不驗證測試本身——要求他把 <code>record(ChargingStarted)</code> 註解掉看它紅；(3) R3 第一次紅是 TODO、第二次才是斷言差異，學員在第一次紅後就把 R3 兩個分支一起寫完——不算錯，但他少看了一次「業務語言的 diff」。</p>
+<p><b>Python 坑：</b>venv 沒 activate 就 <code>pytest</code> 會用到系統的 pytest（或找不到）；<code>tests/</code> 底下<b>不要加 <code>__init__.py</code></b>——pytest prepend 模式會把 <code>tests/</code> 放到 <code>sys.path</code> 最前面，<code>tests/adapters/</code> 就會遮住 <code>src/adapters/</code>，出現 <code>ModuleNotFoundError: No module named 'adapters.persistence.in_memory_…'</code>（我在準備這一頁時親自踩到）；frozen dataclass 的 <code>type</code> 欄位是 <code>init=False</code>，學員在斷言時寫 <code>ChargingStartRejected(type=…)</code> 會 TypeError。</p>
+<p><b>時間：</b>R1–R4 八個循環 90 分鐘剛好，前提是 B1 已經決定授權位置與 stop 失敗方式；沒決定的學員會在 R2 / R4 各卡 15 分鐘。落後的學員照教材「最小可行版本」：R1、R2、R4 各一條，R3 下午或明早補。</p>
+</div>
+
+<p class="eyebrow">BLOCK 3 · WorkOrder + R5 + Repository port（90 分）</p>
+<h2 id="b3">03 · 聚合查不到別的聚合，所以 R5 要分三層</h2>
+<p><b>實況。</b>14:00 從 <code>model.md</code> 補 <code>WorkOrder</code> 的形狀開始（10 分鐘）。14:10 用 <code>/tdd R5</code> 開第一個循環——但 R5 跟 R1–R4 不一樣：「同樁同故障碼在工單開放期間是否已有工單」需要查其他工單，聚合做不到。學員通常在這裡卡 10 分鐘想把 repository 塞進 <code>WorkOrder.open()</code>；助教用「你的聚合怎麼知道 <code>WO-2207</code> 存在？」把它擋回去。14:20–14:55 兩個 R5 測試 + 一個生命週期測試紅綠重構（starter 只有 <code>throw new Error('TODO R5: WorkOrder.open')</code>，四個方法都要填）。14:55–15:20 寫兩個 Repository port 與兩個 in-memory adapter，加一條 repo 契約測試。15:20–15:30 <code>/aggregate-review ChargingSession WorkOrder</code> 審程式碼；修掉指出的洩漏；跑全部、貼進 <code>test-report.md</code>。</p>
+
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /tdd R5</p><p>Day 4 Block 3。第二個聚合 WorkOrder，守 R5「同樁同故障碼在工單開放期間重複申告，只保留一張根因工單；第二次附加重複申告」。例子在 rules.md R5 段：18:10 CP-A12 GroundFailure 開 WO-2208，18:10:08 同樁再報同碼 → 仍一張、附加。我打算把「查有沒有開放中的工單」放在 Repository port，聚合只負責 attachDuplicateReport。先問我兩個問題確認切法，然後照 /tdd 規則。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R5 / 情境 1</b> · Step 1</p><p>切法先問兩題：</p><p>1. 「同一故障」你怎麼定義？<code>chargerId</code> 一樣就算？還是 <code>chargerId + faultCode</code>？如果 18:10 是 <code>GroundFailure</code>、18:12 同一根樁報 <code>OverTemperature</code>——阿豪會希望是一張單還是兩張？</p><p>2. 「開放期間」誰判斷？<code>WorkOrder</code> 自己知道自己 <code>isOpen</code>；但「有沒有一張開放中的 WO-2208」是集合層級的問題。你說 port 查、聚合附加——那<b>決定</b>「查到就附加、沒查到就開新單」的那個 if 住在哪一層？</p><p><b>下一個最小步驟：</b>把答案寫進 <code>model.md</code> 的 R5 分層那一列（三層各一句），再貼第一個測試。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>1. <code>chargerId + faultCode</code>，跟 §1.8 的去重鍵一樣；不同故障碼是不同根因，阿豪要兩張單。2. 三層：port <code>findOpenByFault(chargerId, faultCode)</code> 負責<b>查</b>；應用層（明天的 FaultProcessManager）負責<b>決定</b>開新單或附加；聚合負責<b>守</b>「只有 isOpen 才能附加」並記錄 <code>DuplicateFaultReported</code>。第一個測試：</p><p><code>it('R5 same charger + fault code while open: second report is appended, no second work order', ...)</code>——存 WO-2208 → <code>findOpenByFault('CP-A12','GroundFailure')</code> 回它 → <code>appendDuplicateReport(18:10:08)</code> → <code>repo.all()</code> 長度 1、<code>duplicateReportCount === 1</code>、事件 <code>[WorkOrderOpened, DuplicateFaultReported]</code>。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R5 / 情境 1</b> · Step 3</p><p>分層對，而且你發現了這個測試其實跨了兩層（聚合 + in-memory port）——那是可以的，因為 in-memory 是 fake 不是 mock，測試讀起來仍像規格。一個提醒：<code>InMemoryWorkOrderRepository</code> 今天還不存在，所以你的紅燈第一次會是 import 錯，<b>那不算紅</b>。先用五行寫出 <code>findById / findOpenByFault / save / all</code> 的 in-memory（它是 adapter，不受「沒紅燈不寫」限制），再跑。</p><p><b>下一個最小步驟：</b>寫 <code>src/adapters/persistence/InMemoryWorkOrderRepository.ts</code>，跑 <code>npx vitest run test/assetops</code>，貼紅燈——期望看到 <code>TODO R5: WorkOrder.open</code>。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>紅了：<code>✗ R5 same charger + fault code while open: second report is appended, no second work order → TODO R5: WorkOrder.open</code>，<code>❯ Function.open src/assetops/domain/WorkOrder.ts:32:11</code>。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>🔴🟢🔁 <b>循環 R5 / 情境 1</b> · Step 4</p><p>正確的紅。要綠，最少動 <code>WorkOrder.open()</code> 與 <code>appendDuplicateReport()</code> 兩個方法：<code>open</code> 是 new + <code>reports.push(at)</code> + <code>record(WorkOrderOpened)</code> 三行；<code>appendDuplicateReport</code> 是 <code>if (!this.isOpen) throw</code> + push + record 三行。<code>assign</code> / <code>close</code> 先留 TODO——它們是第三個測試的紅。</p><p><b>下一個最小步驟：</b>寫完跑、綠了 commit <code>R5 green: append duplicate report to open work order</code>，然後寫第二條 <code>R5 after the work order is closed, the same fault opens a NEW work order</code>——它會逼你實作 <code>close()</code>。</p></div>
+</div>
+
+<figure class="wide">
+  <p class="title">R5 分三層：port 查、應用層決定、聚合守</p><p class="subtitle">18:10 第一次申告開 WO-2208；18:10:08 同樁同碼再申告 → 附加；18:18 關單後再申告 → 新單。今天只做右邊兩層，中間那層是明天的 FaultProcessManager。</p>
+  <div class="diagram"><svg viewBox="0 0 960 470" role="img" aria-label="R5 三層：WorkOrderRepository port 查詢、應用層決策、WorkOrder 聚合守衛">
+    <rect class="zone plain" x="20" y="20" width="300" height="440" rx="10"/><text class="t b" x="170" y="44" text-anchor="middle">應用層（Day 5）</text><text class="t s" x="170" y="60" text-anchor="middle">assetops/application/FaultProcessManager</text>
+    <rect class="zone" x="330" y="20" width="300" height="440" rx="10"/><text class="t b" x="480" y="44" text-anchor="middle">port + in-memory adapter（今天）</text><text class="t s" x="480" y="60" text-anchor="middle">WorkOrderRepository · InMemoryWorkOrderRepository</text>
+    <rect class="zone plain" x="640" y="20" width="296" height="440" rx="10"/><text class="t b" x="788" y="44" text-anchor="middle">聚合（今天）</text><text class="t s" x="788" y="60" text-anchor="middle">assetops/domain/WorkOrder</text>
+    <text class="t a" x="36" y="96">18:10 · ChargerFaulted(CP-A12, GroundFailure)</text>
+    <rect class="box" x="36" y="104" width="268" height="44" rx="6"/><text class="t m" x="170" y="122" text-anchor="middle">existing = findOpenByFault(</text><text class="t m" x="170" y="138" text-anchor="middle">'CP-A12', 'GroundFailure')</text>
+    <path class="ar" d="M304 126 L344 126"/>
+    <rect class="box" x="346" y="104" width="268" height="44" rx="6"/><text class="t s" x="480" y="122" text-anchor="middle">掃 byId：chargerId ∧ faultCode ∧ isOpen</text><text class="t s" x="480" y="138" text-anchor="middle">→ undefined（沒有開放中的）</text>
+    <rect class="box dim" x="36" y="160" width="268" height="44" rx="6"/><text class="t m" x="170" y="178" text-anchor="middle">existing 為空 →</text><text class="t m" x="170" y="194" text-anchor="middle">WorkOrder.open(WO-2208, at)</text>
+    <path class="ar" d="M304 182 L654 182"/>
+    <rect class="box core" x="656" y="160" width="268" height="44" rx="6"/><text class="t m" x="790" y="178" text-anchor="middle">open() → reports=[18:10]</text><text class="t s" x="790" y="194" text-anchor="middle">記錄 WorkOrderOpened</text>
+    <text class="t a" x="36" y="232">18:10:08 · 同樁同碼再申告</text>
+    <rect class="box" x="36" y="240" width="268" height="44" rx="6"/><text class="t m" x="170" y="258" text-anchor="middle">existing = findOpenByFault(</text><text class="t m" x="170" y="274" text-anchor="middle">'CP-A12', 'GroundFailure')</text>
+    <path class="ar" d="M304 262 L344 262"/>
+    <rect class="box" x="346" y="240" width="268" height="44" rx="6"/><text class="t s" x="480" y="266" text-anchor="middle">→ WO-2208（isOpen）</text>
+    <rect class="box dim" x="36" y="296" width="268" height="44" rx="6"/><text class="t m" x="170" y="314" text-anchor="middle">有 → existing.</text><text class="t m" x="170" y="330" text-anchor="middle">appendDuplicateReport(18:10:08)</text>
+    <path class="ar" d="M304 318 L654 318"/>
+    <rect class="box core" x="656" y="296" width="268" height="44" rx="6"/><text class="t m" x="790" y="314" text-anchor="middle">isOpen ✓ → reports=</text><text class="t m" x="790" y="330" text-anchor="middle">[18:10, 18:10:08]</text>
+    <text class="t s" x="790" y="358" text-anchor="middle">duplicateReportCount = 1 · DuplicateFaultReported</text>
+    <text class="t a" x="36" y="380">18:18 · close('Repaired') 後再申告</text>
+    <rect class="box" x="36" y="388" width="268" height="44" rx="6"/><text class="t s" x="170" y="406" text-anchor="middle">findOpenByFault → undefined</text><text class="t s" x="170" y="422" text-anchor="middle">→ open(WO-2209)</text>
+    <rect class="box" x="346" y="388" width="268" height="44" rx="6"/><text class="t s" x="480" y="406" text-anchor="middle">WO-2208.isOpen = false</text><text class="t s" x="480" y="422" text-anchor="middle">被略過</text>
+    <rect class="box core" x="656" y="388" width="268" height="44" rx="6"/><text class="t s" x="790" y="406" text-anchor="middle">WO-2208.appendDuplicateReport</text><text class="t s" x="790" y="422" text-anchor="middle">→ throw closed</text>
+    <text class="t s" x="36" y="452">不同故障碼（OverTemperature）→ findOpenByFault 回 undefined → 第二張單：不同根因不同單，這是阿豪要的行為。</text>
+  </svg></div>
+  <figcaption>聚合永遠不知道其他工單存在。它守的只有「開放期間才能附加、關單後任何操作都是呼叫端錯誤」。倉庫的一致性（同鍵只有一張開放單）由 port 查詢 + 應用層決策維持，Day 6 再加 DB 的部分唯一索引當第二道防線。</figcaption>
+</figure>
+<details class="datatable"><summary>圖中資料</summary><div class="table-scroll"><table>
+<tr><th>時間</th><th>應用層（明天）</th><th>port 回什麼</th><th>聚合做什麼</th><th>結果</th></tr>
+<tr><td class="nowrap">18:10</td><td>findOpenByFault('CP-A12','GroundFailure') → 空 → WorkOrder.open</td><td>undefined</td><td>open()：reports=[18:10]，記錄 WorkOrderOpened</td><td>1 張單 WO-2208</td></tr>
+<tr><td class="nowrap">18:10:08</td><td>findOpenByFault → 有 → appendDuplicateReport</td><td>WO-2208</td><td>isOpen → reports 加一筆，記錄 DuplicateFaultReported</td><td>仍 1 張；duplicateReportCount 1</td></tr>
+<tr><td class="nowrap">18:12</td><td>findOpenByFault('CP-A12','OverTemperature') → 空 → open</td><td>undefined（不同碼）</td><td>open()</td><td>2 張單（不同根因）</td></tr>
+<tr><td class="nowrap">18:18 後</td><td>findOpenByFault('CP-A12','GroundFailure') → 空 → open WO-2209</td><td>undefined（WO-2208 已 Closed）</td><td>對 WO-2208 呼叫 appendDuplicateReport → throw</td><td>新單 WO-2209</td></tr>
+</table></div></details>
+<div class="file"><p class="path">starter/node/src/assetops/domain/WorkOrder.ts · starter/python/src/assetops/domain/work_order.py <span class="chip">交付物</span></p><div class="body">
+<p><code>WorkOrder</code> 只知道自己：開放期間才能附加申告、關單後任何操作都 throw。它<b>不</b>查有沒有別的工單——那是 port 與應用層的事。</p>
+<div class="tabs" data-tabs><button data-pane="wo-node" class="on">Node</button><button data-pane="wo-py">Python</button></div>
+<div class="pane on" id="wo-node"><pre>import type { WorkOrderEvent } from './events.ts';
+
+export const WorkOrderStatus = { Open: 'Open', Assigned: 'Assigned', Closed: 'Closed' } as const;
+export type WorkOrderStatus = (typeof WorkOrderStatus)[keyof typeof WorkOrderStatus];
+
+// Aggregate root of AssetOps: HQ's promise to fix one root cause on one charger.
+// Invariant (R5): one open root-cause WO per (chargerId, faultCode) — enforced by whoever
+// opens WOs (FaultProcessManager + repository lookup), recorded here as duplicate reports.
+export class WorkOrder {
+  private events: WorkOrderEvent[] = [];
+  private _status: WorkOrderStatus = WorkOrderStatus.Open;
+  private _technicianId?: string;
+  private _outcome?: string;
+  readonly reports: string[] = []; // occurredAt of every report, first one included
+
+  readonly workOrderId: string;
+  readonly chargerId: string;
+  readonly faultCode: string;
+  readonly connectorId: string | undefined;
+  readonly openedAt: string;
+
+  private constructor(workOrderId: string, chargerId: string, faultCode: string, connectorId: string | undefined, openedAt: string) {
+    this.workOrderId = workOrderId;
+    this.chargerId = chargerId;
+    this.faultCode = faultCode;
+    this.connectorId = connectorId;
+    this.openedAt = openedAt;
+  }
+
+  static open(input: { workOrderId: string; chargerId: string; connectorId?: string; faultCode: string; at: string }): WorkOrder {
+    const wo = new WorkOrder(input.workOrderId, input.chargerId, input.faultCode, input.connectorId, input.at);
+    wo.reports.push(input.at);
+    wo.record({
+      type: 'WorkOrderOpened',
+      workOrderId: wo.workOrderId,
+      chargerId: wo.chargerId,
+      ...(input.connectorId ? { connectorId: input.connectorId } : {}),
+      faultCode: wo.faultCode,
+      occurredAt: input.at,
+    });
+    return wo;
+  }
+
+  get status(): WorkOrderStatus {
+    return this._status;
+  }
+  get technicianId(): string | undefined {
+    return this._technicianId;
+  }
+  get outcome(): string | undefined {
+    return this._outcome;
+  }
+  get isOpen(): boolean {
+    return this._status !== WorkOrderStatus.Closed;
+  }
+  get duplicateReportCount(): number {
+    return this.reports.length - 1;
+  }
+
+  // R5
+  appendDuplicateReport(at: string): void {
+    if (!this.isOpen) throw new Error(`Cannot append report: work order ${this.workOrderId} is closed`);
+    this.reports.push(at);
+    this.record({
+      type: 'DuplicateFaultReported',
+      workOrderId: this.workOrderId,
+      chargerId: this.chargerId,
+      faultCode: this.faultCode,
+      occurredAt: at,
+    });
+  }
+
+  assign(technicianId: string, at: string): void {
+    if (!this.isOpen) throw new Error(`Cannot assign: work order ${this.workOrderId} is closed`);
+    this._technicianId = technicianId;
+    this._status = WorkOrderStatus.Assigned;
+    this.record({ type: 'TechnicianAssigned', workOrderId: this.workOrderId, technicianId, occurredAt: at });
+  }
+
+  close(outcome: string, at: string): void {
+    if (!this.isOpen) throw new Error(`Work order ${this.workOrderId} is already closed`);
+    this._status = WorkOrderStatus.Closed;
+    this._outcome = outcome;
+    this.record({ type: 'WorkOrderClosed', workOrderId: this.workOrderId, chargerId: this.chargerId, outcome, occurredAt: at });
+  }
+
+  pullEvents(): WorkOrderEvent[] {
+    const pulled = this.events;
+    this.events = [];
+    return pulled;
+  }
+
+  private record(event: WorkOrderEvent): void {
+    this.events.push(event);
+  }
+}
+</pre></div>
+<div class="pane" id="wo-py"><pre>"""Aggregate root of AssetOps: HQ's promise to fix one root cause on one charger.
+
+Invariant (R5): one open root-cause WO per (charger_id, fault_code) — enforced by whoever opens
+WOs (FaultProcessManager + repository lookup), recorded here as duplicate reports.
+"""
+from enum import Enum
+
+from assetops.domain.events import DuplicateFaultReported, TechnicianAssigned, WorkOrderClosed, WorkOrderEvent, WorkOrderOpened
+
+
+class WorkOrderStatus(str, Enum):
+    OPEN = "Open"
+    ASSIGNED = "Assigned"
+    CLOSED = "Closed"
+
+
+class WorkOrder:
+    def __init__(self, work_order_id: str, charger_id: str, fault_code: str, connector_id: str | None, opened_at: str) -&gt; None:
+        self.work_order_id = work_order_id
+        self.charger_id = charger_id
+        self.fault_code = fault_code
+        self.connector_id = connector_id
+        self.opened_at = opened_at
+        self.status = WorkOrderStatus.OPEN
+        self.technician_id: str | None = None
+        self.outcome: str | None = None
+        self.reports: list[str] = []  # occurred_at of every report, first one included
+        self._events: list[WorkOrderEvent] = []
+
+    @classmethod
+    def open(cls, *, work_order_id: str, charger_id: str, fault_code: str, at: str, connector_id: str | None = None) -&gt; "WorkOrder":
+        wo = cls(work_order_id, charger_id, fault_code, connector_id, at)
+        wo.reports.append(at)
+        wo._record(WorkOrderOpened(occurred_at=at, work_order_id=work_order_id, charger_id=charger_id, fault_code=fault_code, connector_id=connector_id))
+        return wo
+
+    @property
+    def is_open(self) -&gt; bool:
+        return self.status is not WorkOrderStatus.CLOSED
+
+    @property
+    def duplicate_report_count(self) -&gt; int:
+        return len(self.reports) - 1
+
+    # R5
+    def append_duplicate_report(self, at: str) -&gt; None:
+        if not self.is_open:
+            raise ValueError(f"Cannot append report: work order {self.work_order_id} is closed")
+        self.reports.append(at)
+        self._record(DuplicateFaultReported(occurred_at=at, work_order_id=self.work_order_id, charger_id=self.charger_id, fault_code=self.fault_code))
+
+    def assign(self, technician_id: str, at: str) -&gt; None:
+        if not self.is_open:
+            raise ValueError(f"Cannot assign: work order {self.work_order_id} is closed")
+        self.technician_id = technician_id
+        self.status = WorkOrderStatus.ASSIGNED
+        self._record(TechnicianAssigned(occurred_at=at, work_order_id=self.work_order_id, technician_id=technician_id))
+
+    def close(self, outcome: str, at: str) -&gt; None:
+        if not self.is_open:
+            raise ValueError(f"Work order {self.work_order_id} is already closed")
+        self.status = WorkOrderStatus.CLOSED
+        self.outcome = outcome
+        self._record(WorkOrderClosed(occurred_at=at, work_order_id=self.work_order_id, charger_id=self.charger_id, outcome=outcome))
+
+    def pull_events(self) -&gt; list[WorkOrderEvent]:
+        pulled, self._events = self._events, []
+        return pulled
+
+    def _record(self, event: WorkOrderEvent) -&gt; None:
+        self._events.append(event)
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/assetops/domain/events.ts · starter/python/src/assetops/domain/events.py <span class="chip">領域事件</span></p><div class="body">
+<p>對外只有 <code>WorkOrderOpened</code> → <code>ops.work_order.opened.v1</code> 與 <code>WorkOrderClosed</code> → <code>ops.work_order.closed.v1</code>；<code>DuplicateFaultReported</code> 與 <code>TechnicianAssigned</code> 留在 AssetOps 內（Vicky 的隱藏事實：不對帳務發「技術員已出發」）。</p>
+<div class="tabs" data-tabs><button data-pane="wo-ev-node" class="on">Node</button><button data-pane="wo-ev-py">Python</button></div>
+<div class="pane on" id="wo-ev-node"><pre>import type { DomainEvent } from '../../shared/DomainEvent.ts';
+
+export interface WorkOrderOpened extends DomainEvent {
+  type: 'WorkOrderOpened';
+  workOrderId: string;
+  chargerId: string;
+  connectorId?: string;
+  faultCode: string;
+}
+
+// R5: a repeated report while the WO is open is attached, it does not open a second WO.
+export interface DuplicateFaultReported extends DomainEvent {
+  type: 'DuplicateFaultReported';
+  workOrderId: string;
+  chargerId: string;
+  faultCode: string;
+}
+
+export interface TechnicianAssigned extends DomainEvent {
+  type: 'TechnicianAssigned';
+  workOrderId: string;
+  technicianId: string;
+}
+
+export interface WorkOrderClosed extends DomainEvent {
+  type: 'WorkOrderClosed';
+  workOrderId: string;
+  chargerId: string;
+  outcome: string; // "Repaired" | "ReplacedConnector" | "NoFaultFound" ...
+}
+
+export type WorkOrderEvent = WorkOrderOpened | DuplicateFaultReported | TechnicianAssigned | WorkOrderClosed;
+</pre></div>
+<div class="pane" id="wo-ev-py"><pre>from dataclasses import dataclass, field
+from typing import Union
+
+from shared.domain_event import DomainEvent
+
+
+@dataclass(frozen=True)
+class WorkOrderOpened(DomainEvent):
+    work_order_id: str
+    charger_id: str
+    fault_code: str
+    connector_id: str | None = None
+    type: str = field(default="WorkOrderOpened", init=False)
+
+
+@dataclass(frozen=True)
+class DuplicateFaultReported(DomainEvent):
+    """R5: a repeated report while the WO is open is attached, it does not open a second WO."""
+    work_order_id: str
+    charger_id: str
+    fault_code: str
+    type: str = field(default="DuplicateFaultReported", init=False)
+
+
+@dataclass(frozen=True)
+class TechnicianAssigned(DomainEvent):
+    work_order_id: str
+    technician_id: str
+    type: str = field(default="TechnicianAssigned", init=False)
+
+
+@dataclass(frozen=True)
+class WorkOrderClosed(DomainEvent):
+    work_order_id: str
+    charger_id: str
+    outcome: str  # "Repaired" | "ReplacedConnector" | "NoFaultFound" ...
+    type: str = field(default="WorkOrderClosed", init=False)
+
+
+WorkOrderEvent = Union[WorkOrderOpened, DuplicateFaultReported, TechnicianAssigned, WorkOrderClosed]
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/test/assetops/WorkOrder.test.ts · starter/python/tests/assetops/test_work_order.py <span class="chip">測試 · 4 條</span></p><div class="body">
+<p>R5 的兩條測試都用 in-memory repository：第一條證明「查到既有單 → 附加 → 倉庫仍一張」；第二條證明「關單後 <code>findOpenByFault</code> 回空 → 下一次會開新單（WO-2209）」。</p>
+<div class="tabs" data-tabs><button data-pane="wo-test-node" class="on">Node</button><button data-pane="wo-test-py">Python</button></div>
+<div class="pane on" id="wo-test-node"><pre>import { describe, expect, it } from 'vitest';
+import { WorkOrder, WorkOrderStatus } from '../../src/assetops/domain/WorkOrder.ts';
+import { InMemoryWorkOrderRepository } from '../../src/adapters/persistence/InMemoryWorkOrderRepository.ts';
+
+const T_1810 = '2025-05-20T18:10:00+08:00';
+const T_1810_08 = '2025-05-20T18:10:08+08:00';
+const T_1818 = '2025-05-20T18:18:00+08:00';
+
+describe('WorkOrder aggregate (Day 4 B3)', () =&gt; {
+  it('opens a work order for a charger fault and records WorkOrderOpened', () =&gt; {
+    const wo = WorkOrder.open({ workOrderId: 'WO-2208', chargerId: 'CP-A12', connectorId: 'CP-A12-2', faultCode: 'GroundFailure', at: T_1810 });
+
+    expect(wo.status).toBe(WorkOrderStatus.Open);
+    expect(wo.pullEvents()).toEqual([
+      { type: 'WorkOrderOpened', workOrderId: 'WO-2208', chargerId: 'CP-A12', connectorId: 'CP-A12-2', faultCode: 'GroundFailure', occurredAt: T_1810 },
+    ]);
+  });
+
+  it('R5 same charger + fault code while open: second report is appended, no second work order', async () =&gt; {
+    const repo = new InMemoryWorkOrderRepository();
+    const first = WorkOrder.open({ workOrderId: 'WO-2208', chargerId: 'CP-A12', faultCode: 'GroundFailure', at: T_1810 });
+    await repo.save(first);
+
+    // second report 8 seconds later: the intake looks up the open WO before opening a new one
+    const existing = await repo.findOpenByFault('CP-A12', 'GroundFailure');
+    expect(existing?.workOrderId).toBe('WO-2208');
+    existing!.appendDuplicateReport(T_1810_08);
+    await repo.save(existing!);
+
+    expect(repo.all()).toHaveLength(1);
+    expect(existing!.duplicateReportCount).toBe(1);
+    expect(existing!.pullEvents().map((e) =&gt; e.type)).toEqual(['WorkOrderOpened', 'DuplicateFaultReported']);
+  });
+
+  it('R5 after the work order is closed, the same fault opens a NEW work order', async () =&gt; {
+    const repo = new InMemoryWorkOrderRepository();
+    const first = WorkOrder.open({ workOrderId: 'WO-2208', chargerId: 'CP-A12', faultCode: 'GroundFailure', at: T_1810 });
+    first.close('Repaired', T_1818);
+    await repo.save(first);
+
+    expect(await repo.findOpenByFault('CP-A12', 'GroundFailure')).toBeUndefined();
+    expect(() =&gt; first.appendDuplicateReport(T_1818)).toThrow(/closed/);
+  });
+
+  it('assign then close walks the fault lifecycle', () =&gt; {
+    const wo = WorkOrder.open({ workOrderId: 'WO-2208', chargerId: 'CP-A12', faultCode: 'GroundFailure', at: T_1810 });
+    wo.assign('TECH-HAO', T_1810);
+    wo.close('Repaired', T_1818);
+
+    expect(wo.status).toBe(WorkOrderStatus.Closed);
+    expect(wo.technicianId).toBe('TECH-HAO');
+    expect(wo.pullEvents().map((e) =&gt; e.type)).toEqual(['WorkOrderOpened', 'TechnicianAssigned', 'WorkOrderClosed']);
+    expect(() =&gt; wo.close('Repaired', T_1818)).toThrow(/already closed/);
+  });
+});
+</pre></div>
+<div class="pane" id="wo-test-py"><pre>import pytest
+
+from adapters.persistence.in_memory_work_order_repository import InMemoryWorkOrderRepository
+from assetops.domain.events import WorkOrderOpened
+from assetops.domain.work_order import WorkOrder, WorkOrderStatus
+
+T_1810 = "2025-05-20T18:10:00+08:00"
+T_1810_08 = "2025-05-20T18:10:08+08:00"
+T_1818 = "2025-05-20T18:18:00+08:00"
+
+
+def test_opens_a_work_order_for_a_charger_fault_and_records_WorkOrderOpened():
+    wo = WorkOrder.open(work_order_id="WO-2208", charger_id="CP-A12", connector_id="CP-A12-2", fault_code="GroundFailure", at=T_1810)
+
+    assert wo.status is WorkOrderStatus.OPEN
+    assert wo.pull_events() == [WorkOrderOpened(occurred_at=T_1810, work_order_id="WO-2208", charger_id="CP-A12", fault_code="GroundFailure", connector_id="CP-A12-2")]
+
+
+def test_R5_same_charger_and_fault_code_while_open_second_report_is_appended_no_second_work_order():
+    repo = InMemoryWorkOrderRepository()
+    repo.save(WorkOrder.open(work_order_id="WO-2208", charger_id="CP-A12", fault_code="GroundFailure", at=T_1810))
+
+    # second report 8 seconds later: the intake looks up the open WO before opening a new one
+    existing = repo.find_open_by_fault("CP-A12", "GroundFailure")
+    assert existing is not None and existing.work_order_id == "WO-2208"
+    existing.append_duplicate_report(T_1810_08)
+    repo.save(existing)
+
+    assert len(repo.all()) == 1
+    assert existing.duplicate_report_count == 1
+    assert [e.type for e in existing.pull_events()] == ["WorkOrderOpened", "DuplicateFaultReported"]
+
+
+def test_R5_after_the_work_order_is_closed_the_same_fault_opens_a_new_work_order():
+    repo = InMemoryWorkOrderRepository()
+    first = WorkOrder.open(work_order_id="WO-2208", charger_id="CP-A12", fault_code="GroundFailure", at=T_1810)
+    first.close("Repaired", T_1818)
+    repo.save(first)
+
+    assert repo.find_open_by_fault("CP-A12", "GroundFailure") is None
+    with pytest.raises(ValueError, match="closed"):
+        first.append_duplicate_report(T_1818)
+
+
+def test_assign_then_close_walks_the_fault_lifecycle():
+    wo = WorkOrder.open(work_order_id="WO-2208", charger_id="CP-A12", fault_code="GroundFailure", at=T_1810)
+    wo.assign("TECH-HAO", T_1810)
+    wo.close("Repaired", T_1818)
+
+    assert wo.status is WorkOrderStatus.CLOSED
+    assert wo.technician_id == "TECH-HAO"
+    assert [e.type for e in wo.pull_events()] == ["WorkOrderOpened", "TechnicianAssigned", "WorkOrderClosed"]
+    with pytest.raises(ValueError, match="already closed"):
+        wo.close("Repaired", T_1818)
+</pre></div>
+</div></div><h3 id="b3-ports">Repository port 與 in-memory adapter</h3>
+<p>Port 的方法簽名要想明天的命令處理器會怎麼呼叫：<code>StartCharging</code> 需要 <code>findActiveByConnector</code>（找不到就 <code>ChargingSession.idle</code>），<code>ReportFault</code> 需要 <code>findOpenByFault</code>。回傳型別統一 <code>| undefined</code>／<code>| None</code>。</p>
+<div class="file"><p class="path">starter/node/src/charging/application/ports.ts · starter/python/src/charging/application/ports.py <span class="chip">port</span></p><div class="body">
+<p>Port 住在 <code>application/</code>（核心），只用領域型別。Node 用 <code>interface</code>，Python 用 <code>typing.Protocol</code>（結構型別，adapter 不需要繼承）。</p>
+<div class="tabs" data-tabs><button data-pane="port-ch-node" class="on">Node</button><button data-pane="port-ch-py">Python</button></div>
+<div class="pane on" id="port-ch-node"><pre>import type { ChargingSession } from '../domain/ChargingSession.ts';
+
+// Ports (hexagonal): the application layer depends on these interfaces,
+// adapters (in-memory today, SQLite/Postgres on Day 6) implement them.
+export interface ChargingSessionRepository {
+  findById(sessionId: string): Promise&lt;ChargingSession | undefined&gt;;
+  findActiveByConnector(connectorId: string): Promise&lt;ChargingSession | undefined&gt;; // status === Charging
+  save(session: ChargingSession): Promise&lt;void&gt;;
+}
+
+export interface AuthorizationService {
+  isAuthorized(idTag: string): Promise&lt;boolean&gt;;
+}
+</pre></div>
+<div class="pane" id="port-ch-py"><pre>"""Ports (hexagonal): the application layer depends on these Protocols,
+adapters (in-memory today, SQLite/Postgres on Day 6) implement them."""
+from typing import Protocol
+
+from charging.domain.charging_session import ChargingSession
+
+
+class ChargingSessionRepository(Protocol):
+    def find_by_id(self, session_id: str) -&gt; ChargingSession | None: ...
+    def find_active_by_connector(self, connector_id: str) -&gt; ChargingSession | None: ...  # status == Charging
+    def save(self, session: ChargingSession) -&gt; None: ...
+
+
+class AuthorizationService(Protocol):
+    def is_authorized(self, id_tag: str) -&gt; bool: ...
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/assetops/application/ports.ts · starter/python/src/assetops/application/ports.py <span class="chip">port</span></p><div class="body">
+<div class="tabs" data-tabs><button data-pane="port-wo-node" class="on">Node</button><button data-pane="port-wo-py">Python</button></div>
+<div class="pane on" id="port-wo-node"><pre>import type { WorkOrder } from '../domain/WorkOrder.ts';
+
+export interface WorkOrderRepository {
+  findById(workOrderId: string): Promise&lt;WorkOrder | undefined&gt;;
+  findOpenByFault(chargerId: string, faultCode: string): Promise&lt;WorkOrder | undefined&gt;; // R5 lookup
+  save(workOrder: WorkOrder): Promise&lt;void&gt;;
+}
+
+// Dispatch is its own context; in MVP1 it is a stub that always sends TECH-HAO.
+export interface DispatchService {
+  requestTechnician(workOrderId: string, chargerId: string): Promise&lt;string&gt;; // returns technicianId
+}
+</pre></div>
+<div class="pane" id="port-wo-py"><pre>from typing import Protocol
+
+from assetops.domain.work_order import WorkOrder
+
+
+class WorkOrderRepository(Protocol):
+    def find_by_id(self, work_order_id: str) -&gt; WorkOrder | None: ...
+    def find_open_by_fault(self, charger_id: str, fault_code: str) -&gt; WorkOrder | None: ...  # R5 lookup
+    def save(self, work_order: WorkOrder) -&gt; None: ...
+
+
+class DispatchService(Protocol):
+    """Dispatch is its own context; in MVP1 it is a stub that always sends TECH-HAO."""
+
+    def request_technician(self, work_order_id: str, charger_id: str) -&gt; str: ...  # returns technician_id
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/adapters/persistence/InMemoryChargingSessionRepository.ts · starter/python/src/adapters/persistence/in_memory_charging_session_repository.py <span class="chip">adapter</span></p><div class="body">
+<p><code>save()</code> 對「被拒絕、從未開始」的會話什麼都不做——<code>sessionId</code> 是 undefined 就沒有東西可存。<code>findActiveByConnector</code> 只回 <code>status === Charging</code> 的那一個。</p>
+<div class="tabs" data-tabs><button data-pane="mem-ch-node" class="on">Node</button><button data-pane="mem-ch-py">Python</button></div>
+<div class="pane on" id="mem-ch-node"><pre>import { ChargingSession, SessionStatus } from '../../charging/domain/ChargingSession.ts';
+import type { ChargingSessionRepository } from '../../charging/application/ports.ts';
+
+// Simplest adapter that satisfies the port. Day 6 replaces it with SQLite/Postgres
+// (see docker/init.sql for the table shape) without touching domain or application code.
+export class InMemoryChargingSessionRepository implements ChargingSessionRepository {
+  private readonly bySessionId = new Map&lt;string, ChargingSession&gt;();
+
+  async findById(sessionId: string): Promise&lt;ChargingSession | undefined&gt; {
+    return this.bySessionId.get(sessionId);
+  }
+
+  async findActiveByConnector(connectorId: string): Promise&lt;ChargingSession | undefined&gt; {
+    for (const session of this.bySessionId.values()) {
+      if (session.connectorId === connectorId &amp;&amp; session.status === SessionStatus.Charging) return session;
+    }
+    return undefined;
+  }
+
+  async save(session: ChargingSession): Promise&lt;void&gt; {
+    if (!session.sessionId) return; // a rejected/never-started session has nothing to persist
+    this.bySessionId.set(session.sessionId, session);
+  }
+
+  all(): ChargingSession[] {
+    return [...this.bySessionId.values()];
+  }
+}
+</pre></div>
+<div class="pane" id="mem-ch-py"><pre>"""Simplest adapter that satisfies the port. Day 6 replaces it with SQLite/Postgres
+(see docker/init.sql for the table shape) without touching domain or application code."""
+from charging.domain.charging_session import ChargingSession, SessionStatus
+
+
+class InMemoryChargingSessionRepository:
+    def __init__(self) -&gt; None:
+        self._by_session_id: dict[str, ChargingSession] = {}
+
+    def find_by_id(self, session_id: str) -&gt; ChargingSession | None:
+        return self._by_session_id.get(session_id)
+
+    def find_active_by_connector(self, connector_id: str) -&gt; ChargingSession | None:
+        for session in self._by_session_id.values():
+            if session.connector_id == connector_id and session.status is SessionStatus.CHARGING:
+                return session
+        return None
+
+    def save(self, session: ChargingSession) -&gt; None:
+        if session.session_id is None:
+            return  # a rejected/never-started session has nothing to persist
+        self._by_session_id[session.session_id] = session
+
+    def all(self) -&gt; list[ChargingSession]:
+        return list(self._by_session_id.values())
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/src/adapters/persistence/InMemoryWorkOrderRepository.ts · starter/python/src/adapters/persistence/in_memory_work_order_repository.py <span class="chip">adapter</span></p><div class="body">
+<p><code>findOpenByFault</code> 就是 R5 去重鍵（<code>chargerId + faultCode</code>）加「開放期間」（<code>isOpen</code>）。<code>StubDispatchService</code> 是明天 B3 的替身，今天不用。</p>
+<div class="tabs" data-tabs><button data-pane="mem-wo-node" class="on">Node</button><button data-pane="mem-wo-py">Python</button></div>
+<div class="pane on" id="mem-wo-node"><pre>import type { WorkOrder } from '../../assetops/domain/WorkOrder.ts';
+import type { DispatchService, WorkOrderRepository } from '../../assetops/application/ports.ts';
+
+export class InMemoryWorkOrderRepository implements WorkOrderRepository {
+  private readonly byId = new Map&lt;string, WorkOrder&gt;();
+
+  async findById(workOrderId: string): Promise&lt;WorkOrder | undefined&gt; {
+    return this.byId.get(workOrderId);
+  }
+
+  async findOpenByFault(chargerId: string, faultCode: string): Promise&lt;WorkOrder | undefined&gt; {
+    for (const wo of this.byId.values()) {
+      if (wo.chargerId === chargerId &amp;&amp; wo.faultCode === faultCode &amp;&amp; wo.isOpen) return wo;
+    }
+    return undefined;
+  }
+
+  async save(workOrder: WorkOrder): Promise&lt;void&gt; {
+    this.byId.set(workOrder.workOrderId, workOrder);
+  }
+
+  all(): WorkOrder[] {
+    return [...this.byId.values()];
+  }
+}
+
+// Dispatch stub (Sprint 2 backlog: a real Dispatch context with routes, SLA, spare parts).
+export class StubDispatchService implements DispatchService {
+  private readonly technicianId: string;
+  constructor(technicianId = 'TECH-HAO') {
+    this.technicianId = technicianId;
+  }
+  async requestTechnician(): Promise&lt;string&gt; {
+    return this.technicianId;
+  }
+}
+</pre></div>
+<div class="pane" id="mem-wo-py"><pre>from assetops.domain.work_order import WorkOrder
+
+
+class InMemoryWorkOrderRepository:
+    def __init__(self) -&gt; None:
+        self._by_id: dict[str, WorkOrder] = {}
+
+    def find_by_id(self, work_order_id: str) -&gt; WorkOrder | None:
+        return self._by_id.get(work_order_id)
+
+    def find_open_by_fault(self, charger_id: str, fault_code: str) -&gt; WorkOrder | None:
+        for wo in self._by_id.values():
+            if wo.charger_id == charger_id and wo.fault_code == fault_code and wo.is_open:
+                return wo
+        return None
+
+    def save(self, work_order: WorkOrder) -&gt; None:
+        self._by_id[work_order.work_order_id] = work_order
+
+    def all(self) -&gt; list[WorkOrder]:
+        return list(self._by_id.values())
+
+
+class StubDispatchService:
+    """Dispatch stub (Sprint 2 backlog: a real Dispatch context with routes, SLA, spare parts)."""
+
+    def __init__(self, technician_id: str = "TECH-HAO") -&gt; None:
+        self._technician_id = technician_id
+
+    def request_technician(self, work_order_id: str, charger_id: str) -&gt; str:
+        return self._technician_id
+</pre></div>
+</div></div>
+<div class="file"><p class="path">starter/node/test/adapters/persistence/InMemoryRepositories.test.ts · starter/python/tests/adapters/persistence/test_in_memory.py <span class="chip">測試 · 2 條</span></p><div class="body">
+<p>starter 沒附這個檔，學員自己加。Day 6 會把同一組測試對 SQLite repository 再跑一次（repo 契約測試）。</p>
+<div class="tabs" data-tabs><button data-pane="mem-test-node" class="on">Node</button><button data-pane="mem-test-py">Python</button></div>
+<div class="pane on" id="mem-test-node"><pre>import { describe, expect, it } from 'vitest';
+import { ChargingSession, SessionStatus } from '../../../src/charging/domain/ChargingSession.ts';
+import { InMemoryChargingSessionRepository } from '../../../src/adapters/persistence/InMemoryChargingSessionRepository.ts';
+
+const T_1404 = '2025-05-20T14:04:00+08:00';
+const T_1431 = '2025-05-20T14:31:00+08:00';
+
+describe('InMemoryChargingSessionRepository (port contract)', () =&gt; {
+  it('repository round-trips a session and finds the active one by connector', async () =&gt; {
+    const repo = new InMemoryChargingSessionRepository();
+    const session = ChargingSession.idle('CP-A12-2');
+    session.start({ sessionId: 'S-991', idTag: 'TAG-MONTHLY-77', authorized: true, meterStartWh: 100, at: T_1404 });
+    await repo.save(session);
+
+    expect((await repo.findById('S-991'))?.status).toBe(SessionStatus.Charging);
+    expect((await repo.findActiveByConnector('CP-A12-2'))?.sessionId).toBe('S-991');
+    expect(await repo.findActiveByConnector('CP-A12-1')).toBeUndefined();
+
+    session.stop('Local', T_1431);
+    await repo.save(session);
+    expect(await repo.findActiveByConnector('CP-A12-2')).toBeUndefined();
+  });
+
+  it('a rejected, never-started session is not persisted', async () =&gt; {
+    const repo = new InMemoryChargingSessionRepository();
+    const session = ChargingSession.idle('CP-A12-2');
+    session.start({ sessionId: 'S-993', idTag: 'TAG-EXPIRED-99', authorized: false, meterStartWh: 100, at: T_1404 });
+    await repo.save(session);
+    expect(repo.all()).toHaveLength(0);
+  });
+});
+</pre></div>
+<div class="pane" id="mem-test-py"><pre>from adapters.persistence.in_memory_charging_session_repository import InMemoryChargingSessionRepository
+from charging.domain.charging_session import ChargingSession, SessionStatus
+
+T_1404 = "2025-05-20T14:04:00+08:00"
+T_1431 = "2025-05-20T14:31:00+08:00"
+
+
+def test_repository_round_trips_a_session_and_finds_the_active_one_by_connector():
+    repo = InMemoryChargingSessionRepository()
+    session = ChargingSession.idle("CP-A12-2")
+    session.start(session_id="S-991", id_tag="TAG-MONTHLY-77", authorized=True, meter_start_wh=100, at=T_1404)
+    repo.save(session)
+
+    assert repo.find_by_id("S-991").status is SessionStatus.CHARGING
+    assert repo.find_active_by_connector("CP-A12-2").session_id == "S-991"
+    assert repo.find_active_by_connector("CP-A12-1") is None
+
+    session.stop("Local", T_1431)
+    repo.save(session)
+    assert repo.find_active_by_connector("CP-A12-2") is None
+
+
+def test_a_rejected_never_started_session_is_not_persisted():
+    repo = InMemoryChargingSessionRepository()
+    session = ChargingSession.idle("CP-A12-2")
+    session.start(session_id="S-993", id_tag="TAG-EXPIRED-99", authorized=False, meter_start_wh=100, at=T_1404)
+    repo.save(session)
+    assert repo.all() == []
+</pre></div>
+</div></div>
+<div class="file"><p class="path">workshop/day4/test-report.md <span class="chip">交付物</span></p><div class="body">
+<h4>測試報告</h4>
+<ul>
+  <li>語言：node（Python 版輸出在第二個分頁）</li>
+  <li>指令：<code>cd starter/node &amp;&amp; npm install &amp;&amp; npm test</code>；單條規則 <code>npx vitest run -t "R3"</code>；型別 <code>npm run typecheck</code></li>
+  <li>起點（09:50，starter 原樣）：<code>Tests 1 failed | 1 passed | 4 skipped (6)</code>，失敗原因 <code>Error: TODO R1</code></li>
+  <li>結果（15:25，最後 20 行）：</li>
+</ul>
+<div class="tabs" data-tabs><button data-pane="tr-node" class="on">Node · npm test</button><button data-pane="tr-py">Python · pytest -v</button></div>
+<div class="pane on" id="tr-node"><pre class="term">$ npm test
+
+&gt; ev-charge-ops-starter@0.1.0 test
+&gt; vitest run
+
+ RUN  v2.1.9 /Users/you/dddguide/starter/node
+
+ <span class="green">✓</span> test/assetops/WorkOrder.test.ts (4 tests) 5ms
+ <span class="green">✓</span> test/charging/ChargingSession.test.ts (8 tests) 9ms
+ <span class="green">✓</span> test/adapters/persistence/InMemoryRepositories.test.ts (2 tests) 3ms
+ <span class="green">✓</span> test/shared/EventBus.test.ts (1 test) 4ms
+
+ Test Files  <span class="green">4 passed</span> (4)
+      Tests  <span class="green">15 passed</span> (15)
+   Start at  15:25:02
+   Duration  551ms (transform 204ms, setup 0ms, collect 328ms, tests 21ms, environment 0ms, prepare 202ms)
+
+$ npm run typecheck
+&gt; tsc --noEmit
+$ grep -rnE "publish\(|StatusNotification|StartTransaction|MeterValues|transactionId|new Date|fetch\(|sqlite" src/charging/domain src/assetops/domain
+$</pre></div>
+<div class="pane" id="tr-py"><pre class="term">$ . .venv/bin/activate &amp;&amp; pytest -v
+============================= test session starts ==============================
+platform darwin -- Python 3.11.9, pytest-8.3.3, pluggy-1.5.0
+rootdir: /Users/you/dddguide/starter/python
+configfile: pyproject.toml
+testpaths: tests
+collected 15 items
+
+tests/adapters/persistence/test_in_memory.py <span class="green">..</span>                          [ 13%]
+tests/assetops/test_work_order.py <span class="green">....</span>                                   [ 40%]
+tests/charging/test_charging_session.py <span class="green">........</span>                         [ 93%]
+tests/shared/test_event_bus.py <span class="green">.</span>                                         [100%]
+
+============================== <span class="green">15 passed</span> in 0.04s ==============================
+
+$ grep -rnE "publish\(|StatusNotification|StartTransaction|MeterValues|transaction_id|datetime\.now|requests\.|sqlite" src/charging/domain src/assetops/domain
+$</pre></div>
+
+<h4>測試清單（測試名 = 規則）</h4>
+<div class="table-scroll"><table>
+<tr><th>測試名</th><th>規則</th><th>紅 → 綠的 commit</th></tr>
+<tr><td class="nowrap">R1 occupied connector rejects a second start</td><td>R1</td><td class="nowrap">2b8f0e1 R1 green: reject start on occupied connector</td></tr>
+<tr><td class="nowrap">R2 unauthorized idTag cannot start charging</td><td>R2</td><td class="nowrap">a02c9de R2 green: reject unauthorized idTag</td></tr>
+<tr><td class="nowrap">R2 authorized idTag starts charging and records ChargingStarted</td><td>R2（成功路徑）</td><td class="nowrap">d13b7c5 R2 green: happy path records ChargingStarted</td></tr>
+<tr><td class="nowrap">R3 meter values must be monotonic; a backwards value is rejected and recorded</td><td>R3</td><td class="nowrap">3d9a1f2 R3 green: reject backwards meter value</td></tr>
+<tr><td class="nowrap">R3 a meter value on a session that is not charging is rejected</td><td>R3（NotCharging）</td><td class="nowrap">8ae04d7 R3 green: reject meter value when not charging</td></tr>
+<tr><td class="nowrap">R4 stop completes the session with energyWh = last meter - start meter (12.4 kWh)</td><td>R4</td><td class="nowrap">9b7d3aa R4 green: stop yields energyWh 12400</td></tr>
+<tr><td class="nowrap">R4 only a Charging session can be stopped</td><td>R4（例外）</td><td class="nowrap">f61c2e8 R4 green: stop on Idle/Completed throws InvalidStateError</td></tr>
+<tr><td class="nowrap">a fault during charging marks the session Faulted and reports stillEnergized</td><td>ChargerFaulted（§1.7 F）</td><td class="nowrap">0c4d9b3 reportFault records ChargerFaulted with stillEnergized</td></tr>
+<tr><td class="nowrap">opens a work order for a charger fault and records WorkOrderOpened</td><td>R5（前置）</td><td class="nowrap">5e2a7f0 R5 green: WorkOrder.open records WorkOrderOpened</td></tr>
+<tr><td class="nowrap">R5 same charger + fault code while open: second report is appended, no second work order</td><td>R5</td><td class="nowrap">b90f3c1 R5 green: append duplicate report to open work order</td></tr>
+<tr><td class="nowrap">R5 after the work order is closed, the same fault opens a NEW work order</td><td>R5（開放期間）</td><td class="nowrap">c2d81a6 R5 green: closed work order does not absorb reports</td></tr>
+<tr><td class="nowrap">assign then close walks the fault lifecycle</td><td>故障生命週期（§1.2）</td><td class="nowrap">7ab5e09 WorkOrder assign/close lifecycle</td></tr>
+<tr><td class="nowrap">repository round-trips a session and finds the active one by connector</td><td>port 契約</td><td class="nowrap">e07c4d2 in-memory ChargingSessionRepository</td></tr>
+<tr><td class="nowrap">a rejected, never-started session is not persisted</td><td>port 契約</td><td class="nowrap">e07c4d2（同上）</td></tr>
+<tr><td class="nowrap">R8 前哨：pullEvents 清空（R1 測試的第一次 pull 已涵蓋）；聚合建構子與方法無 bus / repo 參數（grep 為空）</td><td>R8</td><td class="nowrap">—（無獨立 commit；Day 5 延伸為 Outbox 測試）</td></tr>
+</table></div>
+
+<h4>重構紀錄（每次重構後測試都維持綠）</h4>
+<ul>
+  <li><code>6c1d2a9 R1 refactor: chargingSession() builder</code> — 測試的 Given 三行抽成 builder；產品碼不動。</li>
+  <li><code>4f8e1b7 R2 refactor: validate idTag and meterStartWh at the boundary</code> — <code>start()</code> 第一行 <code>parseIdTag</code>，欄位用 <code>wattHours()</code>；跑 R1–R2 仍綠。</li>
+  <li><code>e4f21c0 R3 refactor: rejection base object</code> — 兩個 <code>MeterValueRejected</code> 只差 reason，抽 <code>base</code> 展開；<code>wattHours(meterWh)</code> 驗證進來的值。</li>
+  <li><code>1d7c3a4 R4 refactor: InvalidStateError message carries the status</code> — 第二條 R4 測試改用 <code>toThrow(/Completed/)</code> 驗證訊息。</li>
+  <li><code>a5b9e12 day4: remove Date.now() from WorkOrder.open, take at from caller</code> — <code>/aggregate-review</code> 指出的 High；見下方 findings。</li>
+  <li><code>3c6f0d8 day4: energy through wattHours() everywhere</code> — <code>/aggregate-review</code> 指出的 Low。</li>
+</ul>
+</div></div>
+
+<h3 id="b3-review">/aggregate-review 的判定（15:20，審程式碼）</h3>
+<p>這是一份典型學員程式碼的審查結果——不是 solutions 的。兩個真實會出現的問題：<code>WorkOrder.open()</code> 裡偷用 <code>new Date().toISOString()</code> 當 <code>openedAt</code>（因為學員覺得「開單時間就是現在」）；<code>energyWh</code> 到處用裸 <code>number</code>，<code>reportMeter(-1)</code> 會被當成倒退而不是無效輸入。</p>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /aggregate-review ChargingSession WorkOrder</p><p>Day 4 Block 3 尾聲。請直接讀 starter/node/src/charging/domain/ 與 src/assetops/domain/ 的所有檔案，審查：每個檔案的 import 有沒有 I/O、時鐘、bus、OCPP 字眼；每個聚合的不變條件在哪個方法守；兩個 Repository port 的簽名是否只用領域型別；挑一個最該重構的方法只說為什麼。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問：你的兩個聚合各守哪幾條不變條件？</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>ChargingSession：R1、R2 在 start，R3 在 reportMeter，R4 在 stop。WorkOrder：R5 的「開放期間才能附加」在 appendDuplicateReport；「只有一張」靠 port + 應用層。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>與程式碼一致，R1–R5 都有唯一的家。跑了 <code>grep -rnE "Date\.now|new Date|publish\(|StatusNotification" src/*/domain</code>，有一筆。</p>
+<div class="table-scroll"><table>
+<tr><th>嚴重度</th><th>位置</th><th>問題</th><th>為什麼</th><th>修法方向</th></tr>
+<tr><td class="nowrap"><span class="sev crit"></span>高</td><td class="nowrap">src/assetops/domain/WorkOrder.ts:34</td><td><code>open()</code> 內 <code>openedAt: new Date().toISOString()</code>，忽略 <code>input.at</code></td><td>聚合讀時鐘 = I/O（hexagonal.md §3 依賴規則；aggregate-review D）；測試無法寫 18:10；Day 5 重播事件時 openedAt 會變成重播當下</td><td>用 <code>input.at</code>；時間永遠由命令帶入。測試 <code>opens a work order …</code> 的 <code>occurredAt: T_1810</code> 斷言會逼出來</td></tr>
+<tr><td class="nowrap"><span class="sev warn"></span>中</td><td class="nowrap">src/charging/domain/ChargingSession.ts:118</td><td><code>reportMeter()</code> 在非 Charging 狀態直接覆寫 <code>_lastMeterWh</code>，沒有 NotCharging 分支</td><td>R3 的家不完整；Idle 連接器收到 MeterValues 會改狀態（§1.7 T4「每次 MeterValue 都…」的耦合）</td><td>先寫 <code>R3 a meter value on a session that is not charging is rejected</code> 紅燈，再加 <code>status !== Charging → MeterValueRejected(NotCharging)</code></td></tr>
+<tr><td class="nowrap"><span class="sev info"></span>低</td><td class="nowrap">src/charging/domain/ChargingSession.ts:96, 116</td><td><code>meterStartWh</code> / <code>meterWh</code> 以裸 <code>number</code> 直接寫入欄位，未經 <code>wattHours()</code></td><td>負數與小數會被當成合法計量；<code>reportMeter(-1)</code> 變成「倒退」而不是「無效輸入」（ddd-tactical.md §8 值物件段）</td><td>進入聚合時 <code>wattHours(input.meterStartWh)</code>、<code>wattHours(meterWh)</code>；無效值 throw DomainError（呼叫端錯誤）</td></tr>
+<tr><td class="nowrap"><span class="sev info"></span>低</td><td class="nowrap">src/assetops/domain/WorkOrder.ts:58</td><td><code>appendDuplicateReport</code> 在 Closed 時 <code>return</code>（靜默）</td><td>與 B1 的判準不一致：對關單喊附加是呼叫端錯誤，應 throw；靜默會讓 Day 5 的 process manager 以為附加成功</td><td>改 throw；測試 <code>R5 after the work order is closed…</code> 的 <code>toThrow(/closed/)</code> 已在等它</td></tr>
+</table></div>
+<p><b>判定</b>：⚠️ 修一個 🔴 後可進 Day 5。守住：R1 R2 R4 R5 R8；R3 少一個分支。Port 簽名乾淨（只有 <code>ChargingSession</code> / <code>WorkOrder</code> / string / undefined）。最該重構的方法：<code>ChargingSession.start()</code>——兩段 <code>record(ChargingStartRejected)</code> 只差 reason，且 <code>_status</code> 的設定散在六行中間；不給碼。</p>
+<p><b>下一個最小步驟：</b>把 <code>WorkOrder.open()</code> 的 <code>new Date()</code> 換成 <code>input.at</code>，跑 <code>npx vitest run test/assetops</code>，貼綠燈。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改了。<code>opens a work order …</code> 原本一直過是因為我在測試裡也用了 <code>new Date()</code>——改成 <code>T_1810</code> 之後先紅再綠。NotCharging 分支與 wattHours 也補了：<code>Tests 15 passed (15)</code>。commit <code>a5b9e12</code>、<code>3c6f0d8</code>。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>「測試裡也用 <code>new Date()</code> 所以一直過」——把這句寫進 <code>test-report.md</code> 的重構紀錄，那是今天最好的一課：測試用了真時鐘就測不到時間。重新審：無 High，✅ 可進 Day 5。</p><p><b>下一個最小步驟：</b>跑 <code>/checkout day4</code>。</p></div>
+</div>
+
+<div class="teach"><p class="head">講師註 · Block 3</p>
+<p><b>驗收看哪一行：</b><code>WorkOrder.open()</code> 有沒有任何 <code>await</code> 或 repository 參數——有就是把 R5 塞進聚合。第二行：<code>findOpenByFault</code> 的三個條件 <code>chargerId === ∧ faultCode === ∧ isOpen</code>，少 <code>isOpen</code> 的學員，關單後同樁同碼永遠不會再開新單（Vicky 的 SLA 會被吃掉）。第三行：<code>ports.ts</code> 的回傳型別是 <code>WorkOrder | undefined</code> 還是 <code>any</code> / <code>Row</code>。</p>
+<p><b>常見失真：</b>(1) 「同一故障」只用 <code>chargerId</code>，不同故障碼被吃成同一張單——問「阿豪拿到一張寫 GroundFailure 的單，到現場發現是 OverTemperature，他會怎麼說？」；(2) in-memory repository 存了聚合的參考，測試之間互相污染——每個測試 new 一個 repo（solutions 的做法），或 save 時存快照；(3) <code>duplicateReportCount</code> 用獨立計數器而不是 <code>reports.length − 1</code>，然後 open 時忘了 push 第一筆；(4) 把 <code>StubDispatchService</code> 也寫了——那是明天，今天寫是超前不是錯，但 commit 要分開。</p>
+<p><b>時間：</b>B3 是三個 Block 裡最容易爆的：WorkOrder 四個方法 + 兩個 port + 兩個 adapter + 一條契約測試 + review，90 分鐘很緊。<code>assign()</code> 可以留到 Day 5（starter 也標 Day 5 B3）；契約測試只做 <code>ChargingSessionRepository</code> 那條。<code>/aggregate-review</code> 至少留 10 分鐘，它抓到的 <code>new Date()</code> 是全日最有價值的 finding。</p>
+</div>
+
+<h2 id="checkout">Check-out（30 分）</h2>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /checkout day4</p><p>今天是 Day 4。請對照 docs/rubric.md 的 Day 4 DoD：跑 starter/node 的測試貼摘要；列出所有測試名對照 R1–R5；grep src/charging/domain 與 src/assetops/domain 有沒有 I/O import 或 OCPP 字眼；檢查 model.md 與 test-report.md 的必要小節。每項回「過 / 不過 + 一句理由」；最後給下一個最小步驟，以及明天 Day 5 開始前我該先讀 eda.md 的哪一節。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>跑了 <code>npm test</code>：<code>Test Files 4 passed (4) · Tests 15 passed (15)</code>。<code>grep -rnE "publish\(|StatusNotification|StartTransaction|MeterValues|transactionId|new Date|fetch\(" src/charging/domain src/assetops/domain</code> 為空。逐項：</p>
+<div class="table-scroll"><table>
+<tr><th>交付物</th><th>DoD（rubric Day 4）</th><th>狀態</th><th>一句理由</th></tr>
+<tr><td class="nowrap">model.md</td><td>狀態機、方法 / 事件表、VO 表、目錄對照、取捨（授權位置、stop 失敗方式、R3 相等）</td><td><span class="sev ok"></span>過</td><td>六個小節都在；取捨表六列，含 R5 分層</td></tr>
+<tr><td class="nowrap">npm test</td><td>全綠；R1–R4 的 it.skip 全部拿掉；R5 有測試</td><td><span class="sev ok"></span>過</td><td>15 passed，0 skipped；R5 兩條</td></tr>
+<tr><td class="nowrap">測試名</td><td>規則編號 + 句子（英文）</td><td><span class="sev ok"></span>過</td><td>R1 ×1、R2 ×2、R3 ×2、R4 ×2、R5 ×2；三條非 R 規則的名字也是行為句</td></tr>
+<tr><td class="nowrap">ChargingSession</td><td>idle / start（R1、R2）/ reportMeter（R3）/ stop（R4）/ reportFault / pullEvents</td><td><span class="sev ok"></span>過</td><td>六個方法都有；拒絕是事件、stop 非 Charging throw</td></tr>
+<tr><td class="nowrap">WorkOrder</td><td>open / appendDuplicateReport（R5）/ close / pullEvents；duplicateReportCount</td><td><span class="sev ok"></span>過</td><td>assign 也做了（Day 5 的，不扣分）</td></tr>
+<tr><td class="nowrap">值物件</td><td>有驗證（parseConnectorId、wattHours、parseIdTag）</td><td><span class="sev ok"></span>過</td><td>start() 與 reportMeter() 入口都經過驗證；review 後補的</td></tr>
+<tr><td class="nowrap">拒絕是事件</td><td>ChargingStartRejected、MeterValueRejected；呼叫端錯誤才 throw</td><td><span class="sev ok"></span>過</td><td>R1 / R2 / R3 事件，R4 / 關單後附加 throw，與 model.md 取捨一致</td></tr>
+<tr><td class="nowrap">domain 零 I/O</td><td>無 I/O import、無 new Date()</td><td><span class="sev ok"></span>過</td><td>grep 為空；WorkOrder.open 的 new Date() 已在 a5b9e12 移除</td></tr>
+<tr><td class="nowrap">test-report.md</td><td>每條規則一行（測試名、規則、commit）；git log 看得出紅 / 綠 / 重構</td><td><span class="sev warn"></span>部分</td><td>表格 15 列都有；但 git log 裡 R2 happy path 與 R2 refactor 是同一個 commit——下次分開</td></tr>
+<tr><td class="nowrap">/aggregate-review</td><td>ChargingSession 與 WorkOrder 無 High</td><td><span class="sev ok"></span>過</td><td>第二次審查 ✅；第一次的 High 已修</td></tr>
+</table></div>
+<p>一個問題（給「部分」那一列）：如果 reviewer 只看 <code>git log</code>，他能知道 R2 的 happy path 測試是「一寫就綠、註解掉驗證過」的嗎？</p>
+<p><b>下一個最小步驟：</b><code>git push -u origin workshop/&lt;你的名字&gt;</code>（你自己下，我不推），然後讀 <code>docs/references/eda.md</code> §5.2「Outbox 表 + relay 迴圈」——明天第一件事就是把今天的 <code>pullEvents()</code> 接到 Outbox。</p></div>
+</div>
+
+<h3>Quiz 參考答案</h3>
+<div class="answer"><p class="head">Q1 · ConnectorId 為什麼是值物件不是實體？兩個 ConnectorId.of("CP-A12-2") 相等嗎？</p><p>它沒有自己的生命週期與身份——在 Charging 裡我們只在乎「哪一把槍」，不在乎它的歷史（歷史是 AssetOps 的事，那裡它可能是實體）。用值比較、不可變、可以隨意複製。相等：結構相等（starter 用字串所以 <code>===</code> 直接成立），不是參考相等。同一個名詞在不同 context 可以是不同模式。</p></div>
+<div class="answer"><p class="head">Q2 · start() 在連接器占用時是拋例外還是記錄 ChargingStartRejected？對明天的 HTTP 回應碼有什麼影響？</p><p>記錄事件——R1 原文是「發布 <code>ChargingStartRejected(reason=ConnectorOccupied)</code>，原會話不變」，而且小美要看到被拒的 Start。判準：利害關係人在乎的「不」是事件；呼叫端的 bug（對 Idle 會話 Stop）才是例外。API 端可以同步查回傳的事件回 <code>409 Conflict</code>，或純非同步回 <code>202 Accepted</code>；OCPP ACL 則翻成 <code>idTagInfo.status = 'Blocked'</code>。選擇要寫進 <code>model.md</code> 並在 Day 6 一致。</p></div>
+<div class="answer"><p class="head">Q3 · R3：1000 → 7000 → 6500，第三筆之後 lastMeterWh 是多少？接著 stop(13400)，energyWh 是多少？</p><p>7000（6500 &lt; 7000 被拒，記錄 <code>MeterValueRejected(NotMonotonic, meterWh=6500, lastMeterWh=7000)</code>，狀態不變）。starter 的 <code>stop()</code> 不帶計量，所以要先 <code>reportMeter(13400)</code>（通過 R3，last=13400）再 <code>stop()</code>：<code>energyWh = 13400 − 1000 = 12400</code>，即 12.4 kWh。教材用的數字是 100 / 4100 / 8100 / 12500，答案同樣是 12400。</p></div>
+<div class="answer"><p class="head">Q4 · 為什麼 R5 的「有沒有開放中工單」不能在 WorkOrder 聚合內判斷？那它在哪裡判斷？</p><p>需要查其他工單 = I/O；聚合零 I/O，也不該知道其他聚合存在。判斷分兩層：port <code>WorkOrderRepository.findOpenByFault(chargerId, faultCode)</code> 負責查（in-memory 今天、SQLite Day 6），應用層（明天的 <code>FaultProcessManager</code> / <code>ReportFault</code> 處理器）負責決定：有就 <code>appendDuplicateReport(at)</code>，沒有就 <code>WorkOrder.open</code>。聚合只守「開放期間才能附加」。去重鍵 <code>chargerId + faultCode</code>。</p></div>
+<div class="answer"><p class="head">Q5 · 聚合的 pendingEvents() / pullEvents() 被誰拉走？拉走之後聚合要做什麼？</p><p>應用服務（明天）在命令成功後、同一個交易內拉走，轉成整合事件寫入 Outbox，與聚合狀態一起 commit；relay 之後才發到 bus（R8）。拉走之後聚合要清空——starter 的 <code>pullEvents()</code> 一次做完（回傳並換成空陣列），所以第二次呼叫回 <code>[]</code>；R1 測試的第一次 pull 就是在證明這件事。不清空的話，每次 save 都會把舊事件再寫一次進 Outbox，Billing 會收到重複的 <code>ChargingCompleted</code>。</p></div>
+
+<h2 id="notes">講師手記</h2>
+<p><b>夠的地方。</b>Day 4 是七天裡教材最完整的一天：starter 的骨架已經把欄位、getter、<code>pullEvents()</code>、事件型別、VO 驗證函式都給了，學員真正要寫的是四個方法的內容（約 60 行）加 WorkOrder 四個方法（約 30 行）；R1 紅燈是 starter 附的，R2–R4 的數字寫在測試檔的註解裡；<code>tdd.md</code> §6 逐行解讀了 R1 測試；<code>/tdd</code> 的「沒紅燈不寫 src」在實測時確實擋得住「可以先幫我把 start() 寫好嗎」。<code>solutions/</code> 兩個語言的程式碼與本頁一致，講師可以直接對照。</p>
+<p><b>不夠的地方，講師要自己補。</b>(1) <b>R5 的分層</b>教材講得對但沒有圖——學員第一次聽到「聚合零 I/O 所以 R5 分三層」多半聽不懂，本頁的第三張圖建議 kickoff 投影。(2) <b>「事件 vs 例外」的判準</b>散在 <code>ddd-tactical.md</code> §7 第 3 點與 <code>errors.ts</code> 的註解裡，沒有一個地方用一句話講清楚；kickoff 值得用 2 分鐘講「利害關係人在乎的『不』是事件；呼叫端的 bug 是例外」，否則 R4 那一圈會卡。(3) <b>repository 契約測試</b>（<code>test/adapters/persistence/</code>）教材有提但 starter 沒附檔案，本頁附了一個參考版本；建議加進 starter。(4) <b>R8 前哨</b>教材說「寫一個測試證明聚合不接受 bus 參數」，但實際上 TypeScript 的型別系統已經保證了，這條測試在 Node 寫不出有意義的斷言——建議改成 <code>tdd.md</code> §7 的依賴規則掃描測試，或明說「用 grep 驗證」。(5) 教材 Block 2 步驟 2 的範例程式碼用 <code>ChargingSession.open("S-991", ConnectorId.of("CP-A12-2"))</code> 與 <code>pendingEvents()</code>，但 starter 實際是 <code>ChargingSession.idle('CP-A12-2')</code> 與 <code>pullEvents()</code>——兩個 API 不一致，學員會問；本頁一律以 starter / solutions 為準，講師 kickoff 時先講「教材那段是草圖，以 starter 為準」。</p>
+<p><b>時間會不會爆。</b>B1 不會（徒手畫 + review + 看骨架，90 分鐘寬裕，甚至可以提早 15 分鐘開始 B2）。B2 剛好：八個循環 90 分鐘，前提是 B1 的取捨已定；沒定的學員 R2 與 R4 各多 15 分鐘。<b>B3 會爆</b>：WorkOrder 四個方法 + 三條測試 + 兩個 port + 兩個 adapter + 契約測試 + <code>/aggregate-review</code> + <code>test-report.md</code>，實測要 110–120 分鐘。建議 kickoff 就宣布：<code>assign()</code> 與 <code>StubDispatchService</code> 留 Day 5、契約測試只做 <code>ChargingSessionRepository</code>、review 從 15:15 開始不管做到哪。Check-out 30 分鐘夠，因為 <code>/checkout</code> 自己會跑測試與 grep。</p>
+<p><b>Python 學員要特別注意的。</b>venv 沒 activate 是最常見的「pytest 找不到」；<code>tests/</code> 子目錄不要放 <code>__init__.py</code>（會遮住 <code>src/adapters</code>）；frozen dataclass 的 <code>type</code> 欄位 <code>init=False</code>，斷言時不要傳；<code>str | None</code> 語法需要 3.10+，教材要求 3.11 沒問題；<code>Protocol</code> 不需要繼承，學員常多寫一層 ABC——不扣分但要問「為什麼」。Python 的 <code>pytest -q</code> 輸出只有一行點點，<code>test-report.md</code> 要求他們貼 <code>-v</code> 的版本，否則講師看不到測試名。</p>
+<p><b>驗收時的三個動作。</b>(1) <code>git log --oneline workshop/&lt;name&gt; | head -20</code>——看紅綠交替；(2) <code>grep -rnE "publish\(|StatusNotification|transactionId|new Date|datetime\.now" starter/*/src/*/domain</code>——應該為空；(3) 隨機指 <code>start()</code> 裡一行問「為什麼在那」——答不出來的，retro 時自己重寫。有抄 solutions 嫌疑的最明顯訊號：<code>rehydrate()</code> 存在（starter 骨架沒有它，Day 6 之前不需要）。</p>
+
+<p class="end">教師版 · EV Charge Ops 七天工作坊 · 教材與程式碼：<a href="https://github.com/clarencechien/dddguide">github.com/clarencechien/dddguide</a> · 學員主控台：<a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">ev-charge-ops-workshop</a> · 本頁假設全流程跑完；學員實際產出會與此不同，差異正是驗收要看的地方。</p>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+  </defs>
+</svg>
+
+<script>
+/* 無第三方、無 storage：狀態只活在變數裡（imitator 的 opaque origin 會讓 storage API 丟例外） */
+(() => {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+
+  /* theme toggle — STYLE.md floor item 5 */
+  {
+    const root = document.documentElement, btn = $('#theme-toggle');
+    let dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    btn.textContent = 'theme · ' + (dark ? 'dark' : 'light');
+    btn.addEventListener('click', () => {
+      dark = !dark; root.dataset.theme = dark ? 'dark' : 'light';
+      btn.textContent = 'theme · ' + (dark ? 'dark' : 'light'); btn.setAttribute('aria-pressed', 'true');
+    });
+  }
+
+  /* tabs: <div class="tabs" data-tabs><button data-pane="id">…  + <div class="pane" id="id"> */
+  $$('[data-tabs]').forEach(group => {
+    const btns = $$('button[data-pane]', group);
+    const show = id => {
+      btns.forEach(b => b.classList.toggle('on', b.dataset.pane === id));
+      btns.forEach(b => { const p = document.getElementById(b.dataset.pane); if (p) p.classList.toggle('on', b.dataset.pane === id); });
+    };
+    btns.forEach(b => b.addEventListener('click', () => show(b.dataset.pane)));
+    const first = btns.find(b => b.classList.contains('on')) || btns[0];
+    if (first) show(first.dataset.pane);
+  });
+
+  /* steppers: <section data-stepper data-step="1" data-max="7">
+       <ol class="steps"><li data-goto="1">…</li>…</ol>
+       <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><span class="cap"></span></div>
+       <div class="step-note" data-note="1">…</div>  (one per step; shown when active)
+       <div class="wall" data-step-target>…stickies with data-from / data-until…</div> */
+  $$('[data-stepper]').forEach(sec => {
+    const max = parseInt(sec.dataset.max || '7', 10);
+    let step = parseInt(sec.dataset.step || '1', 10);
+    const targets = $$('[data-step-target]', sec);
+    const notes = $$('[data-note]', sec);
+    const steps = $$('.steps li[data-goto]', sec);
+    const cap = $('.cap', sec);
+    const paint = () => {
+      sec.dataset.step = String(step);
+      targets.forEach(t => t.dataset.step = String(step));
+      notes.forEach(n => n.hidden = n.dataset.note !== String(step));
+      steps.forEach(li => { const n = parseInt(li.dataset.goto, 10); li.classList.toggle('on', n === step); li.classList.toggle('done', n < step); });
+      if (cap) cap.textContent = `步驟 ${step} / ${max}`;
+      $$('[data-prev]', sec).forEach(b => b.disabled = step <= 1);
+      $$('[data-next]', sec).forEach(b => b.disabled = step >= max);
+    };
+    $$('[data-prev]', sec).forEach(b => b.addEventListener('click', () => { if (step > 1) { step--; paint(); } }));
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (step < max) { step++; paint(); } }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { step = 1; paint(); }));
+    steps.forEach(li => li.addEventListener('click', () => { step = parseInt(li.dataset.goto, 10); paint(); }));
+    paint();
+  });
+
+  /* replay lists: <ol class="replay" data-replay> children hidden until "下一步"; uses .stepper inside same section */
+  $$('[data-replay]').forEach(sec => {
+    const items = $$('[data-item]', sec);
+    let i = 0;
+    const paint = () => { items.forEach((el, k) => el.hidden = k >= i); const c = $('.cap', sec); if (c) c.textContent = i === 0 ? '尚未開始' : `${i} / ${items.length}`; };
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (i < items.length) { i++; paint(); } }));
+    $$('[data-all]', sec).forEach(b => b.addEventListener('click', () => { i = items.length; paint(); }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { i = 0; paint(); }));
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

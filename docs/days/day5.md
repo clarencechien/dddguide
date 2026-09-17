@@ -39,7 +39,7 @@ Billing 草稿消費者對重送冪等，`ChargerFaulted` 會自動變成一張�
 ## Block 1（90 分鐘）— Application Service 與 Outbox 同寫
 
 ### 目標
-四個命令處理器；每個處理器：開交易 → 載入聚合 → 呼叫方法 → `save` → 把 `pendingEvents` 包成信封寫進 Outbox → 提交。今天的「交易」是 in-memory 的 unit of work；Day 6 換成 SQLite 交易時處理器不用改。
+四個命令處理器；每個處理器：開交易 → 載入聚合 → 呼叫方法 → `save` → 把 `pullEvents()` / `pull_events()` 包成信封寫進 Outbox → 提交。今天的「交易」是 in-memory 的 unit of work；Day 6 換成 SQLite 交易時處理器不用改。
 
 ### 步驟
 1. **（15 分，不開 Claude）** 在 `event-flow.md` 填處理器表：每個命令載入哪個聚合、寫哪些事件、交易邊界在哪。特別想 `StartCharging`：R1 需要 `findActiveByConnector`，R2 需要授權——授權從哪來？（一個 `AuthorizationPort`，今天 in-memory：`TAG-MONTHLY-77` 有效、`TAG-VISITOR-03` 無效。）

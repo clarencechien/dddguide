@@ -7,25 +7,25 @@ stateDiagram-v2
   [*] --> NoOpenWorkOrder : CP-A12 可售
 
   state "無開放工單" as NoOpenWorkOrder
-  state "Open 已開立 — WO-2208 GroundFailure, openedAt 18:11, SLA 自 occurredAt 18:10 起算" as Open
-  state "Assigned 已派工 — 主責 TECH-HAO 18:18（MVP1 Dispatch stub 固定指派）" as Assigned
+  state "Open 已開立 — WO-2208 GroundFailure, openedAt = occurredAt 18:10:00, SLA 起算" as Open
+  state "Assigned 已派工 — 主責 TECH-HAO 18:10:00（MVP1 DispatchService stub 立即回覆）" as Assigned
   state "InProgress 維修中 — 阿豪到場，可離線回報" as InProgress
   state "Verifying 修復驗證 — 樁回 Available 且 30 分鐘無再申告" as Verifying
   state "Closed 已關閉 — outcome = Repaired / NoFault / Replaced" as Closed
 
   NoOpenWorkOrder --> Open : charging.charger.faulted.v1 (CP-A12, GroundFailure) → WorkOrderOpened → ops.work_order.opened.v1
 
-  Open --> Open : 18:15 同樁同碼再申告 → R5 attachDuplicateReport，不開新單、不發 opened
-  Assigned --> Assigned : 同樁同碼再申告 → R5 附加
+  Open --> Open : 同樁同碼再申告 → R5 appendDuplicateReport → DuplicateFaultReported，不開新單、不發 opened
+  Assigned --> Assigned : 18:10:08 同樁同碼再申告 → R5 附加（duplicateReportCount=1）；18:12 同 eventId 重送 → 忽略
   InProgress --> InProgress : 同樁同碼再申告 → R5 附加
 
-  Open --> Assigned : ops.work_order.opened.v1 → Dispatch AssignTechnician(TECH-HAO)
+  Open --> Assigned : DispatchService.requestTechnician → assign(TECH-HAO) → TechnicianAssigned（內部事件）
   Assigned --> InProgress : 技術員到場 (S2)
   InProgress --> Verifying : 樁 StatusNotification(Available) (S2)
   Verifying --> InProgress : 30 分鐘內再 Faulted 同碼 (S2)
-  Verifying --> Closed : Vicky CloseWorkOrder(outcome) (S2)
-  Assigned --> Closed : MVP1 捷徑 — Vicky CloseWorkOrder(WO-2208, outcome=Repaired)
-  Open --> Closed : MVP1 捷徑 — outcome=NoFault（誤報）
+  Verifying --> Closed : CloseWorkOrder(outcome) (S2)
+  Assigned --> Closed : MVP1 — 18:18 阿豪回報修復驗證 → closeWorkOrder(WO-2208, outcome=Repaired)
+  Open --> Closed : MVP1 捷徑 — outcome=NoFaultFound（誤報）
 
   Closed --> NoOpenWorkOrder : ops.work_order.closed.v1 → Charging 健康：CP-A12 恢復可售；SLA 結算
   NoOpenWorkOrder --> Open : 關單後同碼再申告 = 新的根因工單 WO-2210

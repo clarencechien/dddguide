@@ -4,7 +4,7 @@
 > 七天走完 **需求訪談 → BPR → Event Storming → 戰略 DDD → 戰術 DDD + TDD → Event-Driven → MVP 上線 → SDLC 收尾**。
 
 - 對象：1–3 年經驗的工程師，不需要 EV 領域知識。
-- 環境：一台筆電。Node 20+ **或** Python 3.11+、Git、[Claude Code](https://claude.com/claude-code)。Docker 選配。
+- 環境：一台筆電。Node 22+ **或** Python 3.11+、Git、[Claude Code](https://claude.com/claude-code)。Docker 選配。
 - 形式：講師每天早上 15 分鐘 kickoff（Day 1 為 45 分鐘），其餘時間學員自己 + Claude Code。
 - 主控台：[`index.html`](index.html) 單一檔案，直接開或放到任何靜態主機；所有連結指回本 repo。
 

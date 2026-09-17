@@ -61,7 +61,7 @@
 
 ## days/ — 每日教材
 
-`day1.md` … `day7.md`：每天的講師開場段、三個 Block、Check-out。（由另一份工作產出；結構對齊 `curriculum.md` §2。）
+`day1.md` … `day7.md`：每天的講師開場段、三個 Block（含貼給 Claude Code 的提示）、常見卡點、Check-out。交付物路徑與數量門檻以 `rubric.md` 對齊。
 
 ## 閱讀順序建議（學員）
 

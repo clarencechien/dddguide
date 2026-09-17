@@ -1,0 +1,1987 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="imitator-style" content="v3">
+<meta name="imitator-register" content="教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況">
+<meta name="imitator-reference" content="1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙、灰底參考答案框、頁緣批註欄">
+<meta name="imitator-paper" content="hsl(350 22% 95%)">
+<meta name="imitator-accent" content="hsl(176 52% 26%)">
+<title>教師版 D3 · 戰略設計</title>
+<meta name="description" content="Day 3 全程跑完會留下的 context-map.md、c4.md、ADR-0001 / 0002 的完整參考版本，加上找邊界的五步實況、助教對話重播與驗收點。">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* imitator report chassis — v3
+ *
+ * Source: https://github.com/clarencechien/imitator/blob/main/style/report.css
+ * How to use it: https://github.com/clarencechien/imitator/blob/main/style/STYLE.md
+ *
+ * This is NOT a house style. A report here is an essay with a point of view —
+ * it should look like someone made it, not like it came off a line. So this
+ * file fixes only what every report must get right no matter its voice:
+ * readability, structure, responsiveness, dark mode, motion hygiene, print.
+ *
+ * Everything that carries voice — paper and ink colours, the accent, which
+ * typefaces do which job, how big the headline is, how sections are signposted
+ * — is yours to choose per report. The tokens in §1 are the seams: override
+ * them in a <style> block AFTER this one and the whole chassis follows.
+ *
+ * Paste this file verbatim. Do not link it at runtime.
+ */
+
+/* ── §1 Tokens ───────────────────────────────────────────────────────────
+ *
+ * Override any of these per report. The defaults are a plain warm neutral —
+ * deliberately unremarkable, so a report that overrides nothing is readable
+ * but obviously unfinished. Redefine BOTH modes: dark is chosen, never an
+ * automatic flip.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- voice: expect to override every one of these --- */
+  --paper: #fbfbfa;        /* page */
+  --card: #ffffff;         /* raised surface */
+  --ink: #1a1a19;          /* primary text */
+  --ink-2: #4a4a46;        /* secondary text */
+  --mist: #6b6b68;         /* labels, captions, axis ticks */
+  --rule: #e6e6e3;         /* hairlines */
+  --rule-hard: #d3d3ce;    /* the one heavy rule per section */
+  --accent: #b0552b;       /* links, the coloured word, section numbers */
+  --accent-soft: #efe7df;  /* accent at wash strength — chips, marks */
+
+  /* --- faces: four jobs. Give them real families; --disp and --serif may be
+         the same as --sans if the report's voice is plain. --- */
+  --sans:  ui-sans-serif, system-ui, -apple-system, "Noto Sans TC",
+           "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "Noto Serif TC", "Songti TC", "PMingLiU", Georgia, serif;
+  --disp:  var(--sans);    /* headlines */
+  --mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* --- type scale ---
+     Body is deliberately large: this is long-form prose in Chinese, read on a
+     phone as often as a laptop. 17px is the floor, not the target. */
+  --fs-body: clamp(1.0625rem, 1.01rem + .28vw, 1.1875rem);   /* 17 → 19 */
+  --fs-sm:   clamp(.875rem, .85rem + .12vw, .9375rem);       /* 14 → 15 */
+  --fs-xs:   .8125rem;                                        /* 13 — labels only */
+  --lh-body: 1.85;         /* CJK needs more leading than Latin */
+
+  --fs-display: clamp(2.6rem, 1.4rem + 5.4vw, 5.25rem);      /* the one big headline */
+  --fs-1: clamp(1.85rem, 1.45rem + 1.9vw, 2.75rem);
+  --fs-2: clamp(1.4rem, 1.24rem + .78vw, 1.85rem);
+  --fs-3: clamp(1.14rem, 1.08rem + .3vw, 1.32rem);
+
+  /* --- spacing --- */
+  --sp-1: .25rem; --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1.15rem;
+  --sp-5: 1.75rem; --sp-6: 2.75rem; --sp-7: 4.5rem;
+
+  --radius: 10px;
+  --measure: 34em;         /* prose column ≈ 34 CJK characters */
+  --page: 46rem;           /* text column */
+  --page-wide: 66rem;      /* wide devices: tables, figures, tile rows */
+
+  /* How far a wide device spills into the gutter on each side. Bounded by the
+     gutter that actually exists, so it can never push the page sideways. */
+  --bleed: min((var(--page-wide) - var(--page)) / 2, max(0px, (100vw - var(--page)) / 2));
+
+  /* --- motion ---
+     Strong curves only. The built-in CSS easings are too weak to read as
+     intentional, and ease-in on anything a reader is watching feels sluggish. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;       /* entrances only — never a UI response */
+}
+
+/* Dark is a second set of choices, not an inversion. Declared under both
+   scopes so an in-page toggle wins either way. A report that overrides the
+   light tokens MUST override these too. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: #191917; --card: #222220;
+    --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+    --rule: #333331; --rule-hard: #454542;
+    --accent: #e08a5c; --accent-soft: #3a2f28;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #191917; --card: #222220;
+  --ink: #eeeeec; --ink-2: #b8b8b3; --mist: #9a9a95;
+  --rule: #333331; --rule-hard: #454542;
+  --accent: #e08a5c; --accent-soft: #3a2f28;
+}
+
+/* Chart series colours are NOT part of the voice. They are the one palette a
+   report must not re-pick: the order is what keeps adjacent series apart under
+   colour blindness, and it was validated with a tool rather than an eye. Use
+   them in order, never cycle past --c6. */
+:root {
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a;
+  --c4: #eda100; --c5: #e87ba4; --c6: #008300;
+  --good: #0ca30c; --warn: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+    --c4: #c98500; --c5: #d55181; --c6: #008300;
+  }
+}
+:root[data-theme="dark"] {
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+  --c4: #c98500; --c5: #d55181; --c6: #008300;
+}
+
+/* ── §2 Base & readability ───────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--fs-body)/var(--lh-body) var(--sans);
+  overflow-wrap: break-word;
+  line-break: strict;
+  -webkit-text-size-adjust: 100%;
+  /* Progressive: tightens CJK punctuation where the browser supports it. */
+  text-spacing-trim: trim-start;
+}
+
+p { text-wrap: pretty; }
+h1, h2, h3, h4, .display { text-wrap: balance; }
+
+img, svg, video, canvas { max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: .2em; text-decoration-thickness: from-font; }
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px;
+}
+::selection { background: var(--accent-soft); }
+
+/* ── §3 Layout ───────────────────────────────────────────────────────────── */
+
+.report {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: clamp(2rem, 1.2rem + 3.5vw, 5rem) clamp(1.15rem, .7rem + 2.4vw, 2.5rem) 6rem;
+}
+.report > * { max-width: var(--measure); }
+/* Figures, tables and full-width devices opt out of the prose measure. A
+   <section> or <article> is a pass-through: it must not inherit the measure,
+   or every table inside it is trapped at 34em — so the prose cap is re-applied
+   to its children instead. */
+.report :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+.report > :is(section, article) { max-width: none; }
+.report > :is(section, article) > * { max-width: var(--measure); }
+.report > :is(section, article) > :is(figure, .table-scroll, .wide, hr, .tiles, .cols, .banner) { max-width: none; }
+/* Grid items get min-width: 0 so one unbreakable string cannot widen the track.
+   Any grid you write yourself needs the same — see STYLE.md. */
+.cols > *, .tiles > * { min-width: 0; }
+.cols  { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.tiles { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin-block: var(--sp-5); }
+.card  { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-5); }
+
+/* The text column stays narrow; the wide devices breathe out into the gutter.
+   Tables get this by default — a table trapped at the prose measure is the
+   single most common way a report becomes unusable on a desktop. .wide opts
+   anything else in (a tile row, a chart, a figure).
+
+   It widens by whatever gutter actually exists and no more, so it can never
+   push the page sideways — which the obvious `width + 50% margin` breakout
+   does the moment its percentage resolves against the wrong box.
+   Declared last on purpose: any component using the `margin` shorthand would
+   otherwise zero out the inline margins this depends on. */
+.wide, .table-scroll { margin-inline: calc(-1 * var(--bleed)); }
+
+/* ── §4 Structure & editorial devices ────────────────────────────────────── */
+
+/* The headline. .display is the one oversized thing in the document; a
+   coloured <em> inside it is the report's signature — use it once. */
+.display {
+  font-family: var(--disp);
+  font-size: var(--fs-display);
+  line-height: 1.04;
+  letter-spacing: -.025em;
+  font-weight: 700;
+  margin: 0 0 var(--sp-4);
+}
+.display em { font-style: normal; color: var(--accent); }
+
+h1, h2, h3 { font-family: var(--disp); line-height: 1.25; letter-spacing: -.012em; margin: 0; font-weight: 680; }
+h1 { font-size: var(--fs-1); }
+h2 { font-size: var(--fs-2); margin: var(--sp-7) 0 var(--sp-4); }
+h3 { font-size: var(--fs-3); margin: var(--sp-5) 0 var(--sp-2); }
+h2 + h3 { margin-top: var(--sp-4); }
+p, ul, ol { margin: 0 0 var(--sp-4); }
+li + li { margin-top: var(--sp-2); }
+
+/* The signpost. Mono, letterspaced, small — it gives a document a spine:
+   序幕 · PROLOGUE / 01 · VOCABULARY / 第一幕 · 1973 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin: var(--sp-7) 0 var(--sp-2);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.eyebrow + h2 { margin-top: 0; }
+
+.lede { font-size: 1.15em; line-height: 1.7; color: var(--ink-2); }
+.byline { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); }
+
+/* A sentence worth stopping on. Not a highlighter pen on a whole paragraph. */
+.mark { background: var(--accent-soft); box-shadow: 0 0 0 .18em var(--accent-soft); border-radius: 2px; }
+
+/* An inverted label that interrupts the column: 接回 VOL.1 */
+.chip {
+  display: inline-block; background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em;
+  padding: .2em .55em; border-radius: 3px; vertical-align: .08em;
+}
+.chip.soft { background: var(--accent-soft); color: var(--ink-2); }
+
+/* A line pulled out of the argument, set large. Never a repeat of the lede. */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.9rem);
+  line-height: 1.5; color: var(--ink);
+  border-left: 3px solid var(--accent);
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-5);
+  margin-block: var(--sp-6);
+}
+
+blockquote { margin-block: var(--sp-5); padding-left: var(--sp-5); border-left: 2px solid var(--rule-hard); color: var(--ink-2); }
+.note { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-5); margin-block: var(--sp-6); }
+.note > :last-child { margin-bottom: 0; }
+.note .head { font-weight: 680; margin-bottom: var(--sp-2); }
+.note.good { border-left-color: var(--good); }
+.note.warn { border-left-color: var(--warn); }
+.note.critical { border-left-color: var(--critical); }
+
+code, kbd, samp { font-family: var(--mono); font-size: .88em; }
+/* A URL or a scope string inside <code> has no break opportunity, so it becomes
+   the min-content width of everything containing it. Inside a grid track — whose
+   default min-width is auto, i.e. min-content — that one string widens the track
+   past the viewport and the whole page scrolls sideways. Breaking it here fixes
+   the cause; see also the note on custom grids in STYLE.md. */
+:not(pre) > code {
+  background: var(--accent-soft); padding: .12em .4em; border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+pre {
+  background: var(--card); border: 1px solid var(--rule);
+  border-top: 3px solid var(--accent); border-radius: var(--radius);
+  padding: var(--sp-5); overflow-x: auto;
+  font-size: var(--fs-sm); line-height: 1.7;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin-block: var(--sp-7); }
+
+/* ── §5 Figures, charts, tables ──────────────────────────────────────────── */
+
+.stat { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); }
+.stat .label { font-size: var(--fs-xs); color: var(--mist); margin: 0 0 var(--sp-1); }
+.stat .value { font-family: var(--disp); font-size: 1.75rem; font-weight: 680; line-height: 1.15; letter-spacing: -.02em; }
+.stat .delta { font-size: var(--fs-xs); color: var(--ink-2); margin-top: var(--sp-1); display: flex; align-items: center; gap: .3em; }
+.delta.up::before   { content: "▲"; font-size: .8em; color: var(--good); }
+.delta.down::before { content: "▼"; font-size: .8em; color: var(--critical); }
+
+/* At most one per report. */
+.hero { font-family: var(--disp); font-size: clamp(3rem, 2rem + 4vw, 5rem); font-weight: 700; line-height: 1; letter-spacing: -.03em; margin: var(--sp-2) 0; }
+
+figure { margin-block: var(--sp-6); }
+figure > .title { font-family: var(--disp); font-size: var(--fs-3); font-weight: 680; margin: 0 0 var(--sp-1); }
+figure > .subtitle, figure > figcaption { font-size: var(--fs-sm); color: var(--mist); }
+figure > .subtitle { margin: 0 0 var(--sp-4); }
+figure > figcaption { margin-top: var(--sp-3); }
+
+/* A viewBox scales the TEXT too: let a chart shrink freely to a 375px screen
+   and its 12px labels render at 6px. So the rendered width is bounded and the
+   chart scrolls in its own box below the floor, like a wide table.
+   Author charts on a 640-unit viewBox with font-size 12. */
+.chart { width: 100%; overflow-x: auto; }
+.chart svg { display: block; height: auto; width: 100%; min-width: 34rem; max-width: 44rem; overflow: visible; }
+.chart .grid  { stroke: var(--rule); stroke-width: 1; }
+.chart .axis  { fill: var(--mist); font-size: 12px; font-family: var(--sans); font-variant-numeric: tabular-nums; }
+.chart .label { fill: var(--ink-2); font-size: 12px; font-family: var(--sans); }
+.chart .line  { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dot   { stroke: var(--card); stroke-width: 2; }
+.chart .bar   { rx: 4; }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-sm); color: var(--ink-2); margin-top: var(--sp-3); }
+.legend .key { display: inline-flex; align-items: center; gap: .45em; }
+.legend .swatch { width: .7em; height: .7em; border-radius: 2px; flex: none; }
+
+.datatable > summary {
+  cursor: pointer; font-size: var(--fs-sm); color: var(--mist);
+  padding: var(--sp-2) 0; min-height: 44px;
+  display: flex; align-items: center; gap: .4em; list-style: none;
+}
+.datatable > summary::-webkit-details-marker { display: none; }
+.datatable > summary::before { content: "▸"; transition: transform var(--dur-fast) var(--ease-out); }
+.datatable[open] > summary::before { transform: rotate(90deg); }
+
+/* Every table lives in this wrapper: it scrolls itself instead of widening
+   the page. On a desktop it should never need to — cells wrap and the wrapper
+   widens into the gutter. On a phone a table with real columns still has to
+   scroll, and that is the correct trade: a model number broken across three
+   lines is worse than a swipe. `overscroll-behavior-inline` keeps that swipe
+   inside the table instead of dragging the page or triggering back-navigation. */
+.table-scroll { overflow-x: auto; overscroll-behavior-inline: contain; margin-block: var(--sp-5); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); }
+
+/* Phone: the first column is the row's label — pin it, so what you are reading
+   the specs OF stays on screen while you swipe through them, and the shadow at
+   its edge says there is more to the right. Add .plain to opt a table out (a
+   two-column table, or one whose first column is not a label). Semantics are
+   untouched: nothing here changes `display`, so the table is still a table to
+   a screen reader. */
+@media (max-width: 40rem) {
+  .table-scroll:not(.plain) :is(th, td):first-child {
+    position: sticky; left: 0; z-index: 1; background: var(--card);
+    box-shadow: 1px 0 0 var(--rule), 7px 0 7px -7px rgb(0 0 0 / .22);
+  }
+  .table-scroll:not(.plain) th:first-child { z-index: 2; }
+}
+table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); }
+th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 620; color: var(--ink-2); background: var(--card); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Cells wrap by default: nowrap makes a table's min-content width the sum of
+   every cell's longest unbroken line, which is what forces the horizontal
+   scroll. Opt individual cells out — a model number, a date, a figure — with
+   .nowrap. (`.wrap` is the old opt-in, kept so it stays a no-op.) */
+.nowrap, td.nowrap, th.nowrap { white-space: nowrap; }
+td.wrap { white-space: normal; }
+/* A mono sub-label under a term, the way a glossary sets it. */
+td .sub { display: block; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); text-transform: uppercase; margin-top: .15em; }
+
+/* ── §6 Motion ───────────────────────────────────────────────────────────────
+ *
+ * A report is read, not operated, so motion here has exactly one job: mark
+ * arrival. Entrances only, on the reader's own scroll, and only for elements
+ * that carry a beat — a section opening, a figure, a pulled line. Never on
+ * body paragraphs, and never anything that has to finish before the reader
+ * can read.
+ *
+ * All of it is progressive: without scroll-driven animation support every
+ * element is simply already visible. Nothing is gated behind motion.
+ */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    /* Group entrance: 30–80ms between items reads as one gesture. Longer
+       feels slow, and it is decorative — nothing waits for it. */
+    .stagger > * { animation: reveal-in var(--dur-slow) var(--ease-out) both; }
+    .stagger > :nth-child(2) { animation-delay: 60ms; }
+    .stagger > :nth-child(3) { animation-delay: 120ms; }
+    .stagger > :nth-child(4) { animation-delay: 180ms; }
+    .stagger > :nth-child(n+5) { animation-delay: 240ms; }
+  }
+}
+
+/* The theme toggle: one fixed button that flips data-theme on <html>. It exists
+   because a reader whose every device is dark can otherwise never see the light
+   palette a report designed — and vice versa. State lives in a variable (storage
+   APIs throw in the sandbox), so it resets on reload; that is the correct trade.
+   Until the reader clicks, <html> stays un-stamped and the page follows the
+   system. Markup and the five-line script are in STYLE.md, floor item 5. */
+.theme-toggle {
+  position: fixed; top: 1rem; right: 1rem; z-index: 20;
+  min-height: 44px; padding: .4rem .85rem;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  font: var(--fs-xs)/1 var(--mono); letter-spacing: .06em; cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--ink); }
+@media (max-width: 40rem) { .theme-toggle { top: auto; bottom: 1rem; } }
+
+/* Reading progress, drawn by the scroll position itself — no JS, no listener. */
+.progress {
+  position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 10;
+  background: var(--accent); transform-origin: 0 50%; transform: scaleX(0);
+}
+@supports (animation-timeline: scroll()) {
+  .progress { animation: progress linear both; animation-timeline: scroll(root block); }
+  @keyframes progress { to { transform: scaleX(1); } }
+}
+@media (prefers-reduced-motion: reduce) { .progress { display: none; } }
+
+/* Pressable things acknowledge the press. Hover motion is gated — a touch
+   device fires :hover on tap and the animation reads as a glitch. */
+@media (hover: hover) and (pointer: fine) {
+  a[href], .chip, summary { transition: color var(--dur-fast) var(--ease-out); }
+}
+button:active, summary:active { transform: scale(.98); }
+button, summary { transition: transform var(--dur-fast) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Gentler, not zero: colour and opacity stay, movement goes. */
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ── §7 Print & forced colours ───────────────────────────────────────────── */
+
+@media print {
+  :root { --paper: #fff; --card: #fff; --ink: #000; --ink-2: #333; --mist: #555; --rule: #ccc; }
+  .report { max-width: none; padding: 0; }
+  .report > * { max-width: none; }
+  .progress, .theme-toggle, .datatable > summary { display: none; }
+  .datatable { display: block; }
+  /* A scroll-driven entrance never runs on paper — without this, everything
+     marked .reveal prints as blank space. Content is never gated behind
+     motion; this is the rule that keeps that true. */
+  .reveal, .stagger > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  figure, .card, .stat, .table-scroll, .note, pre { break-inside: avoid; }
+  h2, h3, .eyebrow { break-after: avoid; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #555; }
+}
+
+@media (forced-colors: active) {
+  .card, .stat, .table-scroll, .note, pre, .chip { border: 1px solid CanvasText; }
+  .mark { background: Mark; color: MarkText; box-shadow: none; }
+}
+
+
+/* REGISTER:  教師版竣工紀錄 — 假設七天全程跑完，桌上會留下的每一份產出、每一張圖、每一步互動的實況，給講師與助教對照教材完整性。
+   REFERENCE: 1990 年代國立編譯館《教師手冊》— 淡粉紅道林紙與學生課本區隔、每課固定的「教學目標／教學活動／評量」欄、灰底的「參考答案」框、頁緣的批註欄。
+   PAPER:     教師手冊的淡粉紅道林紙 — hsl(350 22% 95%)。粉紅是為了讓人一眼知道「這本不是給學生的」。
+   VOICE:     襯線體標題（Plex Serif 帶 Noto）、審核章的藍綠印泥只給裁決、單元編號與連結；參考答案一律放灰底框；批註走頁緣。
+   NOT:       主控台、儀表板、學員版的銅橙。沒有要學員按的按鈕，只有講師要看的實況重播。
+   RECENT:    paper 48° 152° 36° · accent 16° 292° 210° — 350° 與 176° 都離得夠遠。 */
+
+:root {
+  --paper: hsl(350 22% 95%);
+  --card: hsl(350 30% 98%);
+  --ink: hsl(340 12% 12%);
+  --ink-2: hsl(340 7% 32%);
+  --mist: hsl(340 5% 44%);
+  --rule: hsl(350 14% 86%);
+  --rule-hard: hsl(350 12% 72%);
+  --accent: hsl(176 52% 26%);      /* 審核章的藍綠印泥 */
+  --accent-soft: hsl(176 30% 90%);
+  --answer: hsl(350 8% 92%);       /* 參考答案的灰底 */
+  --disp: "IBM Plex Serif", "Noto Sans TC", "PingFang TC", serif;
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --serif: "IBM Plex Serif", "Noto Sans TC", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* 便利貼：Event Storming 的標準色。這組不是 voice，是 Brandolini 的慣例，深淺兩版都要辨得出來 */
+  --st-evt: hsl(42 95% 72%);   --st-cmd: hsl(210 80% 82%);  --st-pol: hsl(272 45% 84%);
+  --st-agg: hsl(48 60% 92%);   --st-act: hsl(48 90% 62%);   --st-hot: hsl(352 85% 78%);
+  --st-read: hsl(120 40% 84%); --st-ext: hsl(330 55% 86%);  --st-rej: hsl(352 30% 90%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+    --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+    --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+    --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+    --answer: hsl(345 8% 15%);
+    --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+    --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+    --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: hsl(345 12% 8%); --card: hsl(345 10% 12%);
+  --ink: hsl(350 14% 92%); --ink-2: hsl(350 8% 72%); --mist: hsl(350 6% 58%);
+  --rule: hsl(345 8% 20%); --rule-hard: hsl(345 8% 30%);
+  --accent: hsl(172 45% 58%); --accent-soft: hsl(176 22% 16%);
+  --answer: hsl(345 8% 15%);
+  --st-evt: hsl(42 60% 32%); --st-cmd: hsl(210 45% 30%); --st-pol: hsl(272 28% 30%);
+  --st-agg: hsl(48 25% 22%); --st-act: hsl(48 55% 30%);  --st-hot: hsl(352 45% 32%);
+  --st-read: hsl(120 25% 24%); --st-ext: hsl(330 30% 28%); --st-rej: hsl(352 18% 20%);
+}
+
+/* ── 教師版元件 ─────────────────────────────────────────────── */
+
+/* 七天導覽列：頁首一條，每頁都有 */
+.tnav { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-6); }
+.tnav a { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; text-decoration: none; color: var(--ink-2);
+  border: 1px solid var(--rule); background: var(--card); padding: .35em .7em; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.tnav a:hover { border-color: var(--accent); color: var(--accent); }
+.tnav a.here { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* 課次資訊列 */
+.meta-strip { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .06em; color: var(--mist); margin: var(--sp-3) 0 var(--sp-5); }
+.meta-strip b { color: var(--ink-2); font-weight: 500; }
+
+/* 頁緣批註：講師註 */
+.teach { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.teach > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--sp-2); }
+.teach > :last-child { margin-bottom: 0; }
+
+/* 參考答案：灰底框 — 教師手冊的核心裝置 */
+.answer { background: var(--answer); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); margin-block: var(--sp-5); }
+.answer > .head { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--mist); margin: 0 0 var(--sp-3); display: flex; gap: var(--sp-3); align-items: center; }
+.answer > .head::after { content: ""; flex: 1; height: 1px; background: var(--rule-hard); }
+.answer > :last-child { margin-bottom: 0; }
+
+/* 產出檔案卡：路徑 + 內容。這是「跑完會留下什麼」的主要載體 */
+.file { border: 1px solid var(--rule-hard); border-radius: var(--radius); background: var(--card); margin-block: var(--sp-5); overflow: hidden; }
+.file > .path { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); padding: var(--sp-2) var(--sp-4); background: var(--answer); border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; color: var(--ink-2); }
+.file > .path .chip { margin-left: auto; }
+.file > .body { padding: var(--sp-4) var(--sp-5); }
+.file > .body > :last-child { margin-bottom: 0; }
+.file > .body > pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: 0; }
+.file > .body h4 { font-family: var(--disp); font-size: 1.05em; margin: var(--sp-4) 0 var(--sp-2); }
+.file > .body h4:first-child { margin-top: 0; }
+.file .table-scroll { margin-block: var(--sp-3); }
+
+/* 終端輸出 */
+.term { background: hsl(340 10% 10%); color: hsl(350 12% 90%); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); font: var(--fs-xs)/1.7 var(--mono); overflow-x: auto; margin-block: var(--sp-4); white-space: pre; }
+.term .red { color: hsl(4 80% 68%); } .term .green { color: hsl(140 55% 62%); } .term .dim { color: hsl(350 6% 55%); } .term .yel { color: hsl(45 90% 65%); }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .term { background: hsl(345 12% 5%); } }
+:root[data-theme="dark"] .term { background: hsl(345 12% 5%); }
+
+/* 全幅圖：diagram 用 .wide 破出文字欄，SVG 以 960 寬 viewBox 作圖、字級 13 */
+.diagram { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin: var(--sp-4) 0; }
+.diagram svg { display: block; width: 100%; min-width: 40rem; max-width: 66rem; height: auto; overflow: visible; font-family: var(--sans); margin: 0 auto; }
+.diagram .box { fill: var(--card); stroke: var(--rule-hard); stroke-width: 1.2; }
+.diagram .box.core { stroke: var(--accent); stroke-width: 2; }
+.diagram .box.ext { stroke-dasharray: 4 3; }
+.diagram .box.dim { fill: var(--answer); }
+.diagram .zone { fill: var(--accent-soft); fill-opacity: .5; stroke: none; }
+.diagram .zone.plain { fill: var(--answer); fill-opacity: .7; }
+.diagram .t { fill: var(--ink); font-size: 13px; }
+.diagram .t.b { font-weight: 700; font-size: 14px; }
+.diagram .t.s { fill: var(--mist); font-size: 11.5px; }
+.diagram .t.a { fill: var(--accent); font-size: 11.5px; font-family: var(--mono); }
+.diagram .t.m { font-family: var(--mono); font-size: 11.5px; }
+.diagram .ar { fill: none; stroke: var(--ink-2); stroke-width: 1.4; marker-end: url(#arr); }
+.diagram .ar.ev { stroke: var(--accent); stroke-dasharray: 5 3; marker-end: url(#arr-a); }
+.diagram .ar.bad { stroke: var(--critical); marker-end: url(#arr-x); }
+.diagram .ar.thin { stroke-width: 1; }
+.diagram .st { fill: var(--card); stroke: var(--ink-2); stroke-width: 1.2; }
+.diagram .st.hot { stroke: var(--critical); } .diagram .st.good { stroke: var(--good); }
+.diagram .life { stroke: var(--rule-hard); stroke-width: 1; stroke-dasharray: 3 3; }
+.diagram .sticky { stroke: none; }
+.diagram .sticky.evt { fill: var(--st-evt); } .diagram .sticky.cmd { fill: var(--st-cmd); } .diagram .sticky.pol { fill: var(--st-pol); }
+.diagram .sticky.agg { fill: var(--st-agg); stroke: var(--rule-hard); } .diagram .sticky.act { fill: var(--st-act); } .diagram .sticky.hot { fill: var(--st-hot); }
+figure.wide > .title { padding-inline: var(--bleed); }
+figure.wide > .subtitle, figure.wide > figcaption { padding-inline: var(--bleed); }
+@media (max-width: 40rem) { figure.wide > .title, figure.wide > .subtitle, figure.wide > figcaption { padding-inline: 0; } }
+
+/* Event Storming 牆：HTML 便利貼，逐步揭露 */
+.wall { --cols: 8; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; align-items: start; }
+.wall > * { min-width: 0; }
+.wall .lane { grid-column: 1 / -1; font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); padding: var(--sp-2) 0 2px; border-bottom: 1px solid var(--rule); margin-top: var(--sp-2); }
+.sticky { border-radius: 2px; padding: .45em .55em; font-size: .78rem; line-height: 1.35; color: hsl(340 12% 12%); box-shadow: 1px 1px 0 rgb(0 0 0 / .12); min-height: 3.6em; position: relative; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); } }
+:root[data-theme="dark"] .sticky { color: hsl(350 14% 92%); box-shadow: 1px 1px 0 rgb(0 0 0 / .5); }
+.sticky .k { display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; opacity: .7; margin-bottom: .15em; }
+.sticky.evt { background: var(--st-evt); } .sticky.cmd { background: var(--st-cmd); } .sticky.pol { background: var(--st-pol); }
+.sticky.agg { background: var(--st-agg); border: 1px solid var(--rule-hard); } .sticky.act { background: var(--st-act); border-radius: 50% / 40%; text-align: center; }
+.sticky.hot { background: var(--st-hot); transform: rotate(-2deg); } .sticky.read { background: var(--st-read); } .sticky.ext { background: var(--st-ext); }
+.sticky.rej { background: var(--st-rej); text-decoration: line-through; opacity: .8; }
+.sticky.pivot { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sticky .fix { display: block; margin-top: .3em; font-size: .7rem; color: var(--accent); text-decoration: none; }
+.wall-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: var(--sp-2); }
+.wall-scroll .wall { min-width: 56rem; }
+/* 逐步揭露：容器 data-step=N；便利貼 data-from=N（第 N 步出現）/ data-until=N（第 N 步後消失）。
+   未到的貼紙不佔位（display:none），出現時播一次進場動畫。 */
+@keyframes sticky-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+[data-step-target] [data-from] { animation: sticky-in var(--dur) var(--ease-out) both; }
+[data-step-target] .sticky.hot[data-from] { animation-name: sticky-in-hot; }
+@keyframes sticky-in-hot { from { opacity: 0; transform: rotate(-2deg) translateY(6px) scale(.96); } to { opacity: 1; transform: rotate(-2deg); } }
+[data-step="1"] [data-from]:not([data-from="1"]),
+[data-step="2"] :is([data-from="3"],[data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="3"] :is([data-from="4"],[data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="4"] :is([data-from="5"],[data-from="6"],[data-from="7"]),
+[data-step="5"] :is([data-from="6"],[data-from="7"]),
+[data-step="6"] [data-from="7"],
+[data-step="2"] [data-until="1"],
+[data-step="3"] :is([data-until="1"],[data-until="2"]),
+[data-step="4"] :is([data-until="1"],[data-until="2"],[data-until="3"]),
+[data-step="5"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"]),
+[data-step="6"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"]),
+[data-step="7"] :is([data-until="1"],[data-until="2"],[data-until="3"],[data-until="4"],[data-until="5"],[data-until="6"]) { display: none; }
+@media (prefers-reduced-motion: reduce) { [data-step-target] [data-from] { animation: none; } }
+
+/* 步驟控制列 */
+.stepper { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: var(--sp-3) 0; }
+.stepper button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.stepper button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper .cap { font-family: var(--mono); font-size: var(--fs-xs); color: var(--mist); }
+.steps { list-style: none; padding: 0; margin: var(--sp-3) 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.steps > * { min-width: 0; }
+.steps li { font-size: var(--fs-xs); font-family: var(--mono); letter-spacing: .03em; padding: .5em .6em; border: 1px solid var(--rule); border-radius: 3px; color: var(--mist); background: var(--card); }
+.steps li.on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.steps li.done { color: var(--ink-2); }
+.step-note { border-left: 3px solid var(--accent); padding: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0; background: var(--card); font-size: var(--fs-sm); }
+.step-note > p { margin: 0; }
+.step-note[hidden] { display: none; }
+
+/* 分頁 */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-3); }
+.tabs button { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .04em; min-height: 44px; padding: .45rem .9rem; border: 1px solid var(--rule-hard); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.tabs button.on { border-color: var(--accent); background: var(--accent-soft); }
+.pane { display: none; } .pane.on { display: block; }
+
+/* 交付物清單（靜態勾） */
+.dod { list-style: none; padding: 0; margin: var(--sp-3) 0; }
+.dod li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: .4em; padding: .4em 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.dod li::before { content: "✓"; color: var(--good); font-family: var(--mono); font-weight: 700; }
+.dod li.partial::before { content: "◐"; color: var(--warn); }
+.dod li.no::before { content: "✗"; color: var(--critical); }
+.dod li:last-child { border-bottom: 0; }
+
+/* 時間線 */
+.timeline { list-style: none; padding: 0; margin: var(--sp-4) 0; border-left: 2px solid var(--rule-hard); }
+.timeline li { position: relative; padding: 0 0 var(--sp-3) var(--sp-5); font-size: var(--fs-sm); }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--accent); }
+.timeline li .t { font-family: var(--mono); font-size: var(--fs-xs); color: var(--accent); letter-spacing: .06em; margin-right: .5em; }
+.timeline li.hot::before { border-color: var(--critical); }
+
+/* GWT */
+.gwt { font-family: var(--mono); font-size: var(--fs-xs); line-height: 1.7; background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: var(--sp-3) var(--sp-4); margin: var(--sp-3) 0; white-space: pre-wrap; }
+.gwt b { color: var(--accent); font-weight: 600; }
+
+/* 表格：severity 記號 */
+td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; margin-right: .3em; vertical-align: -1px; }
+.sev.crit { background: var(--critical); } .sev.warn { background: var(--warn); } .sev.ok { background: var(--good); } .sev.info { background: var(--mist); }
+
+/* 對話重播 */
+.chat { display: grid; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.chat > * { min-width: 0; }
+.msg { border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); background: var(--card); max-width: 44rem; }
+.msg.stu { border-left: 3px solid var(--ink); }
+.msg.ta { border-left: 3px solid var(--accent); margin-left: var(--sp-5); }
+.msg .who { font-family: var(--mono); font-size: var(--fs-xs); letter-spacing: .08em; color: var(--mist); margin: 0 0 .3em; text-transform: uppercase; }
+.msg p { margin: 0 0 .5em; } .msg p:last-child { margin: 0; }
+
+.end { margin-top: var(--sp-7); color: var(--mist); font-size: var(--fs-sm); }
+.kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--rule-hard); border-bottom-width: 2px; border-radius: 3px; padding: 0 .35em; }
+@media (hover: hover) and (pointer: fine) {
+  .tnav a, .tabs button, .stepper button { transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+}
+
+/* 讀的欄位維持 34em；工作物件（產出卡、終端、對話、牆、圖）用整個頁寬，牆與 .wide 再破出到 66rem */
+.report :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tnav, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > :is(.file, .term, .chat, .teach, .answer, .steps, .stepper, .step-note, .gwt, .timeline, .dod, .meta-strip, .tabs, .pane, .diagram, .wall-scroll, [data-stepper], [data-replay]) { max-width: none; }
+.report > :is(section, article) > .pane > *, .report > .pane > * { max-width: none; }
+.wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
+.wall-scroll .wall { padding-inline: 2px; }
+
+/* 長路徑與識別碼沒有斷點：給有可能塞進 mono 字串的容器一個斷字機會，免得 375px 被撐寬 */
+.meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
+/* SVG 裡借用 sticky 色票的 rect 不要吃到 HTML 便利貼的旋轉 */
+.diagram .sticky, .diagram .sticky.hot { transform: none; }
+
+</style>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">theme · auto</button>
+<main class="report">
+<nav class="tnav" aria-label="七天導覽">
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher" data-day="0">教師版 · 總覽</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day1" data-day="1">D1 進場</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day2" data-day="2">D2 風暴</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day3" data-day="3" class="here" aria-current="page">D3 戰略</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day4" data-day="4">D4 TDD</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day5" data-day="5">D5 事件</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day6" data-day="6">D6 MVP</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-teacher-day7" data-day="7">D7 收尾</a>
+  <a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">學員主控台 ↗</a>
+</nav>
+
+<!-- title: 教師版 D3 · 戰略設計 -->
+<!-- description: Day 3 全程跑完會留下的 context-map.md、c4.md、ADR-0001 / 0002 的完整參考版本，加上找邊界的五步實況、助教對話重播與驗收點。 -->
+<p class="eyebrow">DAY 3 · STRATEGIC DESIGN</p>
+<h1 class="display">從便利貼<br>切出<em>邊界</em></h1>
+<p class="lede">Day 2 的牆上有 12 張事實、3 個樞紐、8 條規則。Day 3 要回答的只有一個問題：這些東西「誰擁有」？學員用四種線索（語言衝突、生命週期、一致性、獨立存活）把牆切成 3–7 個 Bounded Context，替每一對關係標上模式（ACL、Partnership、Customer–Supplier、Conformist），畫出 C4 前兩層，再用兩份 ADR 把「為什麼這樣切」與「MVP1 只做哪三塊」寫成三個月後還能被挑戰的決策。今天決定的邊界，明天起就是 <code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code> 三個目錄，改不回來。</p>
+<div class="meta-strip"><span><b>方法論</b> Bounded Context · Context Map · Core/Supporting/Generic · C4 L1/L2 · ADR</span><span><b>時長</b> kickoff 15 分 + 先讀 30 分 + 3 × 90 分 + check-out 30 分</span><span><b>交付物</b> context-map.md · c4.md · adr/0001 · adr/0002</span><span><b>skills</b> /context-map · /c4 · /adr · /checkout</span></div>
+
+<p class="eyebrow">00 · 跑完會留下什麼</p>
+<h2>四個檔案，一個子目錄</h2>
+<ul class="dod">
+  <li><code>workshop/day3/context-map.md</code> — 邊界推導紀錄（四小節、每節 ≥ 2 條證據，引用 Day 1–2 檔案）、5 個 context 四欄齊全、R1–R8 擁有者表、Mermaid context map、關係表（模式 + 理由 + 反例）、「不准出現的關係」、推翻過的切法 ≥ 1、與課綱 §1.4 的差異與理由。</li>
+  <li><code>workshop/day3/c4.md</code> — C4Context（6 位角色、1 個系統、3 個外部系統、每條線有動詞）與 C4Container（只畫 MVP1；site / HQ 兩個邊界；OCPP ACL、Outbox relay、in-memory bus、DB 都在；Parking / Dispatch 虛線 stub）；每個箭頭對到 §1.8 的事件或一個命令；「MVP1 不包含」清單。</li>
+  <li><code>workshop/day3/adr/0001-bounded-contexts.md</code> — 決策 = 五個 context 的切法；替代方案 ≥ 2（含「單一 Session」與「AssetOps + Dispatch 合併」）；後果有壞的 ≥ 2；狀態 Accepted；<code>/adr review</code> 過。</li>
+  <li><code>workshop/day3/adr/0002-mvp1-scope.md</code> — 決策 = MVP1 只做 Charging + AssetOps 工單開立 + Billing 草稿；明列不做什麼（Dispatch 真派工、Parking 真整合、Billing 合併出帳、發票）與何時做（Sprint 2）。</li>
+  <li>全部 commit 到 <code>workshop/&lt;name&gt;</code> 分支；context 名稱已與明天的 starter 目錄對上。</li>
+</ul>
+<p>講師視角：這一天最容易失真的地方不是「切錯」，而是「沒切」。三種典型：（1）只切出「場站」與「總部」——那是部署位置，不是語言邊界；（2）切出十塊——「連接器」「計量」「憑證」各一塊，把聚合當 context；（3）所有關係都畫 Partnership、ADR 後果只寫好處——代表沒想過誰是上游、也沒想過代價。另一種更隱蔽的失真：學員在 B1 就偷看 <code>docs/curriculum.md</code> §1.4，交出來的五個 context 名字一模一樣，但「邊界推導紀錄」四小節是空的或是事後補的。驗收時先看推導紀錄有沒有引用 <code>workshop/day1/interviews.md</code> 的原話與 <code>workshop/day2/rules.md</code> 的規則編號——沒有引用，就是抄的。</p>
+<h3>一天怎麼跑</h3>
+<ol class="timeline">
+  <li><span class="t">0:00</span>Kickoff 15 分：昨天亮點（唸一條好的 R5 GWT）、四種線索寫白板、四個關係模式各一句、「今天 kickoff 仍不講五個 context」。</li>
+  <li><span class="t">0:15</span>先讀 30 分：<code>ddd-strategic.md</code> §2–§5、<code>c4.md</code> §2 與 §4、<code>adr.md</code> §2；自己的 storm board 樞紐與「誰在乎」欄。不看 §1.4、不看 <code>docs/diagrams/context-map.*</code>。</li>
+  <li><span class="t">0:45</span>Block 1（90 分）：25 分紙上找證據 → 45 分 <code>/context-map 挑戰</code> → 20 分寫推翻過的切法。</li>
+  <li><span class="t">2:15</span>Block 2（90 分）：20 分紙上列箭頭 → 40 分 <code>/context-map</code> 畫圖與挑戰 → 15 分對照 §1.4 → 15 分修圖、定名。</li>
+  <li><span class="t">3:45</span>午休 60 分。</li>
+  <li><span class="t">4:45</span>Block 3（90 分，實測 110 分以上）：25 分 C4 L1 / L2 → 20 分 <code>/c4</code> → 30 分 <code>/adr new</code> 兩份 → 15 分 <code>/adr review</code>。</li>
+  <li class="hot"><span class="t">6:15</span>Check-out 30 分：<code>/checkout day3</code>、五題、commit。這一段最常被 Block 3 吃掉，講師要在 6:15 準時喊停。</li>
+</ol>
+<p>與前後天的接口：昨天的樞紐事件與「誰在乎」欄是今天 B1 的原料，昨天沒標樞紐的學員今天會卡在第一步；今天定下的五個名字明天就是 <code>src/</code> 目錄，Day 5 的整合事件契約用今天關係表的事件名，Day 7 的 PR 描述要連回今天的兩份 ADR。</p>
+
+<p class="eyebrow">BLOCK 1 · 找邊界（90 分）</p>
+<h2>用四種線索把牆切開</h2>
+<h3>實況</h3>
+<p>前 25 分鐘不開 Claude。學員打開 <code>workshop/day3/TEMPLATE.md</code> 的第一個檔案骨架，對著自己的 <code>storm-board.md</code>、<code>glossary.md</code>、<code>rules.md</code>、<code>interviews.md</code>，替四種線索各找兩條證據。做得好的學員這時桌上會攤開三個檔案，一邊翻一邊在「語言衝突」下面寫「會話：阿忠 = P-441，小美 = S-991」。做得不好的學員第 5 分鐘就開 Claude 問「應該切幾個」。</p>
+<p>第 25–70 分鐘貼 <code>/context-map 挑戰</code>。助教不給名單，只針對每個 context 問「為什麼它不能併進隔壁那個」、針對每條不變條件問「這條規則在哪個時刻必須成立」、針對獨立存活問「總部斷線 30 分鐘時哪些命令還能執行」。一輪通常 3–4 個回合，學員會在這裡把「場站」拆成停車與充電、把「維運」拆成工單與派工。最後 20 分鐘寫「我推翻過的切法」——推翻前後都要留在檔案裡。</p>
+<h3>四種線索速查（講師白板版）</h3>
+<div class="table-scroll"><table>
+  <thead><tr><th>線索</th><th>測試問題</th><th>本案的證據</th><th>切出的邊界</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">語言衝突</td><td>把兩群人放同一個會議，他們會為一個詞吵架嗎？</td><td>「會話」P-441 vs S-991；「狀態」四個狀態機；「開單」WO-2208 vs INV-778；「故障」設備申告 vs 異常中止</td><td>Parking / Charging；AssetOps / Billing；OCPP 隔在外面</td></tr>
+    <tr><td class="nowrap">生命週期</td><td>A 結束時 B 一定結束嗎？</td><td>S-991 27 分、P-441 31 分、WO-2208 可跨日、INV-778 月底開立保存五年</td><td>Charging / Parking；Charging / Billing；Charging / AssetOps</td></tr>
+    <tr><td class="nowrap">一致性</td><td>這兩件事之間差 5 秒會有人受傷嗎？</td><td>R1、R5 命令當下；R7、合併出帳事後；放行 ≠ 結清（R6）</td><td>Billing 與所有上游分開；AssetOps / Dispatch</td></tr>
+    <tr><td class="nowrap">獨立存活 / 團隊</td><td>總部斷線 30 分鐘，這裡還能執行哪些命令？同一群人在改嗎？</td><td>阿忠鑰匙開閘、小美月票白名單 24h、阿豪地下室離線回報、老陳月底才工作</td><td>場站節點 vs 總部節點；Dispatch 獨立</td></tr>
+  </tbody>
+</table></div>
+
+<section data-stepper data-step="1" data-max="5">
+  <ol class="steps">
+    <li data-goto="1">1 攤開事實</li><li data-goto="2">2 樞紐當剪刀</li><li data-goto="3">3 語言衝突</li><li data-goto="4">4 生命週期與斷線</li><li data-goto="5">5 五個邊界</li>
+  </ol>
+  <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="step-note" data-note="1"><p><b>攤開 Day 2 的事實。</b>學員把 storm board 主線（T0–T6）與故障支線（F、工單開立、工單關閉）攤成一排，只留過去式事實，命令、政策先收起來。助教問：「這 10 張裡，哪幾張是你昨天標成樞紐的？」學員答：「充電已開始、充電已結束、樁申告故障——因為它左右兩邊的人不一樣。」助教：「好，那就先只用這三張。」</p></div>
+  <div class="step-note" data-note="2"><p><b>樞紐當剪刀。</b>在三個樞紐事件畫垂直線，替每張事實寫「誰在乎」。助教問：「T3 左邊是阿忠，右邊變成小美與老陳——同一個人跨過這條線了嗎？」學員：「阿忠沒跨，他只管 T0、T1、T6。」助教：「那 T6 的阿忠跟 T0 的阿忠是同一群人、同一套詞？」學員：「是，都是進場放行。所以 T0–T1 和 T6 應該在同一堆，中間夾著充電。」助教：「你剛剛推出了一個不連續的邊界——記下來。」</p></div>
+  <div class="step-note" data-note="3"><p><b>同一個字、不同意思。</b>助教問：「阿忠說『一個會話』和小美說『一個會話』，指同一段時間嗎？」學員翻 <code>interviews.md</code>：P-441 是 14:02–14:33，S-991 是 14:04–14:31，「而且拔了再插會有第二個 S-991，但 P-441 還是同一個」。助教再問「狀態」：OCPP 的 Faulted、小美的異常中止、Vicky 的維修中、老陳的草稿——「你的程式碼裡打算用幾個欄位裝？」學員：「四個。」助教問「開單」：Vicky 開的是 WO-2208，老陳開的是 INV-778——「同一個動詞嗎？」學員：「一個 open 一個 issue。」三組衝突 → 三條候選邊界。</p></div>
+  <div class="step-note" data-note="4"><p><b>生命週期與斷線存活。</b>助教問：「S-991 結束時 P-441 一定結束嗎？WO-2208 關單時 INV-778 呢？」學員：「都不一定。充電活 27 分鐘、停車 31 分鐘、工單可以跨日、帳單月底才開還要留五年。」助教換線索：「總部斷線 30 分鐘，哪些命令還要能執行？」學員回去翻阿忠訪談：「開閘、人工放行、充電授權（月票白名單 24 小時快取）——這些在場站。出帳可以晚、開工單在總部、派工阿豪在地下室本來就離線回報。」助教：「你剛剛把『必須自己活』和『可以晚一點』分成兩堆——這兩堆能放同一個交易嗎？」學員：「不能。」</p></div>
+  <div class="step-note" data-note="5"><p><b>五個邊界。</b>學員把四種線索疊起來：停車（阿忠、P-441、斷線開閘）、充電（小美、S-991、OCPP 在場站、R1–R4 立即守）、帳務（老陳、INV-778、R7、可延遲不可丟）、資產維運（Vicky、WO-2208、R5 立即守）、派工（阿豪、TECH-HAO、離線後對齊）。助教最後問：「如果只有錢做一塊，做哪塊？為什麼是它讓公司贏或輸？」學員：「充電。停車系統本來就有、工單能用電話撐、帳單可以月底手工——但充電順不順、斷線能不能賣，就是這家公司跟隔壁停車場的差別。」核心域定了。助教：「現在可以把這五堆寫進 context 清單，每堆四欄。」</p></div>
+
+  <figure class="wide">
+    <p class="title">找邊界的五步</p>
+    <p class="subtitle">同一張牆逐步疊上剪刀線、語言衝突、生命週期與斷線存活，最後長出五個區域。按「下一步」看每一層。</p>
+    <div class="diagram" data-step-target>
+      <svg viewBox="0 0 960 520" role="img" aria-label="從 Day 2 事實牆推導五個 Bounded Context 的五個步驟">
+        <!-- 第 5 步：便利貼背後的區域（先畫在底層，第 5 步才出現） -->
+        <g data-from="5">
+          <rect class="zone plain" x="14" y="22" width="186" height="68" rx="6"/>
+          <rect class="zone" x="200" y="22" width="368" height="68" rx="6"/>
+          <rect class="zone plain" x="568" y="22" width="92" height="68" rx="6"/>
+          <rect class="zone" x="660" y="22" width="92" height="68" rx="6"/>
+          <rect class="zone plain" x="752" y="22" width="188" height="68" rx="6"/>
+          <text class="t a" x="107" y="140" text-anchor="middle">Parking</text>
+          <text class="t a" x="384" y="140" text-anchor="middle">Charging</text>
+          <text class="t a" x="614" y="140" text-anchor="middle">Parking</text>
+          <text class="t a" x="706" y="140" text-anchor="middle">Charging→AssetOps</text>
+          <text class="t a" x="846" y="140" text-anchor="middle">AssetOps</text>
+        </g>
+        <!-- 第 1 步：Day 2 的事實一排 -->
+        <g data-from="1">
+          <rect class="sticky evt" x="20" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="63" y="46" text-anchor="middle">T0 14:02</text>
+          <text class="t" x="63" y="68" text-anchor="middle">車輛已進場</text>
+          <rect class="sticky evt" x="112" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="155" y="46" text-anchor="middle">T1 14:03</text>
+          <text class="t" x="155" y="68" text-anchor="middle">車位已占用</text>
+          <rect class="sticky evt" x="204" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="247" y="46" text-anchor="middle">T2 14:04</text>
+          <text class="t" x="247" y="68" text-anchor="middle">連接器插上</text>
+          <rect class="sticky evt" x="296" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="339" y="46" text-anchor="middle">T3 14:04</text>
+          <text class="t" x="339" y="68" text-anchor="middle">充電已開始</text>
+          <rect class="sticky evt" x="388" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="431" y="46" text-anchor="middle">T4 14:13</text>
+          <text class="t" x="431" y="68" text-anchor="middle">電量已計量</text>
+          <rect class="sticky evt" x="480" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="523" y="46" text-anchor="middle">T5 14:31</text>
+          <text class="t" x="523" y="68" text-anchor="middle">充電已結束</text>
+          <rect class="sticky evt" x="572" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="615" y="46" text-anchor="middle">T6 14:33</text>
+          <text class="t" x="615" y="68" text-anchor="middle">車輛已離場</text>
+          <rect class="sticky evt" x="664" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="707" y="46" text-anchor="middle">F 18:10</text>
+          <text class="t" x="707" y="68" text-anchor="middle">樁申告故障</text>
+          <rect class="sticky evt" x="756" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="799" y="46" text-anchor="middle">F+1 18:10</text>
+          <text class="t" x="799" y="68" text-anchor="middle">工單已開立</text>
+          <rect class="sticky evt" x="848" y="28" width="86" height="56" rx="2"/>
+          <text class="t a" x="891" y="46" text-anchor="middle">F+2 18:18</text>
+          <text class="t" x="891" y="68" text-anchor="middle">工單已關閉</text>
+        </g>
+        <!-- 第 2 步：樞紐剪刀線 + 誰在乎 -->
+        <g data-from="2">
+          <rect x="296" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <rect x="480" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <rect x="664" y="28" width="86" height="56" rx="2" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <path class="life" d="M293 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <path class="life" d="M477 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <path class="life" d="M661 18 V132" style="stroke:var(--accent);stroke-width:1.5"/>
+          <text class="t a" x="293" y="14" text-anchor="middle">樞紐 ChargingStarted</text>
+          <text class="t a" x="477" y="14" text-anchor="middle">樞紐 ChargingCompleted</text>
+          <text class="t a" x="661" y="14" text-anchor="middle">樞紐 ChargerFaulted</text>
+          <text class="t s" x="63" y="110" text-anchor="middle">阿忠</text>
+          <text class="t s" x="155" y="110" text-anchor="middle">阿忠·小美</text>
+          <text class="t s" x="247" y="110" text-anchor="middle">小美</text>
+          <text class="t s" x="339" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="431" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="523" y="110" text-anchor="middle">小美·老陳</text>
+          <text class="t s" x="615" y="110" text-anchor="middle">阿忠·老陳</text>
+          <text class="t s" x="707" y="110" text-anchor="middle">Vicky·阿豪</text>
+          <text class="t s" x="799" y="110" text-anchor="middle">Vicky·阿豪</text>
+          <text class="t s" x="891" y="110" text-anchor="middle">Vicky·小美</text>
+          <text class="t s" x="63" y="126" text-anchor="middle">↑ 誰在乎</text>
+        </g>
+        <!-- 第 3 步：語言衝突 -->
+        <g data-from="3">
+          <rect class="st hot" x="20" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="32" y="174">「會話」同字不同義</text>
+          <text class="t s" x="32" y="193">阿忠：P-441 14:02–14:33，進場 → 放行</text>
+          <text class="t s" x="32" y="210">小美：S-991 14:04–14:31，授權 → 結束計量</text>
+          <text class="t s" x="32" y="227">韌體：transactionId 5567（不進通用語言）</text>
+          <text class="t a" x="32" y="246">→ 一個 P-441 有 0..n 個 S-991：兩個 context</text>
+          <rect class="st hot" x="330" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="342" y="174">「狀態」四個狀態機</text>
+          <text class="t s" x="342" y="193">OCPP：Available / Charging / Faulted</text>
+          <text class="t s" x="342" y="210">小美：進行中 / 已結束 / 異常中止（會話）</text>
+          <text class="t s" x="342" y="227">Vicky：正常 / 故障 / 維修中（樁健康）</text>
+          <text class="t a" x="342" y="246">→ 不准一個 status 欄吃四種值</text>
+          <rect class="st hot" x="640" y="152" width="300" height="104" rx="8"/>
+          <text class="t b" x="652" y="174">「開單」工單還是帳單</text>
+          <text class="t s" x="652" y="193">Vicky：開工單 WO-2208（WorkOrder.open）</text>
+          <text class="t s" x="652" y="210">老陳：開帳單 INV-778（Invoice.issue）</text>
+          <text class="t s" x="652" y="227">阿忠：「開單」= 打電話給客服（人當 API）</text>
+          <text class="t a" x="652" y="246">→ 工單 ≠ 帳單：AssetOps 與 Billing 分家</text>
+        </g>
+        <!-- 第 4 步：生命週期 + 斷線存活 -->
+        <g data-from="4">
+          <rect class="box dim" x="20" y="268" width="450" height="130" rx="8"/>
+          <text class="t b" x="32" y="288">生命週期不同步（長度非等比）</text>
+          <text class="t m" x="32" y="319">S-991 充電會話</text>
+          <rect class="zone" x="150" y="306" width="46" height="18" rx="3"/>
+          <text class="t s" x="202" y="319">14:04–14:31 · 27 分</text>
+          <text class="t m" x="32" y="341">P-441 停車會話</text>
+          <rect class="zone" x="150" y="328" width="58" height="18" rx="3"/>
+          <text class="t s" x="214" y="341">14:02–14:33 · 31 分，可含多個 S-991</text>
+          <text class="t m" x="32" y="363">WO-2208 工單</text>
+          <rect class="zone" x="150" y="350" width="150" height="18" rx="3"/>
+          <text class="t s" x="306" y="363">18:10 開立 → 18:18 關單，可跨日</text>
+          <text class="t m" x="32" y="385">INV-778 帳單</text>
+          <rect class="zone" x="150" y="372" width="306" height="18" rx="3"/>
+          <text class="t s" x="156" y="385">月底開立 → 更正走 InvoiceAdjusted → 保存 5 年</text>
+          <rect class="box dim" x="490" y="268" width="450" height="130" rx="8"/>
+          <text class="t b" x="502" y="288">總部斷線 30 分鐘，誰要活著？（§1.1）</text>
+          <text class="t a" x="502" y="308">必須自己活（場站）</text>
+          <text class="t a" x="722" y="308">可以晚一點對齊（總部）</text>
+          <rect class="st good" x="502" y="316" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="331">開關閘、人工放行 R6 · 阿忠鑰匙</text>
+          <rect class="st good" x="502" y="342" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="357">授權 R2 · 月票白名單快取 24h</text>
+          <rect class="st good" x="502" y="368" width="208" height="22" rx="11"/>
+          <text class="t s" x="510" y="383">計量與結束 R3 R4 · OCPP 在場站</text>
+          <rect class="st" x="722" y="316" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="331">出帳 · 可延遲、不可丟事件</text>
+          <rect class="st" x="722" y="342" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="357">開工單 · 總部主系統，場站上報</text>
+          <rect class="st" x="722" y="368" width="208" height="22" rx="11"/>
+          <text class="t s" x="730" y="383">派工回報 · 離線後再對齊</text>
+        </g>
+        <!-- 第 5 步：五個區域 -->
+        <g data-from="5">
+          <text class="t a" x="210" y="414" text-anchor="middle">場站節點 SITE-TPE-01（斷線可獨立）</text>
+          <text class="t a" x="675" y="414" text-anchor="middle">總部節點 HQ</text>
+          <path class="life" d="M20 418 H400"/>
+          <path class="life" d="M410 418 H940"/>
+          <rect class="zone plain" x="20" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="30" y="446">Parking 場站停車</text>
+          <text class="t s" x="30" y="464">進場、車位、停車會話、放行</text>
+          <text class="t s" x="30" y="480">一輛車一個進行中停車會話</text>
+          <text class="t a" x="30" y="497">Supporting · 斷線開關閘</text>
+          <rect class="zone" x="200" y="424" width="200" height="84" rx="8"/>
+          <rect x="200" y="424" width="200" height="84" rx="8" style="fill:none;stroke:var(--accent);stroke-width:2"/>
+          <text class="t b" x="210" y="446">Charging 充電會話 · 核心</text>
+          <text class="t s" x="210" y="464">連接器、授權、計量、中止原因</text>
+          <text class="t s" x="210" y="480">一個連接器一個進行中會話</text>
+          <text class="t a" x="210" y="497">Core · OCPP 在場站，總部只訂閱</text>
+          <rect class="zone plain" x="410" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="420" y="446">Billing 計費帳務</text>
+          <text class="t s" x="420" y="464">費率、帳單、發票、爭議</text>
+          <text class="t s" x="420" y="480">帳單開立後金額不可默默改</text>
+          <text class="t a" x="420" y="497">Generic · 可延遲不可丟</text>
+          <rect class="zone plain" x="590" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="600" y="446">AssetOps 資產維運</text>
+          <text class="t s" x="600" y="464">樁、槍、韌體、健康、工單</text>
+          <text class="t s" x="600" y="480">一座樁一張進行中根因工單</text>
+          <text class="t a" x="600" y="497">Supporting · 總部主系統</text>
+          <rect class="zone plain" x="770" y="424" width="170" height="84" rx="8"/>
+          <text class="t b" x="780" y="446">Dispatch 調度派工</text>
+          <text class="t s" x="780" y="464">技術員、路線、SLA、備品</text>
+          <text class="t s" x="780" y="480">一張工單一個主責技術員</text>
+          <text class="t a" x="780" y="497">Supporting · 離線後對齊</text>
+        </g>
+      </svg>
+    </div>
+    <details class="datatable"><summary>圖中資料</summary><div class="table-scroll" style="margin-inline:0"><table>
+      <thead><tr><th>步驟</th><th>圖上出現什麼</th><th>資料</th></tr></thead>
+      <tbody>
+        <tr><td>1 攤開事實</td><td>10 張黃貼</td><td>T0 14:02 VehicleEntered · T1 14:03 ChargingBayOccupied · T2 14:04 ConnectorPluggedIn · T3 14:04 ChargingStarted · T4 14:13 EnergyMetered · T5 14:31 ChargingCompleted · T6 14:33 VehicleExited · F 18:10 ChargerFaulted · F+1 18:10 WorkOrderOpened · F+2 18:18 WorkOrderClosed</td></tr>
+        <tr><td>2 樞紐當剪刀</td><td>三條垂直線、每張貼的「誰在乎」</td><td>樞紐：ChargingStarted、ChargingCompleted、ChargerFaulted。在乎的人：T0 阿忠；T1 阿忠·小美；T2 小美；T3–T5 小美·老陳；T6 阿忠·老陳；F、F+1 Vicky·阿豪；F+2 Vicky·小美</td></tr>
+        <tr><td>3 語言衝突</td><td>三個紅框</td><td>「會話」：阿忠 P-441 14:02–14:33 vs 小美 S-991 14:04–14:31 vs 韌體 transactionId 5567 → Parking / Charging。「狀態」：OCPP 連接器狀態機 vs 小美會話狀態 vs Vicky 樁健康 vs 老陳帳單狀態 → 四個狀態機。「開單」：Vicky WorkOrder.open（WO-2208）vs 老陳 Invoice.issue（INV-778）→ AssetOps / Billing</td></tr>
+        <tr><td>4 生命週期與斷線</td><td>左：四條生命週期；右：兩欄存活清單</td><td>S-991 27 分；P-441 31 分（可含多個 S-991）；WO-2208 18:10 → 18:18 可跨日；INV-778 月底開立、更正走 InvoiceAdjusted、保存 5 年。必須自己活：開關閘與人工放行 R6、授權 R2（月票白名單 24h 快取）、計量與結束 R3/R4。可以晚一點：出帳、開工單、派工回報</td></tr>
+        <tr><td>5 五個邊界</td><td>便利貼背後的區域 + 底部五個框</td><td>Parking（Supporting，斷線開關閘）、Charging（Core，OCPP 在場站）、Billing（Generic，可延遲不可丟）、AssetOps（Supporting，總部主系統）、Dispatch（Supporting，離線後對齊）。場站節點 = Parking + Charging；總部節點 = Billing + AssetOps + Dispatch。F 這張貼由 Charging 產生、AssetOps 消費</td></tr>
+      </tbody>
+    </table></div></details>
+    <figcaption>五步的順序就是四種線索的順序：先用樞紐找候選切點（步驟 2），再用語言（3）、生命週期與一致性、斷線存活（4）逐一驗證，最後才命名（5）。學員的圖不會長這樣——他們交的是 markdown；這張圖是講師用來對照「推導紀錄」四小節有沒有真的走過這五步。</figcaption>
+  </figure>
+</section>
+
+<h3>助教對話重播：<code>/context-map 挑戰</code></h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /context-map 挑戰</p><p>Day 3 Block 1。我從 storm board 切出三堆：</p><p>1. <b>場站 Site</b>：進場、車位、插槍、授權、計量、放行。不變條件：一個車位一次一輛車。斷線要活。<br>2. <b>維運 Ops</b>：故障、工單、派工、技術員、備品。不變條件：一根樁一張工單。總部的事。<br>3. <b>帳務 Billing</b>：停車費、電費、發票。不變條件：帳單開了不能改（R7）。可以晚。</p><p>請只提問，不要說官方答案是幾個。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>可以，先記下這三堆。戳第一堆兩個問題：</p><p>1. 你的 <code>interviews.md</code> 裡阿忠說「一個會話」、小美說「一個會話」——指的是同一段時間嗎？把 P-441 和 S-991 的起訖時間抄出來對一下。<br>2. 「一個車位一次一輛車」守住了 T1；那 R1「連接器占用時拒絕第二次 Start」是誰在守？車位和連接器是同一個東西嗎（阿忠隱藏事實 4：每天約 5 台車占位不充電）？</p><p><b>下一個最小步驟：</b>在 context-map.md「語言衝突」小節寫下 P-441 與 S-991 的起訖時間，再回答第 2 題。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>P-441 是 14:02–14:33，S-991 是 14:04–14:31。而且拔了再插會有第二個 S-991，P-441 還是同一個。R1 是連接器 CP-A12-2 的規則，跟車位無關——車可以停著不充。所以「場站」裡其實有兩條不變條件、兩種會話。我把它拆成停車和充電。</p><p>第二堆的問題是什麼？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>第二堆：阿豪在地下室修好樁的時候沒訊號（阿豪隱藏事實 3），他回到地面才回報。這 40 分鐘裡，Vicky 那邊「一根樁一張根因工單」（R5）還要不要立即守？如果要，工單與派工的一致性節奏是一樣的嗎？另外，費率改動是小美決定、韌體改動是誰決定？同一組人嗎？</p><p>提醒一件事：你的三堆裡沒有 OCPP。你打算把 <code>StatusNotification</code> 放進哪一堆？它有自己的一群業務人員嗎？</p><p><b>下一個最小步驟：</b>替「維運」寫兩條不變條件（一條關於工單、一條關於技術員），看它們能不能在同一筆交易守住。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>工單：「一座樁同一時間一張進行中根因工單」——18:10:08 第二次申告時要立刻擋，不能等。技術員：「一張工單一個主責技術員」——但阿豪離線時這條要等他回報才對得齊。節奏不一樣，拆成資產維運（AssetOps）和派工（Dispatch）。</p><p>OCPP 不是一群人的語言，是樁的協定。它應該是充電的外部系統，中間要翻譯——<code>StatusNotification(Faulted)</code> 進來變 <code>ChargerFaulted</code>。</p><p>所以現在是五堆：停車、充電、帳務、資產維運、派工。核心是充電。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>五堆各自有語言、不變條件、存活條件，可辯護。兩件事要留在檔案裡：（1）「三堆」那版放進「我推翻過的切法」，寫清楚是哪條線索推翻的；（2）「OCPP 不是 context」這句放進「語言衝突」小節——它是 Day 2 storm 時就被你挑掉的「系統動作當事實」的延續。</p><p>先別急著對答案。把五堆的四欄填完，然後替 R1–R8 每一條標擁有者——如果有一條跨兩堆，回來重切。</p><p><b>下一個最小步驟：</b>在 context-map.md 的 context 清單表填滿 5 列 × 4 欄，10 分鐘。</p></div>
+</div>
+
+<h3>助教對話重播：卡住 20 分鐘時</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /context-map</p><p>我卡住超過 20 分鐘了。我知道停車和充電要分開，但帳務我怎麼樣都找不到它「自己的」不變條件——它不就是把 P-441 和 S-991 的數字加起來嗎？</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>超過 20 分鐘，那我給一個啟發法的問題，不給切法：</p><p>翻 <code>rules.md</code> 的 R7，再翻老陳訪談的隱藏事實 2（去年稽核發現三張帳單金額與原始資料不符，ERP 沒留軌跡）。「帳單開立後金額不可默默改，更正走 <code>InvoiceAdjusted</code>」——這條規則在 Charging 或 Parking 裡守得住嗎？S-991 在 14:31 結束之後，Charging 還在乎 INV-778 有沒有被改嗎？</p><p>另一個角度：老陳說「合併的依據是顧客，不是車牌」。「顧客」這個詞在 Parking（認車牌）或 Charging（認 TAG-MONTHLY-77）裡存在嗎？</p><p><b>下一個最小步驟：</b>在「一致性」小節寫下 R7 這一條，並在帳務那一列的「說的話」欄加上「顧客」。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>R7 只有帳務在乎，而且「顧客」只有帳務有——Parking 只認車牌、Charging 只認憑證。所以帳務有自己的詞和自己的規則，不是加總。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>對。用自己的話把這段寫進推導紀錄，不要抄我的問句。</p><p><b>下一個最小步驟：</b>把「帳務 = 加總」這個想法寫進「我推翻過的切法」，註明是 R7 與「顧客」推翻的。</p></div>
+</div>
+
+<h3>哪些替代切法「可辯護」</h3>
+<p>課綱 §1.4 是五個，但 rubric 說 3–7 個都收，關鍵是「說得出理由」。講師在驗收時會遇到這幾種，判準如下：</p>
+<div class="table-scroll"><table>
+  <thead><tr><th>學員的切法</th><th>可辯護嗎</th><th>講師怎麼判</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">4 個：AssetOps + Dispatch 合併為「Ops」</td><td>可辯護</td><td>MVP1 裡 Dispatch 只是 stub，合併不影響 Day 4–6。要求他寫出代價：技術員離線回報（阿豪 3）與工單即時去重（R5）的一致性節奏不同，將來拆的時候要動 Ops 的聚合。ADR-0001 的替代方案要出現「拆成兩個」。</td></tr>
+    <tr><td class="nowrap">6 個：Billing 拆成「計價 Pricing」與「發票 Invoicing」</td><td>可辯護</td><td>發票開立是 Generic（有 SaaS）、費率合併有一點差異化——這正是 <code>ddd-strategic.md</code> §2 說的「子領域 ≠ context」。要求他說明 R7 歸哪一個、Day 5 的 BillingDraftConsumer 在哪一個。</td></tr>
+    <tr><td class="nowrap">3 個：只有 Charging、AssetOps、Billing（Parking、Dispatch 當外部）</td><td>有條件可辯護</td><td>這是 <code>day3.md</code>「如果你落後了」的最小版。必須在文件裡明寫「Parking 是既有廠商系統、Dispatch 是 Sprint 2」，而且 R6 要有歸屬（歸到「Parking 外部系統的事件契約」）。沒寫這兩句就是沒切完。</td></tr>
+    <tr><td class="nowrap">3 個：場站（停車 + 充電）、總部（工單 + 派工）、帳務</td><td>不可辯護</td><td>「場站」裡有兩種會話、兩條不變條件（T1 車位 vs R1 連接器）；人工放行會被未結束的充電會話擋住（§1.7 T6 耦合）。這是部署位置，不是語言邊界。用「P-441 vs S-991」一個問題就能推翻。</td></tr>
+    <tr><td class="nowrap">2 個：場站、總部</td><td>不可辯護</td><td>同上，而且帳務被塞進總部後 R7 沒有擁有者。問：「老陳月底才工作，跟 Vicky 每天派工是同一群人、同一套詞嗎？」</td></tr>
+    <tr><td class="nowrap">≥ 8 個：連接器、計量、憑證、工單、技術員各一個</td><td>不可辯護</td><td>把聚合與值物件當 context。問：「連接器有自己的一群人在乎、自己的一套詞嗎？還是它是充電會話裡的一個名詞？」</td></tr>
+  </tbody>
+</table></div>
+
+<div class="file"><p class="path">workshop/day3/context-map.md <span class="chip">B1 第 40 分鐘的快照 · 第一版切法（後來被推翻）</span></p><div class="body">
+<h4>Context 清單（第一版，三堆）</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>Context</th><th>說的話</th><th>不變條件</th><th>獨立存活</th><th>Core / Supporting / Generic</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">場站 Site</td><td>進場、車位、插槍、授權、計量、放行</td><td>一個車位一次一輛車</td><td>總部斷線要能進場、充電、放行</td><td>Core</td></tr>
+    <tr><td class="nowrap">維運 Ops</td><td>故障、工單、派工、技術員、備品</td><td>一根樁一張工單</td><td>總部的事，場站只上報</td><td>Supporting</td></tr>
+    <tr><td class="nowrap">帳務 Billing</td><td>停車費、電費、發票、對帳</td><td>帳單開了不能改（R7）</td><td>可以晚，不能漏</td><td>Generic</td></tr>
+  </tbody>
+</table></div>
+<h4>被助教戳出來的問題（原樣留著，B1 結束移到「我推翻過的切法」）</h4>
+<ul>
+  <li>「場站」裡「會話」有兩個意思：阿忠的 P-441（14:02–14:33）與小美的 S-991（14:04–14:31）。一個 P-441 可以有 0..n 個 S-991。<b>語言衝突 + 生命週期</b> → 拆成 Parking 與 Charging。</li>
+  <li>「一個車位一次一輛車」守的是 T1；R1「連接器占用拒絕第二次 Start」守的是 CP-A12-2，不是車位（阿忠：每天 5 台車占位不充電）。兩條不變條件、兩個聚合、兩種語言。</li>
+  <li>「維運」裡 R5（同樁同碼一張根因工單）要在 18:10:08 立刻擋；「一張工單一個主責技術員」要等阿豪從地下室上來才對得齊。<b>一致性節奏不同 + Conway（Vicky vs 阿豪）</b> → 拆成 AssetOps 與 Dispatch。</li>
+  <li>OCPP 沒有出現在任何一堆——它不是一群人的語言，是樁的協定。它是 Charging 的外部系統，中間要有翻譯層。</li>
+</ul>
+</div></div>
+
+<div class="teach"><p class="head">講師註 · Block 1</p>
+<p><b>驗收時看這三行：</b>（1）「語言衝突」小節有沒有「P-441 14:02–14:33」與「S-991 14:04–14:31」這兩個數字——有數字代表他真的翻了 <code>interviews.md</code>；（2）「獨立存活」小節有沒有引用阿忠隱藏事實 1（鑰匙開閘、日誌本）或小美隱藏事實 2（月票白名單 24 小時快取）——沒有的話「斷線」只是口號；（3）「我推翻過的切法」是不是真的比最終版少或多一堆，而且寫了是哪條線索推翻的。</p>
+<p><b>常見失真：</b>「場站 / 總部」兩堆（部署位置當邊界）；十堆（聚合當 context）；「帳務找不到不變條件」（回 R7）；把 OCPP 畫成 context；核心域選 Billing「因為它管錢」（老陳的痛是「對得起來」，不是「算得比別人好」）。</p>
+<p><b>怎麼攔：</b>走動時聽到「一個 Session 表加 type 欄」就問「人工放行時那個 Session 的 status 是什麼？」（instructor.md 誤解 #5）。聽到「切幾個才對」就說「切幾個是從牆上推出來的，助教只戳洞」。B1 結束前 10 分鐘投影一位學員的推導紀錄（徵得同意），指出哪一句是證據、哪一句是立場。</p>
+</div>
+
+<p class="eyebrow">BLOCK 2 · CONTEXT MAP（90 分）</p>
+<h2>每條線都要有模式、理由、反例</h2>
+<h3>實況</h3>
+<p>前 20 分鐘不開 Claude：學員列出所有「一個 context 要知道另一個 context 發生了什麼」的箭頭，每條寫上游 → 下游、傳什麼（用 Day 2 的事件名）、下游可不可以回頭改上游。這裡最常見的畫面是十條線全部雙向——因為還沒決定誰是上游。接著 40 分鐘用 <code>/context-map</code> 產 Mermaid 並讓助教挑戰每一條邊：「下游掛了 30 分鐘，上游會怎樣？」答得出來就保留，答不出來就改。最後 30 分鐘才准打開 <code>docs/curriculum.md</code> §1.4 對答案，逐條寫差異與理由，並決定從此固定的 context 名稱（Day 4 起 <code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code> 是固定目錄）。</p>
+
+<h3>逐條判定關係模式（重播）</h3>
+<p>B2 前 20 分鐘的紙上作業長這樣：每條箭頭問三個問題——誰上游、下游能不能改上游、下游要不要翻譯。按「下一步」看每一條的判定。</p>
+<section data-replay>
+  <div class="stepper"><button data-next class="primary">下一步</button><button data-all>全部</button><button data-reset>重來</button><span class="cap"></span></div>
+  <ol class="timeline">
+    <li data-item><span class="t">1</span><b>OCPP → Charging</b>：上游是樁廠商；我們不能改它、也不能等它；要翻譯 → <b>ACL</b>。</li>
+    <li data-item><span class="t">2</span><b>Parking ↔ Charging</b>：都在場站、都碰車位、一起改版、互訂事件；誰都不主宰誰 → <b>Partnership</b>。</li>
+    <li data-item><span class="t">3</span><b>Charging → Billing</b>：上游事件是契約，老陳可以提需求（energyWh 整數）但不能回呼 → <b>Customer–Supplier</b>。</li>
+    <li data-item><span class="t">4</span><b>Parking → Billing</b>：同上；人工放行後事後對齊（R6） → <b>Customer–Supplier</b>。</li>
+    <li data-item><span class="t">5</span><b>Charging → AssetOps</b>：<code>ChargerFaulted</code> 就是業務語言，翻譯沒價值，照單全收 → <b>Conformist</b>。</li>
+    <li data-item><span class="t">6</span><b>AssetOps → Dispatch</b>：同在總部、工單先於派工、程序內呼叫；不對帳務外洩 → <b>內部（Customer–Supplier）</b>。</li>
+    <li data-item><span class="t">7</span><b>AssetOps → Charging</b>：關單後恢復可售，用公開契約 <code>ops.work_order.closed.v1</code>，不回呼 → <b>Published Language</b>。</li>
+    <li data-item><span class="t">8</span><b>Dispatch ↔ Billing</b>：維修成本不進顧客帳單，沒有整合價值 → <b>Separate Ways</b>。</li>
+  </ol>
+</section>
+
+<h3>助教對話重播：<code>/context-map</code>（畫圖 → 挑戰 → 對照）</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /context-map</p><p>Day 3 Block 2。五個 context：Parking、Charging、Billing、AssetOps、Dispatch。關係我先這樣寫：</p><p>OCPP ↔ Charging：Partnership（一起改）<br>Parking ↔ Charging：Partnership<br>Charging ↔ Billing：Partnership（帳務要跟充電一起改費率）<br>Charging ↔ AssetOps：Partnership<br>AssetOps ↔ Dispatch：Partnership</p><p>另外我想讓 Billing 在收到 <code>ChargingCompleted</code> 之後回呼 Charging 把會話鎖住，等算完錢再解鎖，這樣金額不會跑掉。請產 Mermaid。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先不畫。五條全是 Partnership 代表你還沒決定誰是上游。逐條問：</p><p>1. OCPP 有一群業務人員跟你一起改版嗎？OCPP 1.6J 升 2.0.1 時，<code>StartTransaction</code> 會消失——你能要求樁廠商等你嗎？<br>2. Billing 掛了 30 分鐘（老陳月底跑批），S-991 在 14:31 要結束時，你的「鎖住會話等算錢」會讓阿忠的場站發生什麼？對照 §1.1 那句「場站在總部斷線時仍要能進場、充電、人工放行」。<br>3. AssetOps 收到 <code>ChargerFaulted</code> 之後，可以要求 Charging 改事件格式嗎？如果不行，這是 Partnership 嗎？</p><p><b>下一個最小步驟：</b>把每條線改寫成「上游 → 下游」單向，並在旁邊寫「下游掛了 30 分鐘，上游會怎樣」。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>1. 不能，OCPP 是別人的協定，我得自己翻譯——ACL。<br>2. 會卡住：Stop 要等 Billing 回應，Billing 掛了充電就結束不了，車主拔不了槍、阿忠放不了行。所以 Billing 只能訂閱事件，不能回呼。這是 Customer–Supplier：上游事件是契約，老陳可以要求 energyWh 用整數，但不能要求 Charging 等他。<br>3. 不行，AssetOps 照單全收 <code>ChargerFaulted</code> 的欄位——Conformist。翻譯沒有價值，因為它本來就是業務語言。</p><p>Parking ↔ Charging 我還是覺得是 Partnership：車位占用和充電開始要對得上，兩邊都在場站、都會一起改。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>三條都站得住。Parking ↔ Charging 保留 Partnership 可以，但要寫反例：如果不是 Partnership 而是 Parking 單向餵事件給 Charging，T1「占用等同充電已開始」那個耦合會不會回來？誰負責告訴阿忠的看板「這把槍現在有沒有在充」？</p><p>Mermaid 已用你的名字產好（下方）。還有一條你沒畫：AssetOps 關單之後 Charging 怎麼知道「恢復可售」？§1.8 的 <code>ops.work_order.closed.v1</code> 訂閱者是「Charging 健康」——這條是什麼模式？</p><p><b>下一個最小步驟：</b>替五條線各寫一句反例（「如果不用這個模式，會發生什麼」），寫完貼 <code>/context-map 對照</code>。</p></div>
+  <div class="msg stu"><p class="who">學員 → /context-map 對照</p><p>反例寫完了。<code>closed.v1</code> 那條我標 Published Language：AssetOps 公開契約，Charging 訂閱，不回呼。現在請對照 §1.4。我的差異：Billing 我標 Supporting（課綱參考說 Generic）；Parking ↔ Charging 我原本畫單向、現在改 Partnership；我多畫了 closed.v1 那條。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>對照結果：五個 context 與課綱同名同義；核心域相同（Charging）。三個差異：</p><p>（1）Billing 的類型——課綱把發票開立視為 Generic、合併帳單那一小塊有差異化，所以 MVP1 只做草稿。你標 Supporting 可辯護，建議在表格寫「Generic（發票）/ Supporting（合併）」。<br>（2）Parking ↔ Charging——課綱是「伙伴 + 事件下游」，你改成 Partnership 是接受課綱，理由要寫成自己的話（你剛才的反例就是理由）。<br>（3）closed.v1 那條課綱 §1.4 沒列、§1.8 有——你補的是對的，保留。</p><p>名稱從此固定：Parking / Charging / Billing / AssetOps / Dispatch，對得上明天的 <code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code>。</p><p><b>下一個最小步驟：</b>把「與 §1.4 差異」表填成三列（差異 / 可辯護 / 建議調整），然後 commit。</p></div>
+</div>
+
+<div class="file"><p class="path">workshop/day3/context-map.md <span class="chip">交付物 · 完整版（B2 結束）</span></p><div class="body">
+<h4>Bounded Contexts 與 Context Map — EV Charge Ops</h4>
+<p>推導原料：<code>workshop/day1/interviews.md</code>、<code>workshop/day2/storm-board.md</code>、<code>glossary.md</code>、<code>rules.md</code>。B2 結束後才對照 <code>docs/curriculum.md</code> §1.4。</p>
+
+<h4>1. 邊界推導紀錄（我怎麼切的）</h4>
+<p><b>1.1 語言衝突（同一個詞、不同意思）</b></p>
+<ul>
+  <li>「會話」：阿忠說的是車從進來到出去（<code>interviews.md</code> 阿忠原話「一台車一個會話，出去就結束」），P-441 是 14:02–14:33；小美說的是從插槍授權到結束計量（小美原話「插槍不算，授權才算開始」），S-991 是 14:04–14:31。同一輛 ABC-1234 一個 P-441 可以有 0..n 個 S-991（拔了再插）。→ ParkingSession 與 ChargingSession 是兩個詞、兩個 context。<code>glossary.md</code> §3.1。</li>
+  <li>「狀態」：OCPP 的連接器狀態（Available / Preparing / Charging / Faulted）、小美的會話狀態（進行中 / 已結束 / 異常中止）、Vicky 的樁健康（正常 / 故障 / 維修中）、老陳的帳單狀態（草稿 / 已開立 / 已更正）。四個狀態機；<code>rules.md</code> R4「只有 Charging 狀態可 Stop」用的是第二個。→ 至少三個 context，而且 OCPP 那個不是我們的語言。</li>
+  <li>「開單」：Vicky 開的是工單 WO-2208（<code>WorkOrder.open</code>），老陳開的是帳單 INV-778（<code>Invoice.issue</code>），阿忠說的「開單」是打電話給客服（人當 API）。→ AssetOps 與 Billing 分家。</li>
+  <li>「故障」：樁說 <code>StatusNotification(Faulted)</code>；小美的「異常中止」（<code>stopReason=PowerLoss</code>）不是故障；阿忠的「樁壞了」一半是 App 連不上（阿忠隱藏事實 3）。<code>ChargerFaulted</code> 的主語釘在設備上。→ Charging 產生、AssetOps 消費，兩邊語意一致（這是後面 Conformist 的根據）。</li>
+</ul>
+<p><b>1.2 生命週期不同</b></p>
+<ul>
+  <li>P-441（14:02–14:33，31 分）vs S-991（14:04–14:31，27 分）：充電結束時停車不一定結束（14:31 → 14:33 車還在）。<code>storm-board.md</code> T5 與 T6 之間沒有政策把兩者綁在一起。</li>
+  <li>S-991（27 分）vs INV-778（月底才開立，之後還可以 <code>InvoiceAdjusted</code>，稽核要留五年，老陳隱藏事實 2）。會話死了很久帳單才誕生。</li>
+  <li><code>ChargerFaulted</code>（18:10:00 一個瞬間）vs WO-2208（18:10 開立 → 18:18 修復驗證關單，可跨日；Vicky 隱藏事實 2：SLA 從設備申告的 <code>occurredAt</code> 起算，不從電話起算）。事實與承諾是兩個生命週期。</li>
+</ul>
+<p><b>1.3 一致性要求不同</b></p>
+<ul>
+  <li>立即守：R1「連接器占用時拒絕第二次 Start」（<code>rules.md</code> 14:05 第二張卡 TAG-VISITOR-01 在 CP-A12-2 要當場回 Blocked）；R5「同樁同碼一張根因工單」（18:10:08 第二次申告要當場附加，不能等）。</li>
+  <li>可延遲：R7「帳單開立後金額不可變」與合併停車費 + 電費——老陳原話「晚一點沒關係，不能漏」。5 秒、5 小時的延遲都沒人受傷。→ Billing 不能跟 Charging 在同一筆交易。</li>
+  <li>R6「放行不依賴總部」：放行 ≠ 結清（<code>glossary.md</code> §3.6）。<code>ParkingManuallyReleased</code> 之後帳務事後對齊。→ Parking 與 Billing 之間只能是事件。</li>
+</ul>
+<p><b>1.4 獨立存活與團隊（Conway）</b></p>
+<ul>
+  <li>阿忠隱藏事實 1：總部斷線時用鑰匙開閘、日誌本記車牌、隔天 email 給老陳，每月 3–4 次。→ Parking 在場站、斷線要活；帳務事後補。</li>
+  <li>小美隱藏事實 2：斷線時場站本機只有月票卡 24 小時快取白名單，車隊卡與 App 會被拒。→ 授權（R2）是 Charging 在場站的本機責任；總部只訂閱結果。</li>
+  <li>Vicky 隱藏事實 5：總部維護時阿忠的看板要能繼續顯示「WO-2208 / TECH-HAO / 處理中」。→ 場站保存工單副本（訂閱 <code>ops.work_order.opened.v1</code>），但工單的主系統在總部。</li>
+  <li>阿豪隱藏事實 3：地下室沒訊號，回到地面才同步，曾因此被判逾時。→ Dispatch 可離線執行、回報後對齊；節奏與 AssetOps 的即時去重不同。</li>
+  <li>三種節奏三群人：阿忠每天在場站、Vicky 每天在總部、老陳月底才工作。不是同一群人改的東西，不放同一個 context。</li>
+</ul>
+
+<h4>2. Context 清單</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>Context</th><th>說的話</th><th>不變條件</th><th>誰能離線</th><th>核心 / 支援 / 通用</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">Parking 場站停車</td><td>進場、車位、停車會話 P-441、放行、人工放行</td><td>一輛車同一時間一個進行中停車會話</td><td>總部掛掉仍能開關閘（阿忠鑰匙 → R6）</td><td>Supporting（既有廠商系統，只接事件）</td></tr>
+    <tr><td class="nowrap">Charging 充電會話</td><td>連接器 CP-A12-2、憑證 TAG-MONTHLY-77、授權、計量、中止原因、充電會話 S-991</td><td>一個連接器同一時間一個進行中會話（R1）；計量單調遞增（R3）</td><td>OCPP 在場站；斷線時本機授權（月票白名單）；總部只訂閱結果</td><td><b>Core</b>——只有錢做一塊就做這塊：充電順不順、斷線能不能賣，是這家公司跟隔壁停車場的差別</td></tr>
+    <tr><td class="nowrap">Billing 計費帳務</td><td>費率、尖離峰、草稿帳單、帳單 INV-778、發票、爭議、對帳、顧客</td><td>帳單開立後金額不可默默改，更正走 <code>InvoiceAdjusted</code>（R7）</td><td>可延遲出帳，不可丟事件；去重鍵 sessionId</td><td>Generic（發票開立有 SaaS）/ Supporting（合併停車 + 充電那一小塊）</td></tr>
+    <tr><td class="nowrap">AssetOps 資產維運</td><td>樁 CP-A12、槍、韌體、健康、工單 WO-2208、根因工單、重複申告、恢復可售</td><td>一座樁同一時間一張進行中根因工單（R5，去重鍵 chargerId + faultCode）</td><td>總部主系統；場站只上報、只保存副本</td><td>Supporting（必要、不差異化）</td></tr>
+    <tr><td class="nowrap">Dispatch 調度派工</td><td>技術員 TECH-HAO、路線、SLA、備品預留</td><td>一張工單同一時間一個主責技術員</td><td>可離線執行（阿豪在地下室），回報後再對齊</td><td>Supporting（MVP1 stub）</td></tr>
+  </tbody>
+</table></div>
+
+<h4>3. R1–R8 的擁有者（沒有一條跨兩個）</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>規則</th><th>一句話</th><th>擁有者</th><th>何時必須成立</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">R1</td><td>連接器占用時拒絕第二次 Start → <code>ChargingStartRejected(ConnectorOccupied)</code></td><td>Charging</td><td>命令當下（14:05）</td></tr>
+    <tr><td class="nowrap">R2</td><td>未授權憑證不得開始 → <code>ChargingStartRejected(Unauthorized)</code></td><td>Charging</td><td>命令當下；斷線時用本機白名單</td></tr>
+    <tr><td class="nowrap">R3</td><td>計量值單調遞增，倒退拒絕並記 <code>MeterValueRejected</code></td><td>Charging</td><td>每筆 MeterValue 當下</td></tr>
+    <tr><td class="nowrap">R4</td><td>只有 Charging 狀態可 Stop；<code>energyWh</code> = 12400 − 0</td><td>Charging</td><td>Stop 當下（14:31）</td></tr>
+    <tr><td class="nowrap">R5</td><td>同樁同碼在工單開放期間只留一張根因工單，第二次附加重複申告</td><td>AssetOps</td><td>申告當下（18:10:08）；broker 重送靠 eventId 另擋</td></tr>
+    <tr><td class="nowrap">R6</td><td>斷線時值班長可人工放行 → <code>ParkingManuallyReleased</code>，帳務事後對齊</td><td>Parking</td><td>放行當下（14:33）；帳務事後</td></tr>
+    <tr><td class="nowrap">R7</td><td>帳單開立後金額不可變，更正走 <code>InvoiceAdjusted</code></td><td>Billing</td><td>開立之後任何時候</td></tr>
+    <tr><td class="nowrap">R8</td><td>聚合不直接發 broker；事件先記錄，交易成功後由 Outbox relay 發布</td><td>架構規則：每個 context 的應用層各自守（不是跨 context 的業務規則）</td><td>每筆交易</td></tr>
+  </tbody>
+</table></div>
+
+<h4>4. Context Map（Mermaid）</h4>
+<pre>flowchart LR
+  classDef core fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+  classDef supporting fill:#e1f5fe,stroke:#0277bd
+  classDef generic fill:#f3e5f5,stroke:#6a1b9a
+  classDef external fill:#eeeeee,stroke:#616161,stroke-dasharray: 5 5
+  classDef stub fill:#ffffff,stroke:#9e9e9e,stroke-dasharray: 3 3
+
+  OCPP["OCPP 樁 CP-A12&lt;br/&gt;(外部：StatusNotification / StartTransaction …)&lt;br/&gt;工作坊：scripts/ocpp-sim"]:::external
+  LPR["既有停車場系統&lt;br/&gt;(外部：LPR、閘門)"]:::external
+
+  subgraph SITE["場站節點 SITE-TPE-01（總部斷線可獨立運作）"]
+    Parking["Parking 場站停車&lt;br/&gt;語言：進場、車位、停車會話、放行&lt;br/&gt;不變條件：一輛車一個進行中停車會話&lt;br/&gt;MVP1：stub"]:::stub
+    Charging["Charging 充電會話 ★核心&lt;br/&gt;語言：連接器、授權、計量、中止原因&lt;br/&gt;不變條件：一個連接器一個進行中會話&lt;br/&gt;MVP1：完整"]:::core
+  end
+
+  subgraph HQ["總部節點 HQ"]
+    Billing["Billing 計費帳務&lt;br/&gt;語言：費率、帳單、發票、爭議&lt;br/&gt;不變條件：帳單開立後金額不可默默改&lt;br/&gt;MVP1：草稿帳單"]:::generic
+    AssetOps["AssetOps 資產維運&lt;br/&gt;語言：樁、槍、韌體、健康、工單&lt;br/&gt;不變條件：一座樁一個進行中根因工單&lt;br/&gt;MVP1：工單開立 / 關閉"]:::supporting
+    Dispatch["Dispatch 調度派工&lt;br/&gt;語言：技術員、路線、SLA、備品&lt;br/&gt;不變條件：一張工單一個主責技術員&lt;br/&gt;MVP1：stub"]:::stub
+  end
+
+  OCPP -- "ACL 防腐層&lt;br/&gt;StatusNotification 不是通用語言" --&gt; Charging
+  LPR -- "事件 stub&lt;br/&gt;parking.vehicle_entered.v1" --&gt; Parking
+  Parking &lt;-- "Partnership 伙伴 + 事件下游&lt;br/&gt;ChargingBayOccupied ↔ ChargingStarted" --&gt; Charging
+  Charging -- "Customer–Supplier 顧客—供應者 (U→D)&lt;br/&gt;charging.session.started / completed.v1&lt;br/&gt;帳務不得回呼凍結會話" --&gt; Billing
+  Parking -- "Customer–Supplier (U→D)&lt;br/&gt;parking.session.closed.v1" --&gt; Billing
+  Charging -- "Conformist 遵奉者 (U→D)&lt;br/&gt;charging.charger.faulted.v1&lt;br/&gt;AssetOps 接受 ChargerFaulted 語意" --&gt; AssetOps
+  AssetOps -- "內部&lt;br/&gt;ops.work_order.opened.v1&lt;br/&gt;不對帳務發「技術員已出發」" --&gt; Dispatch
+  AssetOps -. "Published Language&lt;br/&gt;ops.work_order.closed.v1 → 恢復可售" .-&gt; Charging
+  Dispatch x-- "Separate Ways 各走各的" --x Billing</pre>
+
+<h4>5. 關係模式與理由（每條一句反例）</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>上游 → 下游</th><th>模式</th><th>流動的事件</th><th>為什麼</th><th>反例：不用這個模式會怎樣</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">OCPP → Charging</td><td>ACL 防腐層</td><td><code>StatusNotification(Faulted)</code> → <code>ChargerFaulted</code>；<code>StartTransaction</code> → <code>StartCharging</code>；<code>transactionId 5567</code> ↔ S-991</td><td>OCPP 是樁廠商的協定，沒有一群業務人員跟我們一起改版；1.6J → 2.0.1 時 <code>StartTransaction</code> 會消失。</td><td>做成 Conformist：<code>StatusNotification</code> 滲進 <code>src/charging/domain</code>，升版時聚合要改，老陳的 SQL 也會跟著壞（大泥球第二週）。</td></tr>
+    <tr><td class="nowrap">Parking ↔ Charging</td><td>Partnership 伙伴 + 事件互訂</td><td><code>ChargingBayOccupied</code> → Charging；<code>charging.session.started.v1</code> → Parking（看板）</td><td>兩邊都在場站、都碰車位、都要在斷線時活；「車位有車」與「槍在充」要對得上但誰都不主宰誰。</td><td>改成 Parking 單向餵事件：阿忠的看板不知道「這把槍現在有沒有在充」，T1「占用等同充電已開始」的耦合回來。</td></tr>
+    <tr><td class="nowrap">Charging → Billing</td><td>Customer–Supplier</td><td><code>charging.session.started.v1</code>、<code>charging.session.completed.v1</code>（energyWh 12400）</td><td>上游事件是契約；老陳可以要求 energyWh 用整數（老陳隱藏事實 5），但不能要求 Stop 等他算完。</td><td>讓 Billing 回呼鎖會話：老陳月底跑批時 Billing 慢，14:31 的 Stop 卡住，車主拔不了槍、阿忠放不了行，§1.1 斷線存活破功。</td></tr>
+    <tr><td class="nowrap">Parking → Billing</td><td>Customer–Supplier</td><td><code>parking.session.closed.v1</code>（durationMin、releaseMode=Manual）</td><td>人工放行後帳務事後對齊（R6）；放行 ≠ 結清。</td><td>放行要等帳務確認：斷線時閘門開不了，回到阿忠拿鑰匙的 As-Is。</td></tr>
+    <tr><td class="nowrap">Charging → AssetOps</td><td>Conformist 遵奉者</td><td><code>charging.charger.faulted.v1</code>（chargerId、faultCode、stillEnergized、occurredAt）</td><td><code>ChargerFaulted</code> 本來就是業務語言（「設備已聲明無法按契約供電」），AssetOps 翻譯它沒有價值；SLA 直接用 occurredAt 起算（Vicky 隱藏事實 2）。</td><td>AssetOps 再做一層 ACL：多一份對照表要維護，faultCode 兩邊各自演化，阿豪拿到的故障碼跟小美看到的對不上。</td></tr>
+    <tr><td class="nowrap">AssetOps → Dispatch</td><td>內部（Customer–Supplier）</td><td><code>ops.work_order.opened.v1</code>（MVP1 程序內呼叫 <code>requestTechnician</code>，固定回 TECH-HAO）</td><td>同在總部，工單先於派工；備品依故障碼決定（Vicky 隱藏事實 3）。</td><td>把「技術員已出發」也發給 Billing：帳務被通知淹沒（Vicky 隱藏事實 4）。</td></tr>
+    <tr><td class="nowrap">AssetOps → Charging</td><td>Published Language</td><td><code>ops.work_order.closed.v1</code>（outcome=Repaired）→ 槍恢復可售</td><td>AssetOps 公開契約，Charging 訂閱後把 CP-A12-2 標回可售；不回呼。</td><td>Charging 直接查 AssetOps 的工單表：兩個節點共用 DB，斷線時場站不知道槍能不能賣。</td></tr>
+    <tr><td class="nowrap">Dispatch ↔ Billing</td><td>Separate Ways</td><td>無</td><td>維修成本是第三種錢，不走顧客帳單；MVP1 不算。</td><td>硬連：派工狀態進帳務系統，就是 Vicky 被要求做過、然後被淹沒的那件事。</td></tr>
+  </tbody>
+</table></div>
+
+<h4>6. 不准出現的關係</h4>
+<ul>
+  <li><b>Billing → Charging 回呼</b>（凍結 / 鎖住會話等算錢）：違反 Customer–Supplier 與 §1.1 斷線存活。</li>
+  <li><b>AssetOps / Dispatch → Billing「技術員已出發」</b>：維修成本不進顧客帳單；帳務只訂閱 <code>session.*</code> 與 <code>parking.session.closed</code>。</li>
+  <li><b>OCPP 直連任何 domain</b>：<code>StatusNotification</code>、<code>idTag</code>、<code>transactionId</code> 只能出現在 <code>src/adapters/ocpp/</code>。</li>
+  <li><b>Charging 呼叫總部 API 才能 Start / Stop</b>：授權與計量是場站本機責任；總部只訂閱結果。</li>
+  <li><b>任何 Shared Kernel</b>（共用 schema、共用 ORM model）：<code>contracts/*.json</code> 是 Published Language，不是共享核心。</li>
+  <li><b>Dispatch ↔ Billing 任何直接邊</b>：各走各的。</li>
+</ul>
+
+<h4>7. 我推翻過的切法</h4>
+<ul>
+  <li><b>第一版（白板）：兩堆——場站 / 總部。</b>推翻理由：那是部署位置。「場站」裡阿忠的放行與小美的授權用的詞、守的規則都不一樣；「總部」裡老陳月底才工作，跟 Vicky 每天派工不是同一群人。</li>
+  <li><b>第二版（B1 第 40 分鐘）：三堆——場站（停車 + 充電）、維運（工單 + 派工）、帳務。</b>推翻理由：（a）語言衝突 + 生命週期——P-441 14:02–14:33 與 S-991 14:04–14:31 是兩種會話，一對多；（b）一致性——R1 守的是連接器不是車位，「一個車位一輛車」與「一個連接器一個會話」是兩條不變條件；（c）一致性節奏——R5 要在 18:10:08 立刻擋，派工回報要等阿豪從地下室上來；（d）漏掉 OCPP 該放哪——它不是 context，是要被 ACL 隔開的外部協定。</li>
+  <li><b>第三版（最終）：五個。</b>保留「三堆」版本的代價紀錄：如果 Sprint 2 Dispatch 仍是 stub，把 AssetOps 與 Dispatch 合成一個 context 是可接受的簡化，但要在 ADR-0001 的替代方案裡留著。</li>
+</ul>
+
+<h4>8. 與課綱 §1.4 的差異（B2 對照後才填）</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>我的</th><th>課綱 §1.4</th><th>差異</th><th>可辯護嗎</th><th>建議調整</th></tr></thead>
+  <tbody>
+    <tr><td>五個同名 context；核心 = Charging</td><td>五個；核心 = Charging</td><td>無</td><td>—</td><td>名稱從此固定，對齊 <code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code></td></tr>
+    <tr><td>Billing = Supporting</td><td>參考文件視發票為 Generic、合併為有一點差異化</td><td>類型標籤</td><td>可辯護：老陳的痛是「對得起來」，合併那一小塊確實是這家公司自己的</td><td>表格改寫「Generic（發票）/ Supporting（合併）」；MVP1 只做草稿</td></tr>
+    <tr><td>Parking → Charging 單向事件（第一稿）</td><td>Partnership 伙伴 + 事件下游</td><td>方向</td><td>單向也可辯護，但看板會少「槍在充」的資訊</td><td>接受課綱：改 Partnership，理由是 T1 耦合的反例；Day 5 兩個方向都要有契約 stub</td></tr>
+    <tr><td>多一條 AssetOps → Charging（closed.v1，Published Language）</td><td>§1.4 未列；§1.8 <code>ops.work_order.closed.v1</code> 訂閱者 = Charging 健康</td><td>多一條邊</td><td>可辯護：沒有這條，場站不知道槍何時恢復可售</td><td>保留；C4 Container 圖上畫成 bus → 場站 API 的訂閱</td></tr>
+    <tr><td>Dispatch ↔ Billing 明寫 Separate Ways</td><td>只寫「不對顧客帳務發技術員已出發」</td><td>顯式化</td><td>可辯護</td><td>保留，放進「不准出現的關係」</td></tr>
+  </tbody>
+</table></div>
+</div></div>
+
+<figure class="wide">
+  <p class="title">Context Map — 誰的語言流向誰</p>
+  <p class="subtitle">箭頭方向 = 語言方向（上游 → 下游）。每條邊一個模式；紅框是明文禁止的邊。</p>
+  <div class="diagram">
+    <svg viewBox="0 0 960 480" role="img" aria-label="五個 Bounded Context 與兩個外部系統的 Context Map，標示 ACL、Partnership、Customer–Supplier、Conformist、Published Language">
+      <!-- 區域 -->
+      <rect class="zone plain" x="238" y="60" width="184" height="290" rx="10"/>
+      <text class="t a" x="246" y="80">場站節點 SITE-TPE-01</text>
+      <text class="t s" x="246" y="96">總部斷線可獨立運作</text>
+      <rect class="zone plain" x="528" y="60" width="412" height="390" rx="10"/>
+      <text class="t a" x="536" y="80">總部節點 HQ · 只訂閱場站結果</text>
+      <!-- 外部 -->
+      <rect class="box ext" x="20" y="90" width="170" height="80" rx="6"/>
+      <text class="t b" x="32" y="114">既有停車場系統</text>
+      <text class="t s" x="32" y="134">LPR、閘門、P-441</text>
+      <text class="t a" x="32" y="154">→ vehicle_entered.v1</text>
+      <rect class="box ext" x="20" y="230" width="170" height="80" rx="6"/>
+      <text class="t b" x="32" y="254">OCPP 樁 CP-A12</text>
+      <text class="t s" x="32" y="274">StatusNotification…</text>
+      <text class="t a" x="32" y="294">外部協定 · 不是通用語言</text>
+      <!-- 場站 -->
+      <rect class="box" x="250" y="110" width="160" height="80" rx="6" style="stroke-dasharray:4 3"/>
+      <text class="t b" x="262" y="134">Parking 場站停車</text>
+      <text class="t s" x="262" y="154">進場、車位、停車會話、放行</text>
+      <text class="t a" x="262" y="174">stub · Supporting</text>
+      <rect class="box core" x="250" y="250" width="160" height="80" rx="6"/>
+      <text class="t b" x="262" y="274">Charging 充電會話 ★</text>
+      <text class="t s" x="262" y="294">連接器、授權、計量、中止</text>
+      <text class="t a" x="262" y="314">MVP1 完整 · Core</text>
+      <!-- 總部 -->
+      <rect class="box" x="540" y="110" width="160" height="80" rx="6"/>
+      <text class="t b" x="552" y="134">Billing 計費帳務</text>
+      <text class="t s" x="552" y="154">費率、帳單、發票、爭議</text>
+      <text class="t a" x="552" y="174">草稿帳單 · Generic</text>
+      <rect class="box" x="540" y="250" width="160" height="80" rx="6"/>
+      <text class="t b" x="552" y="274">AssetOps 資產維運</text>
+      <text class="t s" x="552" y="294">樁、槍、韌體、健康、工單</text>
+      <text class="t a" x="552" y="314">工單開閉 · Supporting</text>
+      <rect class="box" x="540" y="370" width="160" height="70" rx="6" style="stroke-dasharray:4 3"/>
+      <text class="t b" x="552" y="394">Dispatch 調度派工</text>
+      <text class="t s" x="552" y="412">技術員、路線、SLA、備品</text>
+      <text class="t a" x="552" y="430">stub · Supporting</text>
+      <!-- 不准 -->
+      <rect class="st hot" x="740" y="110" width="190" height="110" rx="8"/>
+      <text class="t b" x="752" y="132">不准出現的關係</text>
+      <text class="t s" x="752" y="152">Billing → Charging 回呼凍結</text>
+      <text class="t s" x="752" y="169">AssetOps → Billing「已出發」</text>
+      <text class="t s" x="752" y="186">Dispatch ↔ Billing 各走各的</text>
+      <text class="t s" x="752" y="203">OCPP 直連 domain（要過 ACL）</text>
+      <!-- 邊 -->
+      <path class="ar" d="M190 150 H250"/>
+      <text class="t s" x="220" y="142" text-anchor="middle">事件 stub</text>
+      <path class="ar" d="M190 290 H250"/>
+      <text class="t a" x="220" y="282" text-anchor="middle">ACL</text>
+      <text class="t s" x="220" y="304" text-anchor="middle">防腐層</text>
+      <path class="ar" d="M330 192 V248" marker-start="url(#arr)"/>
+      <text class="t a" x="322" y="214" text-anchor="end">Partnership</text>
+      <text class="t s" x="322" y="230" text-anchor="end">伙伴 · 事件互訂</text>
+      <path class="ar ev" d="M410 150 H540"/>
+      <text class="t a" x="475" y="142" text-anchor="middle">Customer–Supplier</text>
+      <text class="t s" x="475" y="166" text-anchor="middle">session.closed.v1</text>
+      <path class="ar ev" d="M410 262 H480 V172 H540"/>
+      <text class="t a" x="486" y="200">Customer–Supplier</text>
+      <text class="t s" x="486" y="216">session.started / completed.v1</text>
+      <text class="t s" x="486" y="232">帳務不得回呼凍結會話</text>
+      <path class="ar ev" d="M410 290 H540"/>
+      <text class="t a" x="475" y="282" text-anchor="middle">Conformist 遵奉者</text>
+      <text class="t s" x="475" y="306" text-anchor="middle">charger.faulted.v1</text>
+      <path class="ar" d="M620 330 V370"/>
+      <text class="t s" x="628" y="354">內部 · work_order.opened.v1</text>
+      <path class="ar ev" d="M560 330 V356 H330 V332"/>
+      <text class="t s" x="400" y="374" text-anchor="end">Published Language · work_order.closed.v1 → 恢復可售</text>
+      <text class="t s" x="20" y="466">實線＝命令 / 上游語言方向；虛線＝整合事件（經 Outbox）；紅框＝不准；虛框＝外部或 stub</text>
+    </svg>
+  </div>
+  <details class="datatable"><summary>圖中資料</summary><div class="table-scroll" style="margin-inline:0"><table>
+    <thead><tr><th>節點</th><th>類型</th><th>MVP1</th></tr></thead>
+    <tbody>
+      <tr><td>既有停車場系統（LPR、閘門）</td><td>外部系統</td><td>事件 stub</td></tr>
+      <tr><td>OCPP 樁 CP-A12</td><td>外部協定</td><td>scripts/ocpp-sim，經 ACL</td></tr>
+      <tr><td>Parking 場站停車</td><td>Supporting · 場站節點</td><td>stub</td></tr>
+      <tr><td>Charging 充電會話</td><td>Core · 場站節點</td><td>完整</td></tr>
+      <tr><td>Billing 計費帳務</td><td>Generic / Supporting · 總部節點</td><td>草稿帳單</td></tr>
+      <tr><td>AssetOps 資產維運</td><td>Supporting · 總部節點</td><td>工單開立 / 關閉</td></tr>
+      <tr><td>Dispatch 調度派工</td><td>Supporting · 總部節點</td><td>stub → TECH-HAO</td></tr>
+    </tbody>
+    <thead><tr><th>邊</th><th>模式</th><th>事件 / 命令</th></tr></thead>
+    <tbody>
+      <tr><td>LPR → Parking</td><td>事件 stub</td><td>parking.vehicle_entered.v1</td></tr>
+      <tr><td>OCPP → Charging</td><td>ACL</td><td>StatusNotification → ChargerFaulted；StartTransaction → StartCharging</td></tr>
+      <tr><td>Parking ↔ Charging</td><td>Partnership</td><td>ChargingBayOccupied ↔ charging.session.started.v1</td></tr>
+      <tr><td>Parking → Billing</td><td>Customer–Supplier</td><td>parking.session.closed.v1</td></tr>
+      <tr><td>Charging → Billing</td><td>Customer–Supplier</td><td>charging.session.started.v1、charging.session.completed.v1</td></tr>
+      <tr><td>Charging → AssetOps</td><td>Conformist</td><td>charging.charger.faulted.v1</td></tr>
+      <tr><td>AssetOps → Dispatch</td><td>內部</td><td>ops.work_order.opened.v1 / requestTechnician</td></tr>
+      <tr><td>AssetOps → Charging</td><td>Published Language</td><td>ops.work_order.closed.v1 → 恢復可售</td></tr>
+      <tr><td>Dispatch ↔ Billing</td><td>Separate Ways</td><td>無</td></tr>
+      <tr><td>Billing → Charging</td><td>不准</td><td>回呼凍結會話</td></tr>
+    </tbody>
+  </table></div></details>
+  <figcaption>學員交的是 Mermaid，渲染出來的版面會不同；講師看的是三件事：OCPP → Charging 有沒有 ACL、Billing 有沒有回呼 Charging、每條邊有沒有模式標籤。</figcaption>
+</figure>
+
+<div class="teach"><p class="head">講師註 · Block 2</p>
+<p><b>驗收時看這三行：</b>（1）Mermaid 裡 <code>OCPP -- "ACL" --&gt; Charging</code> 那條——沒有 ACL 或把 OCPP 畫成 context 就是沒讀 primer；（2）有沒有任何一條邊從 Billing 指向 Charging——rubric「講師看這裡」明列；（3）關係表的「反例」欄——空的代表模式是背的，不是推的。</p>
+<p><b>常見失真：</b>全部雙向（沒決定上游）；AssetOps → Dispatch 想順便發給 Billing；「與 §1.4 差異」寫「因為官方這樣寫所以改」（不是理由）；對答案之後把自己的推導紀錄刪掉重寫成五個（要求他保留推翻前的版本）。</p>
+<p><b>怎麼攔：</b>B2 開始 20 分鐘後走一圈，只問一句「這條線的下游掛了 30 分鐘，上游會怎樣？」。看到「Billing 鎖住會話」立刻指回 §1.1 與 R6。B2 結束前確認每位學員的 context 名稱與 <code>starter/&lt;lang&gt;/src/</code> 目錄對得上——對不上的明天第一個小時會浪費在改目錄。</p>
+</div>
+
+<p class="eyebrow">BLOCK 3 · C4 + ADR（90 分）</p>
+<h2>兩層圖、兩個決策</h2>
+<h3>實況</h3>
+<p>這是今天最容易爆時間的 Block：兩張圖加兩份 ADR 加一輪審查，90 分鐘。做得順的學員在 25 分鐘內把 C4 Level 1 的人與外部系統列完（六個人、三個外部系統），Level 2 只畫 MVP1、從 <code>docs/references/c4.md</code> §4 的範本改（不是從零寫 Mermaid 語法）。<code>/c4</code> 產圖之後最重要的動作是「每個箭頭對到 §1.8 的哪個事件或哪個命令」——對不到的箭頭要刪。接著 <code>/adr new</code> 先問三題才給骨架，學員自己填「決策」與「後果」，最後 <code>/adr review 0001</code> 逐欄評。這個 Block 助教最常擋的兩件事：Level 2 畫了五個微服務（Day 6 只起一個程序）、ADR 沒有替代方案（「那叫公告，不叫決策」）。</p>
+
+<h3>助教對話重播：<code>/c4</code></h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /c4 container</p><p>Day 3 Block 3。context-map.md 請直接讀檔。Level 2 我畫了五個 container：Parking Service、Charging Service、Billing Service、AssetOps Service、Dispatch Service，各自一個 DB，中間用 Kafka。OCPP 樁直接打 Charging Service 的 WebSocket。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>先問三題：</p><p>1. Day 6 你會起幾個程序？<code>docker-compose.yml</code> 裡目前只有 Postgres（選配），沒有 Kafka。五個 container、五個 DB，你的 <code>docker build</code> 準備做幾次？<br>2. 你的圖上 <code>StatusNotification</code> 進來之後，在哪裡變成 <code>ChargerFaulted</code>？我找不到翻譯的那一格——OCPP 是直接打進領域嗎？<br>3. 事件怎麼跨 context？Outbox 在圖上哪裡？</p><p><b>下一個最小步驟：</b>把五個 service 收成兩個 <code>Container_Boundary</code>（場站節點 / 總部節點），在場站節點加一個「OCPP 端點 + ACL」container 與一個「OutboxRelay」container，重貼到 mermaid.live 確認能渲染。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>改好了：場站節點有 OCPP 端點 + ACL、場站 API + ChargingService、場站 DB（SQLite）、OutboxRelay；總部節點有 InMemoryEventBus、AssetOps + FaultProcessManager、BillingDraftConsumer、DispatchService stub（虛線）、總部 DB、總部 API。Parking 畫成外部系統的事件 stub。Kafka 拿掉，bus 標「MVP1 程序內；Sprint 2 broker」。</p><p>每個箭頭我對了一次：relay → bus 是 <code>charging.session.started / completed.v1</code> 與 <code>charging.charger.faulted.v1</code>；bus → AssetOps 是 <code>faulted.v1</code>；bus → Billing 是 <code>session.*.v1</code> 加 <code>parking.session.closed.v1</code>；AssetOps → bus 是 <code>ops.work_order.opened / closed.v1</code>；bus → 場站 API 是 <code>opened / closed.v1</code>（看板副本、恢復可售）。有一條對不到：我原本畫「Billing → 場站 API 查會話」。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>對不到的那條就是 context-map.md「不准出現的關係」第一條——Billing 回頭查 Charging。刪掉；Billing 需要的 energyWh 已經在 <code>completed.v1</code> 的 payload 裡。</p><p>兩個檢查：（1）Context 圖上不要有 DB（那是 Container 層）；（2）Container 圖上 site 與 HQ 是兩個邊界，即使 Day 6 跑在同一台筆電——圖畫的是設計意圖，README-mvp.md 到時候要註明「MVP1 實際同一程序」。</p><p><b>下一個最小步驟：</b>在 c4.md 每張圖下面寫 3–5 行「這張圖想說的事」，加一段「MVP1 不包含」清單，然後 <code>/adr new 0001</code>。</p></div>
+</div>
+
+<h3><code>/c4 審查</code> 的輸出</h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /c4 審查</p><p>c4.md 改好了，請審查（直接讀檔）。</p></div>
+  <div class="msg ta"><p class="who">助教</p>
+  <div class="table-scroll" style="margin-inline:0"><table><thead><tr><th>檢查</th><th>狀態</th><th>備註</th></tr></thead><tbody>
+    <tr><td>L1 有人物、有外部系統、每條邊有動詞</td><td>過</td><td>6 人、3 外部；<code>Rel(evops, hqsys)</code> 有標 Sprint 2</td></tr>
+    <tr><td>L2 每個 container 標技術</td><td>過</td><td>Fastify / FastAPI、SQLite、WebSocket、程序內</td></tr>
+    <tr><td>ACL 可見，OCPP 不直接進領域</td><td>過</td><td>「OCPP 端點 + ACL」是場站第一格</td></tr>
+    <tr><td>Outbox 可見（R8）</td><td>過</td><td>場站 DB 的 outbox 表 + OutboxRelay；AssetOps 也經 outbox 發布</td></tr>
+    <tr><td>依賴方向 = context map，無反向回呼</td><td>過</td><td>「Billing → 場站 API」那條已刪</td></tr>
+    <tr><td>MVP1 外的 context 標 stub / 虛線</td><td>過</td><td>Dispatch 虛線；Parking 是外部事件 stub</td></tr>
+    <tr><td>圖能在 Mermaid 渲染</td><td>需確認</td><td>把兩段貼到 mermaid.live；<code>Rel</code> 描述含半形冒號會壞，用全形</td></tr>
+  </tbody></table></div>
+  <p>判定：可。</p><p><b>下一個最小步驟：</b>貼到 mermaid.live 確認兩張都渲染，然後 <code>/adr new 0001</code>。</p></div>
+</div>
+
+<h3>Mermaid C4 常見渲染錯誤（學員會來問的）</h3>
+<div class="table-scroll"><table>
+  <thead><tr><th>症狀</th><th>原因</th><th>修法</th></tr></thead>
+  <tbody>
+    <tr><td>整張圖不出來、只有紅字</td><td><code>Rel</code> 或 <code>Container</code> 的描述含半形括號、冒號或引號</td><td>換全形（ ）：，或拿掉</td></tr>
+    <tr><td>邊界框是空的</td><td><code>Container_Boundary(...) {</code> 的大括號少了空格或沒關</td><td>照 <code>docs/references/c4.md</code> §4.2 逐字對</td></tr>
+    <tr><td>人物擠成一排看不清</td><td>沒有 <code>UpdateLayoutConfig</code></td><td>加 <code>$c4ShapeInRow="3", $c4BoundaryInRow="1"</code></td></tr>
+    <tr><td>flowchart 的邊 label 壞掉</td><td>label 含 <code>&lt;br/&gt;</code> 以外的 HTML、或含「|」</td><td>只用 <code>&lt;br/&gt;</code>；管線字元改成「/」</td></tr>
+    <tr><td>GitHub 上不渲染</td><td>fence 寫成 <code>mmd</code> 而不是 <code>mermaid</code></td><td>改 fence 名稱；VS Code 裝 Markdown Preview Mermaid Support</td></tr>
+  </tbody>
+</table></div>
+
+<div class="file"><p class="path">workshop/day3/c4.md <span class="chip">交付物 · 完整版</span></p><div class="body">
+<h4>C4 — EV Charge Ops（MVP1）</h4>
+<p>兩張圖對齊 <code>context-map.md</code> 的五個 context 與 ADR-0002 的 MVP1 範圍。原始碼從 <code>docs/references/c4.md</code> §4 的範本改；貼到 mermaid.live 驗過可渲染。</p>
+
+<h4>Level 1 · System Context</h4>
+<pre>C4Context
+  title System Context — EV Charge Ops（MVP1）
+
+  Person(driver, "車主", "臨停 / 月票 / 車隊。插槍、刷卡（TAG-MONTHLY-77）、離場")
+  Person(azhong, "阿忠 值班長", "看場站看板、人工放行（R6）")
+  Person(xiaomei, "小美 充電營運", "費率、憑證、遠端停止、異常中止統計")
+  Person(laochen, "老陳 帳務", "看草稿帳單、對帳")
+  Person(vicky, "Vicky 總部調度", "看去重後的工單、關單、SLA")
+  Person(ahao, "阿豪 技術員", "收工單 WO-2208、回報")
+
+  System(evops, "EV Charge Ops", "場站充電會話（Charging）、工單（AssetOps）、草稿帳單（Billing）；場站在總部斷線時獨立運作")
+
+  System_Ext(charger, "充電樁 CP-A12", "OCPP 1.6J / 2.0.1；工作坊用 scripts/ocpp-sim，不接真硬體")
+  System_Ext(parking, "既有停車場系統", "LPR、閘門、停車會話 P-441；MVP1 只接事件 stub")
+  System_Ext(hqsys, "總部既有系統", "客服工單、ERP、發票；Sprint 2 才整合")
+
+  Rel(driver, charger, "插槍、刷卡", "")
+  Rel(charger, evops, "Boot / Status / Authorize / Start / Meter / Stop", "OCPP over WebSocket")
+  Rel(evops, charger, "遠端停止（請求，非事實）", "OCPP RemoteStopTransaction")
+  Rel(parking, evops, "進場 / 離場 / 人工放行事件", "整合事件 v1（stub）")
+  Rel(azhong, evops, "看板、人工放行", "HTTP")
+  Rel(xiaomei, evops, "遠端停止、看會話與中止原因", "HTTP")
+  Rel(laochen, evops, "看草稿帳單 INV-778", "HTTP")
+  Rel(vicky, evops, "看工單、關單", "HTTP")
+  Rel(ahao, evops, "看工單", "HTTP（Sprint 2：離線 App）")
+  Rel(evops, hqsys, "Sprint 2：同步工單 / 出帳", "")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")</pre>
+<p><b>這張圖想說的事</b></p>
+<ul>
+  <li>系統只有一個框，讀者是 Vicky 與主管：它接樁、接既有停車場、給六種人看，總部斷線時場站那半邊照常。</li>
+  <li>三個外部系統都是「我們不擁有的」：樁（協定是別人的）、既有停車場（廠商的）、總部既有系統（Sprint 2 才碰）。</li>
+  <li>每條線有動詞與協定；OCPP 訊息名只出現在樁那條線上，不在領域語言裡。</li>
+  <li>圖上沒有 DB、沒有 Outbox——那是 Level 2 的事。</li>
+</ul>
+
+<h4>Level 2 · Container（只畫 MVP1）</h4>
+<pre>C4Container
+  title Container — EV Charge Ops（MVP1：場站節點 + 總部節點）
+
+  Person(driver, "車主", "")
+  Person(azhong, "阿忠 值班長", "")
+  Person(vicky, "Vicky 總部調度", "")
+  Person(laochen, "老陳 帳務", "")
+  System_Ext(charger, "充電樁 CP-A12 / scripts/ocpp-sim", "OCPP 1.6J over WebSocket")
+  System_Ext(parking, "既有停車場系統", "MVP1：事件 stub")
+
+  Container_Boundary(site, "場站節點 SITE-TPE-01（總部斷線可獨立運作）") {
+    Container(ocpp, "OCPP 端點 + ACL", "POST /ocpp/:chargerId → adapters/ocpp/OcppAcl（真樁：WebSocket）", "接樁；翻譯為 StartCharging / ReportMeterValue / StopCharging / ReportFault；transactionId 991 ↔ S-991；拒絕回 Blocked / Invalid")
+    Container(siteapi, "場站 API + ChargingService", "Fastify / FastAPI；charging/application", "命令處理器（R1–R4 在聚合內）、人工放行 stub（R6）、GET /sessions/:id")
+    ContainerDb(sitedb, "場站 DB", "SQLite（預設）或 Postgres", "charging_sessions、outbox、work_order 副本")
+    Container(relay, "OutboxRelay", "publishPending()；POST /relay 或定時迴圈", "讀 outbox 未送事件 → 發布 → markPublished；失敗不標記 → 至少一次")
+  }
+
+  Container_Boundary(hq, "總部節點 HQ") {
+    Container(bus, "InMemoryEventBus", "MVP1：程序內；Sprint 2：broker", "整合事件 v1（信封八欄位）；redeliver() 模擬至少一次")
+    Container(assetops, "AssetOps + FaultProcessManager", "同語言；src/assetops/{domain,application}", "charging.charger.faulted.v1 → WorkOrder（R5 去重 chargerId+faultCode；eventId 去重）→ opened / closed")
+    Container(billing, "BillingDraftConsumer", "同語言；src/billing", "訂閱 started / completed；sessionId 去重；草稿 INV-778 = 99.2")
+    Container(dispatch, "DispatchService stub", "同語言", "requestTechnician → 固定回 TECH-HAO；不排路線、不預留備品")
+    ContainerDb(hqdb, "總部 DB", "SQLite 或 Postgres", "work_orders、draft_invoices、processed_events")
+    Container(hqapi, "總部 API", "Fastify / FastAPI", "工單查詢、關單（CloseWorkOrder）、草稿帳單查詢")
+  }
+
+  Rel(driver, charger, "插槍、刷卡", "")
+  Rel(charger, ocpp, "Boot / Status / Authorize / Start / Meter / Stop", "HTTP POST（scripts/ocpp-sim --url）/ WebSocket（真樁）")
+  Rel(ocpp, siteapi, "命令", "程序內呼叫")
+  Rel(siteapi, sitedb, "聚合 + outbox 同一交易（R8）", "SQL")
+  Rel(relay, sitedb, "讀未送事件、標記已送", "SQL")
+  Rel(relay, bus, "charging.session.started / completed.v1、charging.charger.faulted.v1", "HTTP 或程序內")
+  Rel(parking, bus, "parking.vehicle_entered.v1、parking.session.closed.v1（stub）", "")
+  Rel(bus, assetops, "charging.charger.faulted.v1", "訂閱")
+  Rel(bus, billing, "charging.session.*.v1、parking.session.closed.v1", "訂閱")
+  Rel(assetops, hqdb, "work_orders + outbox", "SQL")
+  Rel(billing, hqdb, "draft_invoices + processed_events", "SQL")
+  Rel(assetops, bus, "ops.work_order.opened / closed.v1", "經 outbox 發布")
+  Rel(assetops, dispatch, "requestTechnician(WO-2208, CP-A12)", "程序內（MVP1）")
+  Rel(bus, siteapi, "ops.work_order.opened / closed.v1（看板副本、恢復可售）", "訂閱")
+  Rel(azhong, siteapi, "看板、人工放行", "HTTP")
+  Rel(vicky, hqapi, "工單、關單", "HTTP")
+  Rel(laochen, hqapi, "草稿帳單", "HTTP")
+  Rel(hqapi, hqdb, "查詢 / 關單", "SQL")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")</pre>
+<p><b>這張圖想說的事</b></p>
+<ul>
+  <li>site 與 HQ 是兩個邊界，中間只有整合事件（Outbox relay → bus）；這是「斷線可獨立」的視覺表達。MVP1 實際可在同一程序，README-mvp.md 會註明。</li>
+  <li>OCPP 只碰得到「OCPP 端點 + ACL」這一格；領域語言從 ACL 之後才開始。</li>
+  <li>每個 context 一個 container、共用一個 DB 檔（modular monolith），不是五個微服務。</li>
+  <li>Outbox 與 relay 明確存在（R8）；bus 的 <code>redeliver()</code> 是 Day 5 測「同一事件送兩次」用的。</li>
+  <li>Dispatch 是虛線 stub；Parking 是外部系統的事件 stub，不畫內部。</li>
+</ul>
+
+<h4>圖上每個箭頭對應的整合事件 / 命令</h4>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>箭頭</th><th>對到什麼</th><th>來源</th></tr></thead>
+  <tbody>
+    <tr><td>樁 → OCPP 端點</td><td>OCPP 訊息（協定，不是通用語言）</td><td><code>docs/domain/ocpp-primer.md</code></td></tr>
+    <tr><td>OCPP 端點 → 場站 API</td><td>命令 <code>StartCharging</code>、<code>ReportMeterValue</code>、<code>StopCharging</code>、<code>ReportFault</code></td><td>§1.9 R1–R4；<code>glossary.md</code> #49</td></tr>
+    <tr><td>場站 API → 場站 DB</td><td>聚合 + outbox 同一交易</td><td>R8</td></tr>
+    <tr><td>relay → bus</td><td><code>charging.session.started.v1</code>、<code>charging.session.completed.v1</code>、<code>charging.charger.faulted.v1</code></td><td>§1.8</td></tr>
+    <tr><td>既有停車場 → bus</td><td><code>parking.vehicle_entered.v1</code>、<code>parking.session.closed.v1</code>（stub）</td><td>§1.8</td></tr>
+    <tr><td>bus → AssetOps</td><td><code>charging.charger.faulted.v1</code></td><td>§1.8；去重鍵 chargerId + faultCode</td></tr>
+    <tr><td>bus → Billing</td><td><code>charging.session.*.v1</code>、<code>parking.session.closed.v1</code></td><td>§1.8；去重鍵 sessionId</td></tr>
+    <tr><td>AssetOps → bus</td><td><code>ops.work_order.opened.v1</code>、<code>ops.work_order.closed.v1</code></td><td>§1.8</td></tr>
+    <tr><td>AssetOps → Dispatch</td><td>命令 <code>requestTechnician(WO-2208, CP-A12)</code>（MVP1 程序內）</td><td>§1.4 內部關係</td></tr>
+    <tr><td>bus → 場站 API</td><td><code>ops.work_order.opened / closed.v1</code>（看板副本、恢復可售）</td><td>§1.8 訂閱者：場站看板、Charging 健康</td></tr>
+    <tr><td>阿忠 / Vicky / 老陳 → API</td><td>HTTP 查詢與命令：人工放行（R6）、<code>CloseWorkOrder</code>、查草稿帳單</td><td>Day 6 端點</td></tr>
+    <tr><td>刪掉的：Billing → 場站 API 查會話</td><td>對不到任何事件或命令；違反「不准出現的關係」</td><td>context-map.md §6</td></tr>
+  </tbody>
+</table></div>
+
+<h4>MVP1 不包含（對齊 ADR-0002）</h4>
+<ul>
+  <li>Parking 的停車會話聚合與閘門控制——只有事件契約與 <code>ReleaseVehicleManually</code> 端點發事件。</li>
+  <li>Dispatch 的路線、備品預留、離線 App——stub 固定回 TECH-HAO。</li>
+  <li>Billing 的正式帳單、R7 更正、停車費 + 電費合併、跨時段費率、發票——只做單一費率草稿。</li>
+  <li>真 broker（Kafka / RabbitMQ）、Kubernetes、真 OCPP WebSocket 伺服器——in-memory bus、HTTP POST 模擬器。</li>
+  <li>總部既有系統（客服、ERP）整合。</li>
+</ul>
+
+<h4>設計說明</h4>
+<ul>
+  <li><b>為什麼一個程序</b>：一台筆電、三天；context 是模型邊界，部署是另一件事。兩個 <code>Container_Boundary</code> 畫的是斷線意圖，不是兩個 Docker。</li>
+  <li><b>ACL 在哪</b>：<code>src/adapters/ocpp/OcppAcl</code>；<code>StatusNotification</code>、<code>idTag</code>、<code>transactionId</code> 只能出現在那個目錄。</li>
+  <li><b>Outbox 在哪</b>：場站 DB 的 <code>outbox</code> 表 + <code>OutboxRelay.publishPending()</code>；總部 AssetOps 也經 outbox 發 <code>opened / closed</code>。</li>
+</ul>
+</div></div>
+
+<figure class="wide">
+  <p class="title">C4 Level 1 — System Context</p>
+  <p class="subtitle">六個人、一個系統（畫成兩個節點以顯示斷線意圖）、三個外部系統。每條線有動詞與協定；沒有 DB。</p>
+  <div class="diagram">
+    <svg viewBox="0 0 960 480" role="img" aria-label="C4 System Context：車主、阿忠、小美、老陳、Vicky、阿豪與 EV Charge Ops 及三個外部系統">
+      <!-- 左側：場站人員 -->
+      <rect class="st" x="20" y="40" width="160" height="56" rx="16"/>
+      <text class="t b" x="34" y="62">阿忠 值班長</text>
+      <text class="t s" x="34" y="84">看板、人工放行 R6</text>
+      <rect class="st" x="20" y="130" width="160" height="56" rx="16"/>
+      <text class="t b" x="34" y="152">小美 充電營運</text>
+      <text class="t s" x="34" y="174">費率、憑證、遠端停止</text>
+      <rect class="st" x="20" y="230" width="160" height="56" rx="16"/>
+      <text class="t b" x="34" y="252">車主</text>
+      <text class="t s" x="34" y="274">臨停 / 月票 / 車隊</text>
+      <!-- 右側：總部人員 -->
+      <rect class="st" x="780" y="40" width="160" height="56" rx="16"/>
+      <text class="t b" x="794" y="62">老陳 帳務</text>
+      <text class="t s" x="794" y="84">看草稿帳單、對帳</text>
+      <rect class="st" x="780" y="130" width="160" height="56" rx="16"/>
+      <text class="t b" x="794" y="152">Vicky 總部調度</text>
+      <text class="t s" x="794" y="174">看工單、關單、SLA</text>
+      <rect class="st" x="780" y="230" width="160" height="56" rx="16"/>
+      <text class="t b" x="794" y="252">阿豪 技術員</text>
+      <text class="t s" x="794" y="274">收工單、回報修復</text>
+      <!-- 系統 -->
+      <rect class="zone" x="240" y="110" width="480" height="220" rx="10"/>
+      <text class="t b" x="252" y="132">EV Charge Ops（一個系統、兩個節點）</text>
+      <rect class="box core" x="262" y="160" width="190" height="110" rx="6"/>
+      <text class="t b" x="274" y="184">場站服務 SITE</text>
+      <text class="t s" x="274" y="206">Charging 核心 + Parking stub</text>
+      <text class="t s" x="274" y="224">OCPP 在場站、本機授權</text>
+      <text class="t a" x="274" y="246">斷線仍可充電、放行</text>
+      <rect class="box core" x="508" y="160" width="190" height="110" rx="6"/>
+      <text class="t b" x="520" y="184">總部服務 HQ</text>
+      <text class="t s" x="520" y="206">AssetOps 工單 + Billing 草稿</text>
+      <text class="t s" x="520" y="224">Dispatch stub → TECH-HAO</text>
+      <text class="t a" x="520" y="246">只訂閱場站結果</text>
+      <path class="ar ev" d="M452 200 H508"/>
+      <text class="t a" x="480" y="192" text-anchor="middle">事件 v1</text>
+      <text class="t s" x="480" y="216" text-anchor="middle">Outbox</text>
+      <path class="ar ev" d="M508 240 H452"/>
+      <text class="t s" x="480" y="256" text-anchor="middle">工單副本</text>
+      <!-- 外部系統 -->
+      <rect class="box ext" x="240" y="400" width="200" height="64" rx="6"/>
+      <text class="t b" x="252" y="424">充電樁 CP-A12（外部）</text>
+      <text class="t s" x="252" y="444">OCPP 1.6J · scripts/ocpp-sim</text>
+      <rect class="box ext" x="460" y="400" width="200" height="64" rx="6"/>
+      <text class="t b" x="472" y="424">既有停車場系統（外部）</text>
+      <text class="t s" x="472" y="444">LPR、閘門 · P-441 · stub</text>
+      <rect class="box ext" x="700" y="400" width="200" height="64" rx="6"/>
+      <text class="t b" x="712" y="424">發票 / 總部既有系統（外部）</text>
+      <text class="t s" x="712" y="444">客服工單、ERP · Sprint 2</text>
+      <!-- 線 -->
+      <path class="ar" d="M180 68 H357 V160"/>
+      <text class="t s" x="190" y="60">看板、人工放行 · HTTP</text>
+      <path class="ar" d="M180 158 H262"/>
+      <text class="t s" x="221" y="150" text-anchor="middle">遠端停止</text>
+      <text class="t s" x="221" y="174" text-anchor="middle">HTTP</text>
+      <path class="ar" d="M100 286 V432 H240"/>
+      <text class="t s" x="108" y="380">插槍、刷卡</text>
+      <text class="t s" x="108" y="396">TAG-MONTHLY-77</text>
+      <path class="ar" d="M340 400 V270" marker-start="url(#arr)"/>
+      <text class="t s" x="332" y="340" text-anchor="end">OCPP · WebSocket</text>
+      <text class="t s" x="332" y="356" text-anchor="end">上報 / 遠端停止請求</text>
+      <path class="ar ev" d="M560 400 V360 H400 V270"/>
+      <text class="t s" x="480" y="352" text-anchor="middle">進場 / 離場事件（stub）</text>
+      <path class="ar ev" d="M690 270 V432 H700"/>
+      <text class="t s" x="698" y="380">Sprint 2：出帳、工單同步</text>
+      <path class="ar" d="M780 68 H603 V160"/>
+      <text class="t s" x="610" y="60">看草稿帳單 INV-778 · HTTP</text>
+      <path class="ar" d="M780 158 H698"/>
+      <text class="t s" x="739" y="150" text-anchor="middle">工單、關單</text>
+      <text class="t s" x="739" y="174" text-anchor="middle">HTTP</text>
+      <path class="ar" d="M780 258 H698"/>
+      <text class="t s" x="739" y="250" text-anchor="middle">看工單</text>
+      <text class="t s" x="739" y="274" text-anchor="middle">HTTP</text>
+    </svg>
+  </div>
+  <details class="datatable"><summary>圖中資料</summary><div class="table-scroll" style="margin-inline:0"><table>
+    <thead><tr><th>元素</th><th>類型</th><th>與系統的關係（動詞 · 協定）</th></tr></thead>
+    <tbody>
+      <tr><td>車主</td><td>人</td><td>對樁插槍、刷卡 TAG-MONTHLY-77</td></tr>
+      <tr><td>阿忠 值班長</td><td>人</td><td>看板、人工放行 R6 · HTTP</td></tr>
+      <tr><td>小美 充電營運</td><td>人</td><td>遠端停止、看會話與中止原因 · HTTP</td></tr>
+      <tr><td>老陳 帳務</td><td>人</td><td>看草稿帳單 INV-778 · HTTP</td></tr>
+      <tr><td>Vicky 總部調度</td><td>人</td><td>看工單、關單 · HTTP</td></tr>
+      <tr><td>阿豪 技術員</td><td>人</td><td>看工單 WO-2208 · HTTP（Sprint 2 離線 App）</td></tr>
+      <tr><td>EV Charge Ops · 場站服務</td><td>我們的系統（場站節點）</td><td>Charging 核心 + Parking stub；斷線仍可充電、放行</td></tr>
+      <tr><td>EV Charge Ops · 總部服務</td><td>我們的系統（總部節點）</td><td>AssetOps 工單 + Billing 草稿 + Dispatch stub；只訂閱場站結果（整合事件 v1 經 Outbox）；回送工單副本</td></tr>
+      <tr><td>充電樁 CP-A12</td><td>外部系統</td><td>上報狀態 / 交易 / 計量 · OCPP over WebSocket；系統送遠端停止請求</td></tr>
+      <tr><td>既有停車場系統</td><td>外部系統</td><td>進場 / 離場 / 人工放行事件 · 整合事件 v1（stub）</td></tr>
+      <tr><td>發票 / 總部既有系統</td><td>外部系統</td><td>Sprint 2：出帳、工單同步</td></tr>
+    </tbody>
+  </table></div></details>
+  <figcaption>Mermaid 版是一個 <code>System</code> 框；這裡把它拆成場站 / 總部兩格，是為了讓 Vicky 一眼看到「斷線時哪半邊還活著」。學員兩種畫法都收，但 Context 圖上不能出現 DB 或 Outbox。</figcaption>
+</figure>
+
+<figure class="wide">
+  <p class="title">C4 Level 2 — Container（MVP1）</p>
+  <p class="subtitle">場站節點與總部節點兩個邊界，中間只有 relay → bus。綠色膠囊標出斷線時仍可運作的 container。</p>
+  <div class="diagram">
+    <svg viewBox="0 0 960 530" role="img" aria-label="C4 Container：場站節點四個 container 與總部節點六個 container，OCPP ACL 與 Outbox relay 明確可見">
+      <!-- 頂列：外部與人 -->
+      <rect class="st" x="30" y="10" width="60" height="44" rx="14"/>
+      <text class="t b" x="60" y="37" text-anchor="middle">車主</text>
+      <path class="ar" d="M90 32 H105"/>
+      <rect class="box ext" x="105" y="10" width="125" height="44" rx="6"/>
+      <text class="t b" x="167" y="28" text-anchor="middle">CP-A12 / ocpp-sim</text>
+      <text class="t s" x="167" y="46" text-anchor="middle">OCPP 1.6J</text>
+      <rect class="st" x="250" y="10" width="130" height="44" rx="14"/>
+      <text class="t b" x="315" y="28" text-anchor="middle">阿忠 值班長</text>
+      <text class="t s" x="315" y="46" text-anchor="middle">看板、人工放行</text>
+      <rect class="box ext" x="530" y="10" width="200" height="44" rx="6"/>
+      <text class="t b" x="630" y="28" text-anchor="middle">既有停車場系統</text>
+      <text class="t s" x="630" y="46" text-anchor="middle">MVP1：事件 stub</text>
+      <!-- 場站節點 -->
+      <rect class="zone plain" x="20" y="70" width="420" height="300" rx="10"/>
+      <text class="t a" x="32" y="90">場站節點 SITE-TPE-01</text>
+      <rect class="box" x="30" y="100" width="190" height="76" rx="6"/>
+      <text class="t b" x="42" y="124">OCPP 端點 + ACL</text>
+      <text class="t s" x="42" y="144">POST /ocpp/:id · OcppAcl</text>
+      <text class="t s" x="42" y="162">翻譯成命令 · 991 ↔ S-991</text>
+      <rect class="box core" x="240" y="100" width="190" height="76" rx="6"/>
+      <text class="t b" x="252" y="124">場站 API + Charging</text>
+      <text class="t s" x="252" y="144">Fastify / FastAPI</text>
+      <text class="t s" x="252" y="162">命令處理器 · 人工放行 stub</text>
+      <rect class="box dim" x="30" y="230" width="190" height="76" rx="20"/>
+      <text class="t b" x="42" y="254">場站 DB</text>
+      <text class="t s" x="42" y="274">SQLite（預設）/ Postgres</text>
+      <text class="t s" x="42" y="292">charging_sessions · outbox</text>
+      <rect class="box" x="240" y="230" width="190" height="76" rx="6"/>
+      <text class="t b" x="252" y="254">OutboxRelay</text>
+      <text class="t s" x="252" y="274">POST /relay 或定時迴圈</text>
+      <text class="t s" x="252" y="292">至少一次：失敗不標記已送</text>
+      <rect class="st good" x="30" y="330" width="400" height="24" rx="12"/>
+      <text class="t s" x="40" y="346">斷線可運作：四個都在場站；事件先進 outbox，恢復後補送</text>
+      <!-- 總部節點 -->
+      <rect class="zone plain" x="520" y="70" width="420" height="380" rx="10"/>
+      <text class="t a" x="532" y="90">總部節點 HQ</text>
+      <rect class="box" x="530" y="100" width="400" height="56" rx="6"/>
+      <text class="t b" x="542" y="124">InMemoryEventBus</text>
+      <text class="t s" x="542" y="146">程序內；Sprint 2 換 broker · 事件 v1 · redeliver() 至少一次</text>
+      <rect class="box" x="530" y="226" width="140" height="76" rx="6"/>
+      <text class="t" x="538" y="248">AssetOps+FaultPM</text>
+      <text class="t s" x="538" y="266">R5 去重 · 開單/關單</text>
+      <text class="t s" x="538" y="284">src/assetops</text>
+      <rect class="box" x="690" y="226" width="90" height="76" rx="6" style="stroke-dasharray:4 3"/>
+      <text class="t" x="735" y="248" text-anchor="middle">Dispatch</text>
+      <text class="t s" x="735" y="266" text-anchor="middle">→ TECH-HAO</text>
+      <text class="t s" x="735" y="284" text-anchor="middle">不排路線</text>
+      <rect class="box" x="800" y="226" width="130" height="76" rx="6"/>
+      <text class="t" x="808" y="248">Billing 草稿消費者</text>
+      <text class="t s" x="808" y="266">sessionId 去重 · 99.2</text>
+      <text class="t s" x="808" y="284">src/billing</text>
+      <rect class="box dim" x="530" y="350" width="200" height="76" rx="20"/>
+      <text class="t b" x="542" y="372">總部 DB</text>
+      <text class="t s" x="542" y="388">SQLite / Postgres</text>
+      <text class="t s" x="542" y="402">work_orders · draft_invoices</text>
+      <text class="t s" x="542" y="416">processed_events（冪等）</text>
+      <rect class="box" x="750" y="350" width="180" height="76" rx="6"/>
+      <text class="t b" x="762" y="374">總部 API</text>
+      <text class="t s" x="762" y="394">Fastify / FastAPI</text>
+      <text class="t s" x="762" y="412">工單查詢、關單、草稿帳單</text>
+      <!-- 底列：總部人員 -->
+      <rect class="st" x="750" y="470" width="85" height="44" rx="14"/>
+      <text class="t b" x="792" y="497" text-anchor="middle">Vicky</text>
+      <rect class="st" x="850" y="470" width="80" height="44" rx="14"/>
+      <text class="t b" x="890" y="497" text-anchor="middle">老陳</text>
+      <!-- 線：場站 -->
+      <path class="ar" d="M167 54 V100"/>
+      <text class="t s" x="173" y="80">HTTP POST / WS</text>
+      <path class="ar" d="M315 54 V100"/>
+      <text class="t s" x="321" y="80">看板、人工放行 · HTTP</text>
+      <path class="ar" d="M220 138 H240"/>
+      <text class="t s" x="230" y="124" text-anchor="middle">命令</text>
+      <path class="ar" d="M335 176 V200 H125 V230"/>
+      <text class="t s" x="230" y="194" text-anchor="middle">聚合 + outbox 同一交易（R8）· SQL</text>
+      <path class="ar" d="M240 268 H220"/>
+      <text class="t s" x="230" y="222" text-anchor="middle">讀未送、標已送 · SQL</text>
+      <path class="ar ev" d="M430 250 H480 V128 H530"/>
+      <text class="t a" x="467" y="200" text-anchor="middle" transform="rotate(-90 467 200)">relay → publish</text>
+      <path class="ar ev" d="M530 112 H430"/>
+      <text class="t s" x="480" y="104" text-anchor="middle">看板副本</text>
+      <!-- 線：總部 -->
+      <path class="ar ev" d="M630 54 V100"/>
+      <text class="t s" x="636" y="80">parking.*.v1（stub）</text>
+      <path class="ar ev" d="M545 156 V226"/>
+      <text class="t s" x="551" y="178">訂閱 faulted.v1</text>
+      <path class="ar ev" d="M655 226 V156"/>
+      <text class="t s" x="661" y="196">opened/closed.v1 ↑ outbox</text>
+      <path class="ar ev" d="M900 156 V226"/>
+      <text class="t s" x="894" y="178" text-anchor="end">訂閱 session.* / parking.closed</text>
+      <path class="ar" d="M670 264 H690"/>
+      <text class="t s" x="680" y="318" text-anchor="middle">程序內呼叫 requestTechnician(WO-2208, CP-A12)</text>
+      <path class="ar" d="M580 302 V350"/>
+      <text class="t s" x="586" y="342">work_orders</text>
+      <path class="ar" d="M865 302 V326 H700 V350"/>
+      <text class="t s" x="706" y="344">draft_invoices · processed_events</text>
+      <path class="ar" d="M750 388 H730"/>
+      <text class="t s" x="740" y="376" text-anchor="middle">SQL</text>
+      <path class="ar" d="M792 470 V426"/>
+      <text class="t s" x="798" y="452">工單、關單</text>
+      <path class="ar" d="M890 470 V426"/>
+      <text class="t s" x="896" y="452">草稿帳單</text>
+    </svg>
+  </div>
+  <details class="datatable"><summary>圖中資料</summary><div class="table-scroll" style="margin-inline:0"><table>
+    <thead><tr><th>Container</th><th>節點</th><th>技術</th><th>斷線時</th><th>職責</th></tr></thead>
+    <tbody>
+      <tr><td>OCPP 端點 + ACL</td><td>場站</td><td>POST /ocpp/:chargerId · OcppAcl（真樁 WebSocket）</td><td>可運作</td><td>翻譯 OCPP 為 StartCharging / ReportMeterValue / StopCharging / ReportFault；transactionId 991 ↔ S-991；拒絕回 Blocked / Invalid</td></tr>
+      <tr><td>場站 API + ChargingService</td><td>場站</td><td>Fastify / FastAPI · charging/application</td><td>可運作</td><td>命令處理器（R1–R4 在聚合內）、人工放行 stub（R6）、GET /sessions/:id、工單副本</td></tr>
+      <tr><td>場站 DB</td><td>場站</td><td>SQLite（預設）或 Postgres</td><td>可運作</td><td>charging_sessions、outbox、work_order 副本</td></tr>
+      <tr><td>OutboxRelay</td><td>場站</td><td>publishPending()；POST /relay 或定時迴圈</td><td>累積，恢復後補送</td><td>讀 outbox 未送事件 → 發布 → markPublished；失敗不標記（至少一次）</td></tr>
+      <tr><td>InMemoryEventBus</td><td>總部</td><td>MVP1 程序內；Sprint 2 broker</td><td>—</td><td>整合事件 v1（信封八欄位）；redeliver() 模擬至少一次</td></tr>
+      <tr><td>AssetOps + FaultProcessManager</td><td>總部</td><td>src/assetops/{domain,application}</td><td>—</td><td>faulted.v1 → WorkOrder（R5 去重 chargerId + faultCode；eventId 去重）→ opened / closed；呼叫 Dispatch stub</td></tr>
+      <tr><td>BillingDraftConsumer</td><td>總部</td><td>src/billing</td><td>—</td><td>訂閱 started / completed 與 parking.session.closed；sessionId 去重；草稿 INV-778 = 99.2</td></tr>
+      <tr><td>DispatchService stub</td><td>總部（虛線）</td><td>同語言</td><td>—</td><td>requestTechnician → 固定回 TECH-HAO；不排路線、不預留備品</td></tr>
+      <tr><td>總部 DB</td><td>總部</td><td>SQLite 或 Postgres</td><td>—</td><td>work_orders、draft_invoices、processed_events</td></tr>
+      <tr><td>總部 API</td><td>總部</td><td>Fastify / FastAPI</td><td>—</td><td>工單查詢、關單（CloseWorkOrder）、草稿帳單查詢；Vicky 與老陳用</td></tr>
+    </tbody>
+  </table></div></details>
+  <figcaption>講師看兩件事：OCPP 進來有沒有先經過 ACL 那一格；site 與 HQ 是不是兩個邊界。Kafka、K8s、五個 DB 出現在 MVP1 的實線上就是沒讀 Day 6。</figcaption>
+</figure>
+
+<h3>助教對話重播：<code>/adr new</code> 與 <code>/adr review</code></h3>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /adr new 0001 context 切法</p><p>請用 docs/references/adr.md 的格式建骨架到 workshop/day3/adr/0001-bounded-contexts.md，只放小節。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>骨架之前先答三題，答案會直接變成你的背景、替代方案、負面後果：</p><p>1. 這個決策解決什麼問題？如果不切、一個 monolith 一個 schema 會怎樣？<br>2. 你考慮過哪些替代方案？至少兩個，其中一個要是你 B1 真的用過的（三堆那版）。<br>3. 選了五個之後，三個月後你會在哪裡後悔？</p><p><b>下一個最小步驟：</b>把三個答案各寫一句貼回來，我再產骨架。</p></div>
+  <div class="msg stu"><p class="who">學員</p><p>1. 不切的話「會話」會變成一個 Session 表加 type 欄，人工放行會被未結束的充電擋住，OCPP 升版帳單 SQL 會壞。<br>2. 兩堆（場站 / 總部）、三堆（場站 / 維運 / 帳務）、還有「Billing 併進 Charging 在 Stop 時直接算錢」。<br>3. Billing 要自己維護「顧客」概念（老陳說合併依據是顧客不是車牌）；五套契約 Day 5 前要定版；場站要保存工單副本。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>好。骨架已寫到 <code>workshop/day3/adr/0001-bounded-contexts.md</code>，「決策」「後果」留白給你。第 3 題的三個答案就是負面後果，直接放。第 2 題的三個方案各補一句「為何不選」與一句「它在什麼情況下反而會贏」——「三堆」在 Dispatch 永遠是 stub 的情況下就會贏，這句要留著。</p><p><b>下一個最小步驟：</b>填完決策段（一段），然後 <code>/adr review 0001</code>。</p></div>
+  <div class="msg stu"><p class="who">學員 → /adr review 0001</p><p>兩份都填完了（0001、0002），請審查，直接讀檔。不要重寫我的文字。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p><b>ADR Review — 0001</b></p>
+  <div class="table-scroll" style="margin-inline:0"><table><thead><tr><th>欄位</th><th>狀態</th><th>備註 / 問題</th></tr></thead><tbody>
+    <tr><td>標題</td><td>過</td><td>動詞開頭、一句決策</td></tr>
+    <tr><td>背景有證據</td><td>過</td><td>引用了 P-441 / S-991 時間、阿忠隱藏事實 1、R1 / R5 / R7</td></tr>
+    <tr><td>替代方案 ≥ 2</td><td>過</td><td>三個，各有「何時會贏」——「三堆」那條寫得最誠實</td></tr>
+    <tr><td>後果負面 ≥ 2</td><td>過</td><td>四條；「R1 跨多個聚合要靠 repository + 唯一約束」這條明天會直接撞到</td></tr>
+    <tr><td>與 context-map / c4 一致</td><td>過</td><td>五個名字、關係模式一致</td></tr>
+  </tbody></table></div>
+  <p><b>ADR Review — 0002</b></p>
+  <div class="table-scroll" style="margin-inline:0"><table><thead><tr><th>欄位</th><th>狀態</th><th>備註 / 問題</th></tr></thead><tbody>
+    <tr><td>背景有證據</td><td>過</td><td>三天、一台筆電、E2E 劇本 14:02 → 18:18</td></tr>
+    <tr><td>替代方案 ≥ 2</td><td>過</td><td>「只做 Charging」那條——你寫它「沒有消費者就證明不了 Outbox」，好</td></tr>
+    <tr><td>不做清單</td><td>需補</td><td>有 Dispatch、Parking、Billing 合併，缺「發票」與「跨時段費率」——小美隱藏事實 1 要進 Sprint 2</td></tr>
+    <tr><td>後果負面 ≥ 2</td><td>過</td><td>「Parking stub 不保證一輛車一個會話」這條請在 Day 6 E2E 劇本裡記得不要依賴它</td></tr>
+  </tbody></table></div>
+  <p>判定：0001 Accepted 可；0002 補「不做清單」兩項後 Accepted。</p>
+  <p><b>下一個最小步驟：</b>在 0002 的「不做」清單加「發票開立」與「跨時段費率（小美 1）」兩行，改狀態為 Accepted，commit。</p></div>
+</div>
+
+<div class="file"><p class="path">workshop/day3/adr/0001-bounded-contexts.md <span class="chip">交付物 · 完整版</span></p><div class="body">
+<h4>ADR-0001: 以五個 Bounded Context 切分場站與總部</h4>
+<ul>
+  <li>狀態：Accepted</li>
+  <li>日期：2026-09-17</li>
+  <li>決策者：學員（工作坊 Day 3）</li>
+  <li>關聯：<code>workshop/day3/context-map.md</code>、<code>workshop/day3/c4.md</code>、<code>docs/curriculum.md</code> §1.1、§1.4、§1.7</li>
+</ul>
+<p><b>背景（Context）</b></p>
+<p>連鎖停車場營運商在既有停車場（LPR、閘門、月票）新裝 OCPP 充電樁；總部要看全國樁健康度並派工；場站在總部斷線時仍要能進場、充電、人工放行（§1.1）。Day 1 訪談與 Day 2 Event Storming 留下這些事實：</p>
+<ul>
+  <li>「會話」在阿忠（進場到放行，P-441 14:02–14:33）與小美（授權到結束計量，S-991 14:04–14:31）口中是兩個東西；一個 P-441 可含 0..n 個 S-991。</li>
+  <li>「狀態」有四個狀態機：OCPP 連接器、充電會話、樁健康、帳單。</li>
+  <li>R1「一個連接器一個進行中會話」與 R5「一根樁一張根因工單」要在命令當下守住；R7「帳單開立後不可改」與合併出帳可以事後對齊（老陳：「晚一點沒關係，不能漏」）。</li>
+  <li>阿忠隱藏事實 1：斷線時用鑰匙開閘、日誌本記車牌，每月 3–4 次。小美隱藏事實 2：斷線時只有月票卡 24 小時快取白名單能授權。</li>
+  <li>阿豪隱藏事實 3：地下室無訊號，回到地面才回報，曾被判逾時。Vicky 隱藏事實 4：帳務不該收到「技術員已出發」。</li>
+  <li>樞紐事件：ChargingStarted、ChargingCompleted、ChargerFaulted。</li>
+</ul>
+<p>如果不決定：最可能長成一個 <code>Session</code> 表加 <code>type</code> 欄、<code>status</code> 欄吃四種值，人工放行被未結束的充電會話擋住，OCPP 升 2.0.1 時帳單 SQL 跟著壞（<code>ddd-strategic.md</code> §6 的大泥球六步）。</p>
+<p><b>決策（Decision）</b></p>
+<p>我們把系統切成五個 Bounded Context，各自擁有一套語言、一組不變條件、一個獨立存活條件：</p>
+<div class="table-scroll" style="margin-inline:0"><table>
+  <thead><tr><th>Context</th><th>不變條件</th><th>獨立存活</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">Parking</td><td>一輛車同一時間一個進行中停車會話</td><td>總部掛掉仍能開關閘</td></tr>
+    <tr><td class="nowrap">Charging（核心）</td><td>一個連接器同一時間一個進行中會話</td><td>OCPP 在場站；本機授權；總部只訂閱結果</td></tr>
+    <tr><td class="nowrap">Billing</td><td>帳單開立後金額不可默默改</td><td>可延遲出帳，不可丟事件</td></tr>
+    <tr><td class="nowrap">AssetOps</td><td>一座樁同一時間一張進行中根因工單</td><td>總部主系統；場站只上報、保存副本</td></tr>
+    <tr><td class="nowrap">Dispatch</td><td>一張工單同一時間一個主責技術員</td><td>可離線執行，回報後再對齊</td></tr>
+  </tbody>
+</table></div>
+<p>Context 間關係：OCPP → Charging 防腐層；Parking ↔ Charging 伙伴 + 事件互訂；Charging / Parking → Billing 顧客—供應者（帳務不得回呼凍結會話）；Charging → AssetOps 遵奉者；AssetOps → Dispatch 內部；AssetOps → Charging 以 <code>ops.work_order.closed.v1</code> 公開語言通知恢復可售。整合一律經整合事件 v1 + Outbox；不用 shared kernel。</p>
+<p><b>替代方案（Alternatives considered）</b></p>
+<ol>
+  <li><b>兩個 context：場站 / 總部</b>——不選，因為那是部署位置不是語言邊界：「場站」裡放行與授權用不同的詞、守不同規則；「總部」裡老陳月底工作、Vicky 每天派工。它會贏的情況：沒有——它連 R7 都找不到擁有者。</li>
+  <li><b>三個 context：場站（停車 + 充電）/ 維運（工單 + 派工）/ 帳務</b>——這是我 B1 真的用過的切法。不選，因為 P-441 與 S-991 一對多、R1 守的是連接器不是車位、R5 即時去重與派工離線回報節奏不同。它會贏的情況：Dispatch 永遠停在 stub、且 Parking 由廠商系統全權處理時，「維運」合併能少一份契約。</li>
+  <li><b>Billing 併入 Charging，Stop 時直接算錢</b>——不選，因為違反「帳務不得回呼凍結會話」與 §1.1 斷線存活；且 Billing 需要「顧客」概念（老陳隱藏事實 1：合併依據是顧客不是車牌），Charging 沒有。它會贏的情況：單一費率、無月票、無車隊、不需要合併停車費——那不是這家公司。</li>
+  <li><b>不做 ACL，直接用 OCPP 名詞</b>——不選，因為 1.6J → 2.0.1 時 <code>StartTransaction</code> 消失，聚合要改；<code>StatusNotification</code> 不是任何利害關係人的語言。它會贏的情況：我們是樁廠商而不是停車場營運商。</li>
+</ol>
+<p><b>後果（Consequences）</b></p>
+<ul>
+  <li>正面：R1–R8 每條有唯一擁有者（R1–R4 Charging、R5 AssetOps、R6 Parking、R7 Billing；R8 是各 context 應用層各自守的架構規則）。</li>
+  <li>正面：場站節點可以只部署 Parking stub + Charging，斷線時完整運作；OCPP 版本升級只影響 <code>src/adapters/ocpp/</code>。</li>
+  <li>正面：Day 4 起目錄就是 context（<code>src/charging</code>、<code>src/assetops</code>、<code>src/billing</code>），聚合不准 import 其他 context。</li>
+  <li>負面：Billing 必須自己維護「顧客」與「合併」邏輯，上游不提供；MVP1 只做草稿，合併留 Sprint 2。</li>
+  <li>負面：R1「連接器是否占用」跨越多個 ChargingSession 聚合，需要 repository 查詢 + 儲存層唯一約束，不能只靠聚合內狀態。</li>
+  <li>負面：五個 context 的整合事件契約要在 Day 5 前定版，否則 Billing / AssetOps 無法平行開發；多一層 ACL 要維護對照表（阿豪隱藏事實 1 的三套編號）。</li>
+  <li>負面：場站看板要保存工單副本（訂閱 <code>ops.work_order.opened.v1</code>），場站多一份狀態要對齊。</li>
+  <li>要監看：Parking ↔ Charging 的 Partnership 在 Sprint 2 真整合時會不會退化成單向；AssetOps 與 Dispatch 若長期都是 stub，考慮回到「合併」並以新 ADR 取代本份。</li>
+</ul>
+<p><b>驗證（How we'll know）</b></p>
+<ul>
+  <li><code>grep -rn "StatusNotification\|transactionId\|idTag" src/charging/domain src/billing src/assetops</code> 為空。</li>
+  <li><code>src/billing</code> 不 import <code>src/charging/domain</code>；沒有任何程式碼從 Billing 呼叫 Charging 的命令。</li>
+  <li>Day 6 斷線劇本：HQ 停掉，site 仍能 Start / Stop / 人工放行；恢復後 outbox 補送。</li>
+</ul>
+<p><b>參考</b>：<code>docs/curriculum.md</code> §1.4、§1.7；<code>workshop/day2/storm-board.md</code>（樞紐事件）；<code>workshop/day3/context-map.md</code>；<code>docs/references/ddd-strategic.md</code> §4、§6。</p>
+</div></div>
+
+<div class="file"><p class="path">workshop/day3/adr/0002-mvp1-scope.md <span class="chip">交付物 · 完整版</span></p><div class="body">
+<h4>ADR-0002: MVP1 範圍 = Charging + AssetOps 工單開立 + Billing 草稿帳單</h4>
+<ul>
+  <li>狀態：Accepted</li>
+  <li>日期：2026-09-17</li>
+  <li>決策者：學員（工作坊 Day 3）</li>
+  <li>關聯：ADR-0001、<code>workshop/day3/c4.md</code>（Container 圖）、<code>docs/curriculum.md</code> §1.4（MVP1）、§1.8（契約）、<code>scripts/e2e/e2e.md</code></li>
+</ul>
+<p><b>背景（Context）</b></p>
+<p>Day 4–6 共三天、一台筆電、Node 或 Python、Docker 選配。ADR-0001 定了五個 context，三天做不完五個。Day 6 要跑通 <code>scripts/e2e</code> 的「14:02 → 18:18」劇本：一次正常充電（S-991，12.4 kWh，草稿 99.2）+ 一次故障開單（WO-2208）+ 一次重複申告（R5）+ 一次 broker 重送（同 eventId）+ 一次修復驗證關單。Charging 是核心子領域；AssetOps 的工單開立是故障流程第一個自動化點（As-Is 的人當 API：阿忠打電話、客服手動開單，平均 20 分鐘）；Billing 是 Charging 事件的第一個消費者，能證明 Outbox + 冪等真的成立。Parking 是既有廠商系統；Dispatch 的路線與備品三天內做不出有意義的版本。</p>
+<p>如果不決定範圍：Day 6 最可能做不完的是派工與持久化，而且五個地方都可能壞，E2E 找不到問題在哪。</p>
+<p><b>決策（Decision）</b></p>
+<p>MVP1 實作三塊：</p>
+<ol>
+  <li><b>Charging（完整）</b>：ChargingSession 聚合（R1–R4）、<code>StartCharging</code> / <code>StopCharging</code> / <code>ReportMeterValue</code> / <code>ReportFault</code> 命令處理器、OCPP ACL、SQLite 持久化、Outbox relay、HTTP API。</li>
+  <li><b>AssetOps（工單開立與關閉）</b>：WorkOrder 聚合（R5）、FaultProcessManager、<code>ops.work_order.opened / closed.v1</code>、關單端點。</li>
+  <li><b>Billing（草稿帳單，最小消費者）</b>：訂閱 <code>charging.session.started / completed.v1</code>，以 sessionId 去重，單一費率算草稿金額（12400 Wh → 99.2）；不開立正式帳單、不做 R7、不合併停車費。</li>
+</ol>
+<p>MVP1 只做契約與 stub：</p>
+<ul>
+  <li><b>Parking</b>：<code>parking.vehicle_entered.v1</code> / <code>parking.session.closed.v1</code> 的 JSON Schema 與範例；<code>ReleaseVehicleManually</code> 端點只發事件（R6 契約成立，不做停車會話聚合）。</li>
+  <li><b>Dispatch</b>：<code>requestTechnician</code> 固定回 TECH-HAO；不排路線、不預留備品、不做離線 App。</li>
+</ul>
+<p><b>不做清單（明列）</b></p>
+<ul>
+  <li>Dispatch 真派工：路線、備品預留（Vicky 隱藏事實 3）、離線回報對齊（阿豪隱藏事實 3）→ Sprint 2。</li>
+  <li>Parking 真整合：停車會話聚合、閘門控制、月票資格 → Sprint 2。</li>
+  <li>Billing 合併出帳（停車費 + 電費，依顧客合併）、R7 <code>InvoiceAdjusted</code>、爭議流程 → Sprint 2。</li>
+  <li>發票開立（Generic，接 SaaS）→ Sprint 2 或更後。</li>
+  <li>跨時段費率（小美隱藏事實 1：21:50 開始的會話全程算尖峰）→ Sprint 2；契約已含 startedAt / endedAt，不需升版。</li>
+  <li>真 broker、真 OCPP WebSocket 伺服器、Kubernetes、總部既有系統（客服、ERP）整合。</li>
+</ul>
+<p><b>替代方案（Alternatives considered）</b></p>
+<ol>
+  <li><b>五個 context 都做薄薄一層</b>——不選：每個都做不深，R1–R5 的 TDD 練習被壓縮，E2E 有五個地方可能壞。它會贏的情況：團隊有五個人、各認一個 context 平行做。</li>
+  <li><b>只做 Charging</b>——不選：沒有消費者就證明不了 Outbox / 冪等 / 契約；故障流程（BPR 主軸、人當 API 最痛的兩點）完全沒落地。它會贏的情況：只剩一天。</li>
+  <li><b>Charging + Billing 完整出帳（含 R7、合併）</b>——不選：Billing 需要顧客、費率表、停車事件，三者 MVP1 都沒有；R7 的價值在稽核，不在 E2E 劇本。它會贏的情況：老陳是唯一的贊助者、故障流程不在範圍。</li>
+  <li><b>先做真 broker（Kafka / RabbitMQ）</b>——不選：一台筆電、Docker 選配；in-memory bus 足以證明模式，切換只影響 EventBus adapter。它會贏的情況：MVP1 就要跨兩台機器部署。</li>
+</ol>
+<p><b>後果（Consequences）</b></p>
+<ul>
+  <li>正面：E2E 劇本每一步都有真程式碼——進場（stub 事件）→ 充電（真）→ 故障（真）→ 開單（真）→ 派工（stub）→ 關單（真）。</li>
+  <li>正面：Outbox、冪等消費者、Process Manager 三個模式各有一個真實消費者驗證。</li>
+  <li>正面：Day 7 的 Sprint 2 backlog 有明確起點：Billing 合併出帳（R7）、Dispatch 路線與備品、Parking 真整合。</li>
+  <li>負面：草稿帳單用單一費率（8 元/kWh），跨時段計價留 backlog；老陳月底仍要手動合併停車費。</li>
+  <li>負面：Parking stub 不保證「一輛車一個進行中停車會話」；E2E 劇本不得依賴它。</li>
+  <li>負面：Dispatch stub 的「指派」不是真派工；<code>ops.work_order.opened.v1</code> 的訂閱者名單在 Sprint 2 會變。</li>
+  <li>負面：沒有 broker 表示 site 與 HQ 節點 MVP1 實際在同一程序；Container 圖仍畫兩個邊界，README-mvp.md 要註明差異。</li>
+</ul>
+<p><b>驗證（How we'll know）</b></p>
+<ul>
+  <li><code>node scripts/e2e/run.mjs</code> 或 <code>python scripts/e2e/run.py</code> 全綠，最後斷言：S-991 Completed 12400 Wh；INV-778 Draft 99.2；只有一張 WO-2208、duplicateReportCount = 1；<code>ops.work_order.opened.v1</code> ×1、<code>closed.v1</code> ×1。</li>
+  <li><code>contracts/</code> 有 <code>parking.*.v1</code> 的 schema 與範例，即使 MVP1 沒人真的發。</li>
+</ul>
+<p><b>參考</b>：ADR-0001；<code>docs/curriculum.md</code> §1.4、§1.8；<code>workshop/day3/c4.md</code>；<code>docs/diagrams/event-flow.mmd</code>；<code>scripts/e2e/e2e.md</code>。</p>
+</div></div>
+
+<h3>Day 3 結束時的目錄與 commit</h3>
+<pre class="term">$ tree workshop/day3
+workshop/day3
+├── TEMPLATE.md
+├── adr
+│   ├── 0001-bounded-contexts.md
+│   └── 0002-mvp1-scope.md
+├── c4.md
+└── context-map.md
+
+$ git log --oneline -- workshop/day3
+<span class="dim">a3f19c2</span> day3: adr-0002 add not-doing list, mark accepted
+<span class="dim">9be07d4</span> day3: adr-0001 and adr-0002 drafts after /adr review
+<span class="dim">5c2e8a1</span> day3: c4 context and container, drop billing-&gt;charging edge
+<span class="dim">e71d0f9</span> day3: context map compared with curriculum 1.4
+<span class="dim">2b84c33</span> day3: context map with relationship patterns and counterexamples
+<span class="dim">7d01aa5</span> day3: boundary evidence and first split (3 contexts)
+<span class="green">✓</span> 6 commits · 今天沒有紅綠節奏，但粒度要看得出「推翻過一次」與「對照過 §1.4」</pre>
+
+<div class="teach"><p class="head">講師註 · Block 3</p>
+<p><b>驗收時看這三行：</b>（1）<code>c4.md</code> Container 圖有沒有「OCPP 端點 + ACL」與「OutboxRelay」兩格，以及 <code>Container_Boundary</code> 是不是兩個；（2）ADR-0001 的替代方案有沒有一條寫「它在 X 情況下反而會贏」——沒有就是稻草人；（3）ADR-0002 的「不做清單」有沒有「Billing 合併出帳」「Dispatch 真派工」「Parking 真整合」三項，缺一項就代表他沒想過 Day 7 的 backlog 從哪來。</p>
+<p><b>常見失真：</b>Context 圖畫了 DB；Container 圖畫五個微服務 + Kafka；ADR 後果只有好的；ADR 背景寫「我們想要乾淨的架構」（立場不是事實）；直接把 <code>docs/references/adr.md</code> §3–§4 的範例貼上來改個日期——抽問「替代方案 2 為什麼在 Dispatch 是 stub 時會贏」，答不出來就是貼的。</p>
+<p><b>怎麼攔：</b>B3 開始就說「C4 從 <code>docs/references/c4.md</code> §4 範本改，不要從零寫語法」，省 20 分鐘。ADR 的三題（不決定會怎樣 / 替代方案 / 三個月後後悔什麼）讓學員先口頭答再寫。時間不夠時砍的順序：Level 1 圖（可用 Container 圖代替）→ ADR-0002 只寫「做 / 不做」兩張清單，但 ADR-0001 的替代方案與壞後果不能砍。</p>
+<p><b>Day 4–7 會回到 <code>workshop/day3/adr/</code> 加的 ADR</b>（<code>adr.md</code> §5，講師預告用）：0003 R1 擺在聚合內還是應用層 + repository 查詢（Day 4）；0004 拒絕用事件不用例外、in-memory bus 而非 broker（Day 5）；0005 SQLite 預設、Postgres 選配、Outbox relay 同程序（Day 6）；0006 <code>DuplicateFaultReported</code> 是否對外成為整合事件（Day 7，R5 留下的問題卡）。合格的目錄到 Day 7 通常有 4–6 份。</p>
+</div>
+
+<p class="eyebrow">CHECK-OUT · 30 分</p>
+<h2><code>/checkout day3</code> 與五題</h2>
+<div class="chat">
+  <div class="msg stu"><p class="who">學員 → /checkout day3</p><p>今天是 Day 3。請對照 docs/rubric.md 的 Day 3 DoD 檢查 workshop/day3/ 的四個檔案（含 adr/ 子目錄）。每項回「過 / 不過 + 一句理由」；不過的給一個問題。另外請確認我的 context 名稱與明天 starter 目錄對得上嗎？最後給「下一個最小步驟」，以及明天 Day 4 開始前我應該把 rules.md 的哪幾條印出來放旁邊。</p></div>
+  <div class="msg ta"><p class="who">助教</p><p>讀了 <code>workshop/day3/</code> 四個檔案與 <code>docs/rubric.md</code> Day 3 段落。逐項：</p>
+  <div class="table-scroll" style="margin-inline:0"><table>
+    <thead><tr><th>交付物</th><th>DoD</th><th>狀態</th><th>一句理由</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="6" class="nowrap">context-map.md</td><td>邊界推導四小節，每節 ≥ 2 條證據，引用 Day 1–2 檔案</td><td>過</td><td>語言 4 條、生命週期 3 條、一致性 3 條、存活 / 團隊 5 條；每條都有 interviews.md 的隱藏事實編號或 rules.md 的 R 編號</td></tr>
+      <tr><td>context 3–7 個，四欄齊全含 Core / Supporting / Generic</td><td>過</td><td>五個；Billing 寫成「Generic（發票）/ Supporting（合併）」有理由</td></tr>
+      <tr><td>R1–R8 各標擁有者，沒有一條跨兩個</td><td>過</td><td>R1–R4 Charging、R5 AssetOps、R6 Parking、R7 Billing；R8 標為架構規則、各 context 應用層各自守——可接受，但要能口頭解釋為什麼它不算「跨」</td></tr>
+      <tr><td>Mermaid map；ACL / Partnership / Customer–Supplier / Conformist 各至少一次 + 理由 + 反例</td><td>過</td><td>八條邊全有模式與反例；OCPP → Charging 是 ACL；沒有任何邊從 Billing 指向 Charging</td></tr>
+      <tr><td>推翻過的切法 ≥ 1</td><td>過</td><td>兩堆與三堆兩版都留著，各寫是哪條線索推翻的</td></tr>
+      <tr><td>與 §1.4 差異與理由；<code>/context-map 挑戰</code> 過一輪</td><td>過</td><td>五列差異表，每列有「可辯護嗎」與「建議調整」；沒有「因為官方這樣寫」</td></tr>
+      <tr><td rowspan="3" class="nowrap">c4.md</td><td>System Context：≥ 4 位角色、1 個系統、≥ 2 個外部系統、每條線有動詞</td><td>過</td><td>6 人、1 系統、3 外部；圖上沒有 DB</td></tr>
+      <tr><td>Container 只畫 MVP1：API、OCPP ACL、Charging、AssetOps、Billing 草稿、Outbox + bus、DB、模擬器；Parking / Dispatch 虛線；site / HQ 兩邊界；箭頭對到事件或命令</td><td>過</td><td>兩個 <code>Container_Boundary</code>；「Billing → 場站 API 查會話」那條已刪；每個箭頭在對照表裡有 §1.8 事件或命令</td></tr>
+      <tr><td>每張圖 3–5 行「想說的事」；「MVP1 不包含」清單</td><td>過</td><td>兩張各 4–5 行；不包含清單五項，與 ADR-0002 一致</td></tr>
+      <tr><td rowspan="3" class="nowrap">adr/0001、0002</td><td>Nygard 格式：日期、狀態 Accepted、脈絡、決定、替代方案、後果、參考</td><td>過</td><td>兩份都有；0002 補完「不做清單」後狀態改 Accepted</td></tr>
+      <tr><td>替代方案 ≥ 2 且非稻草人；後果壞的 ≥ 2</td><td>過</td><td>0001 四個替代方案各有「何時會贏」；0002 四個；壞後果各四條</td></tr>
+      <tr><td>0001 = 切法、0002 = MVP1；<code>/adr review</code> 過</td><td>過</td><td>審查表兩份都在對話紀錄裡</td></tr>
+      <tr><td class="nowrap">commit</td><td>全部 commit 到 <code>workshop/&lt;name&gt;</code></td><td>不過</td><td><code>git status</code> 顯示 <code>adr/0002-mvp1-scope.md</code> 未加入。問：你最後一次 <code>git add</code> 是在補「不做清單」之前還是之後？</td></tr>
+    </tbody>
+  </table></div>
+  <p>Context 名稱對照：Charging → <code>src/charging</code>、AssetOps → <code>src/assetops</code>、Billing → <code>src/billing</code>，全部對得上；Parking 與 Dispatch 明天沒有目錄，正確。</p>
+  <p>明天印出來放旁邊：R1、R2、R3、R4（Day 4 B2 逐條 TDD）與 R5（B3 WorkOrder）。R6–R8 留到 Day 5。</p>
+  <p><b>下一個最小步驟：</b><code>git add workshop/day3 &amp;&amp; git commit -m "day3: context map, c4, adr-0001/0002"</code>，然後把 rules.md 的 R1 印出來——明天第一個紅燈就是它。</p></div>
+</div>
+
+<h3>Quiz 參考答案</h3>
+<div class="answer"><p class="head">Q1 · 「會話」在阿忠和小美嘴裡不同，是四種線索裡的哪一種？切出哪兩個 context？</p>
+<p>語言衝突（同一個詞、不同意思）。阿忠的會話是 ParkingSession P-441（14:02 進場 → 14:33 放行），小美的會話是 ChargingSession S-991（14:04 授權 → 14:31 結束計量）；同一輛 ABC-1234 一個 P-441 可含 0..n 個 S-991。→ Parking 與 Charging。順帶的第二條線索是生命週期：充電結束時停車不一定結束。</p></div>
+<div class="answer"><p class="head">Q2 · OCPP → Charging 為什麼是 ACL 而不是 Conformist？做成 Conformist，StatusNotification 會出現在哪裡？</p>
+<p>OCPP 是樁廠商的協定，不是任何利害關係人的通用語言，而且它會自己改版（1.6J → 2.0.1 時 StartTransaction 消失）；我們沒有一群業務人員跟它一起演進，所以要翻譯：<code>StatusNotification(Faulted)</code> → <code>ChargerFaulted</code>，<code>transactionId 5567</code> ↔ S-991。做成 Conformist 的話，<code>StatusNotification</code>、<code>idTag</code>、<code>transactionId</code> 會滲進 <code>src/charging/domain/</code>，之後換 OCPP 版本領域層要跟著改——這正是 rubric 一票否決的第二條。</p></div>
+<div class="answer"><p class="head">Q3 · Charging → Billing 是 Customer–Supplier。「帳務不得回呼凍結會話」是什麼意思？違反了會發生什麼？</p>
+<p>上游事件是契約：Billing 訂閱 <code>charging.session.completed.v1</code>（energyWh 12400）出草稿帳單，但不能呼叫 Charging 的 API 去「鎖住」S-991 等它算完錢。老陳可以要求 energyWh 用整數（那是對契約的需求），不能要求 Stop 等他。違反了：老陳月底跑批 Billing 慢或掛時，14:31 的 Stop 卡住，車主拔不了槍、阿忠放不了行，§1.1「場站在總部斷線時仍要能充電、放行」破功。</p></div>
+<div class="answer"><p class="head">Q4 · Charging → AssetOps 是 Conformist：誰遵奉誰？AssetOps 可以要求 Charging 改事件格式嗎？</p>
+<p>AssetOps 遵奉 Charging：接受 <code>ChargerFaulted</code> 的語意與欄位（chargerId、connectorId、faultCode、stillEnergized、occurredAt）原樣進工單，SLA 直接用 occurredAt 起算。它不能要求 Charging 改；要翻譯就自己在 AssetOps 內翻。為什麼不做 ACL：<code>ChargerFaulted</code> 本來就是業務語言（「設備已聲明自己無法按契約供電」），翻譯沒有價值，只會多一份對照表。</p></div>
+<div class="answer"><p class="head">Q5 · ADR-0002 裡 Parking「只做事件契約與 stub」——MVP1 裡誰發 parking.session.closed.v1？誰收？</p>
+<p>MVP1 沒有人真的發。<code>contracts/</code> 裡有它的 JSON Schema 與範例；測試與 E2E 用 stub 發一筆假的（例如 14:33 的 <code>releaseMode=Manual</code>）來驗 Billing 消費者的冪等與合併入口；Billing 收。真正的發布者（既有停車場系統的整合、或我們自己的 Parking context）是 Sprint 2 的事，這件事要寫在 ADR-0002 的「不做清單」與 Day 7 的 sprint-2-backlog.md。</p></div>
+
+<h3>如果學員落後：最小可行版本對 DoD</h3>
+<div class="table-scroll"><table>
+  <thead><tr><th>最小版本做什麼（約 3 小時）</th><th>DoD 仍過</th><th>DoD 不過、講師怎麼收</th></tr></thead>
+  <tbody>
+    <tr><td>推導只寫「語言衝突」與「獨立存活」兩節，各 2 條證據</td><td>兩節有引用檔案</td><td>缺生命週期與一致性——Day 4 kickoff 前補，因為 R1 / R7 的一致性差別明天就用到</td></tr>
+    <tr><td>直接切 3 塊（充電、資產維運、帳務），B2 對照後補成 5 塊並寫差異</td><td>3–7 個；「推翻過的切法」（3 → 5 就是）</td><td>Parking / Dispatch 沒有自己推出的不變條件——要求在差異表寫「接受課綱，因為…」</td></tr>
+    <tr><td>Context Map 只畫 MVP1 三條線（ACL、Customer–Supplier、Conformist）</td><td>三個模式各一次、有反例</td><td>缺 Partnership——不扣分，但 Day 5 的 Parking stub 方向要另外決定</td></tr>
+    <tr><td>C4 只畫 Level 2</td><td>Container 兩個邊界、ACL、Outbox</td><td>缺 L1——Day 7 PR 描述前補一張</td></tr>
+    <tr><td>ADR-0001 一個替代方案；ADR-0002 只寫做 / 不做兩張清單</td><td>0002 的不做清單</td><td>0001 替代方案少於 2 是不過——這條不能省，補「單一 Session」那個就夠</td></tr>
+  </tbody>
+</table></div>
+
+<p class="eyebrow">講師手記</p>
+<h2>這一天的教材夠不夠</h2>
+<p><b>夠的地方。</b>Day 3 是七天裡教材密度最高、也最自洽的一天：<code>day3.md</code> 三個 Block 的步驟、提示、卡點、產出四段齊全，三個 skill（<code>/context-map</code>、<code>/c4</code>、<code>/adr</code>）的「不准」清單與 rubric 的「講師看這裡」互相對得上（ACL、Billing 不回呼、兩個邊界、壞後果）。「自己推邊界再對答案」的順序被 <code>instructor.md</code> §7.3 列為絕對不砍的五件事之一，而 <code>/context-map</code> 的 Phase 1–5 確實把這個順序寫死了。<code>docs/references/c4.md</code> §4 與 <code>docs/diagrams/*.mmd</code> 給了可以直接改的 Mermaid，B3 不必從零寫語法。</p>
+<p><b>不夠的地方，講師要自己補。</b></p>
+<ul>
+  <li><b>四種線索的第四條名字不一致。</b><code>day3.md</code> 講師開場與範本寫「獨立存活」，<code>rubric.md</code> 寫「團隊」，<code>ddd-strategic.md</code> §4 寫「團隊 / 組織」並把「獨立存活」放在 §3.1 的定義裡。學員照範本寫「獨立存活」小節，<code>/checkout</code> 照 rubric 找「團隊」小節會判不過。Kickoff 時明講：第四節同時涵蓋「總部斷線誰要活」與「同一群人在改嗎」，標題兩個都可以。本頁的參考版本把兩者合在 §1.4。</li>
+  <li><b>R8 的擁有者。</b>rubric 要求「每條 R1–R8 標擁有的 context，沒有一條跨兩個」，但 R8（Outbox）是架構規則，本質上每個 context 都要守；<code>adr.md</code> §3 的範例也寫「R8 全部」。<code>day3.md</code> 的步驟裡甚至沒提這張表。講師要決定：接受「架構規則、各自守」的標法（本頁採此），並在 kickoff 說清楚。</li>
+  <li><b>關係模式「只講四個」與參考圖有八條邊。</b>開場說 ACL / Partnership / Customer–Supplier / Conformist 四個，但 <code>context-map.mmd</code> 與 <code>ddd-strategic.md</code> §5.8 另有 Published Language（closed.v1）、Separate Ways（Dispatch ↔ Billing）、內部。學員對答案時會問「這兩個是什麼」。建議 kickoff 加一句：「另外三個名字你對答案時會看到，能解釋就加，不加不扣分。」</li>
+  <li><b>ADR 範例太完整。</b><code>docs/references/adr.md</code> §3–§4 是兩份填好的 ADR-0001 / 0002，內容幾乎就是標準答案。學員先讀 30 分鐘就會看到，B3 很難不受影響。攔法：驗收時抽問替代方案的「何時會贏」與後果裡「你其實不確定的那一條」——範例沒有這兩件事，抄的答不出來。長期建議把範例改成半成品。</li>
+  <li><b>System Context 圖「一個系統」與本頁「兩個節點」。</b>C4 正統是 Level 1 只有一個 System 框；本頁的 SVG 拆成場站 / 總部兩格是為了讓 Vicky 看到斷線意圖。學員兩種都會交，講師要一致：Level 1 允許拆成兩格，但不准出現 DB、Outbox、bus。</li>
+  <li><b>Day 2 storm board 沒有參考解。</b>Block 1 步驟 1 要學員從自己的 <code>storm-board.md</code> 拿樞紐與「誰在乎」欄；如果 Day 2 交付物品質差（樞紐少於 3、沒有「誰在乎」），B1 會卡在原料不足。Day 3 kickoff 前先看一遍昨天的 storm board，樞紐不足的學員給他 §1.7 那張表當補救。</li>
+</ul>
+<p><b>時間會不會爆。</b>B1 不會（25 + 45 + 20 剛好）。B2 的「20 分鐘不開 Claude 列箭頭」常被跳過直接 <code>/context-map</code>，結果全部雙向——講師要在第 20 分鐘走一圈看有沒有紙本箭頭。<b>B3 一定爆</b>：兩張圖 + 兩份 ADR + 一輪審查，90 分鐘做得完的前提是 C4 從範本改、ADR 三題先口頭答。實測估計 110–120 分鐘；砍的順序在 Block 3 講師註寫了（先砍 Level 1 圖，再砍 ADR-0002 的篇幅，替代方案與壞後果不砍）。Check-out 30 分鐘裡 <code>/checkout day3</code> 讀四個檔案要 5–8 分鐘，quiz 五題口頭 10 分鐘，剩下 commit。整天 7 小時的預算，實際 7.5 小時。</p>
+<p><b>驗收 30 分鐘怎麼分。</b>每位學員只看三處：<code>context-map.md</code> 的 Mermaid 那條 OCPP 邊與有沒有 Billing → Charging；<code>c4.md</code> Container 的兩個邊界與 ACL 格；<code>adr/0001</code> 的替代方案有沒有「何時會贏」。記兩個亮點（通常是一份寫得好的「推翻過的切法」與一條好的反例）、兩個普遍問題（通常是全雙向、ADR 只寫好處），放進 Day 4 kickoff——Day 4 kickoff 要投影一張好的 context map，並講「答案」與學員版本的差異（四個或六個都可以）。</p>
+
+<p class="end">教師版 · EV Charge Ops 七天工作坊 · 教材與程式碼：<a href="https://github.com/clarencechien/dddguide">github.com/clarencechien/dddguide</a> · 學員主控台：<a href="https://imitator.ai-apps.work/r/ev-charge-ops-workshop">ev-charge-ops-workshop</a> · 本頁假設全流程跑完；學員實際產出會與此不同，差異正是驗收要看的地方。</p>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="arr-x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+  </defs>
+</svg>
+
+<script>
+/* 無第三方、無 storage：狀態只活在變數裡（imitator 的 opaque origin 會讓 storage API 丟例外） */
+(() => {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+
+  /* theme toggle — STYLE.md floor item 5 */
+  {
+    const root = document.documentElement, btn = $('#theme-toggle');
+    let dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    btn.textContent = 'theme · ' + (dark ? 'dark' : 'light');
+    btn.addEventListener('click', () => {
+      dark = !dark; root.dataset.theme = dark ? 'dark' : 'light';
+      btn.textContent = 'theme · ' + (dark ? 'dark' : 'light'); btn.setAttribute('aria-pressed', 'true');
+    });
+  }
+
+  /* tabs: <div class="tabs" data-tabs><button data-pane="id">…  + <div class="pane" id="id"> */
+  $$('[data-tabs]').forEach(group => {
+    const btns = $$('button[data-pane]', group);
+    const show = id => {
+      btns.forEach(b => b.classList.toggle('on', b.dataset.pane === id));
+      btns.forEach(b => { const p = document.getElementById(b.dataset.pane); if (p) p.classList.toggle('on', b.dataset.pane === id); });
+    };
+    btns.forEach(b => b.addEventListener('click', () => show(b.dataset.pane)));
+    const first = btns.find(b => b.classList.contains('on')) || btns[0];
+    if (first) show(first.dataset.pane);
+  });
+
+  /* steppers: <section data-stepper data-step="1" data-max="7">
+       <ol class="steps"><li data-goto="1">…</li>…</ol>
+       <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><span class="cap"></span></div>
+       <div class="step-note" data-note="1">…</div>  (one per step; shown when active)
+       <div class="wall" data-step-target>…stickies with data-from / data-until…</div> */
+  $$('[data-stepper]').forEach(sec => {
+    const max = parseInt(sec.dataset.max || '7', 10);
+    let step = parseInt(sec.dataset.step || '1', 10);
+    const targets = $$('[data-step-target]', sec);
+    const notes = $$('[data-note]', sec);
+    const steps = $$('.steps li[data-goto]', sec);
+    const cap = $('.cap', sec);
+    const paint = () => {
+      sec.dataset.step = String(step);
+      targets.forEach(t => t.dataset.step = String(step));
+      notes.forEach(n => n.hidden = n.dataset.note !== String(step));
+      steps.forEach(li => { const n = parseInt(li.dataset.goto, 10); li.classList.toggle('on', n === step); li.classList.toggle('done', n < step); });
+      if (cap) cap.textContent = `步驟 ${step} / ${max}`;
+      $$('[data-prev]', sec).forEach(b => b.disabled = step <= 1);
+      $$('[data-next]', sec).forEach(b => b.disabled = step >= max);
+    };
+    $$('[data-prev]', sec).forEach(b => b.addEventListener('click', () => { if (step > 1) { step--; paint(); } }));
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (step < max) { step++; paint(); } }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { step = 1; paint(); }));
+    steps.forEach(li => li.addEventListener('click', () => { step = parseInt(li.dataset.goto, 10); paint(); }));
+    paint();
+  });
+
+  /* replay lists: <ol class="replay" data-replay> children hidden until "下一步"; uses .stepper inside same section */
+  $$('[data-replay]').forEach(sec => {
+    const items = $$('[data-item]', sec);
+    let i = 0;
+    const paint = () => { items.forEach((el, k) => el.hidden = k >= i); const c = $('.cap', sec); if (c) c.textContent = i === 0 ? '尚未開始' : `${i} / ${items.length}`; };
+    $$('[data-next]', sec).forEach(b => b.addEventListener('click', () => { if (i < items.length) { i++; paint(); } }));
+    $$('[data-all]', sec).forEach(b => b.addEventListener('click', () => { i = items.length; paint(); }));
+    $$('[data-reset]', sec).forEach(b => b.addEventListener('click', () => { i = 0; paint(); }));
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

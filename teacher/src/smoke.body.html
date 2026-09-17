@@ -1,0 +1,27 @@
+<!-- title: smoke -->
+<!-- description: 元件用法最小範例（不發佈） -->
+<p class="eyebrow">SMOKE</p>
+<h1 class="display">元件<br><em>煙霧</em>測試</h1>
+<p class="lede">檢查牆、步驟、全幅圖在深淺兩色與 375px 下的樣子。</p>
+<section data-stepper data-step="1" data-max="3">
+  <ol class="steps"><li data-goto="1">1 貼事實</li><li data-goto="2">2 挑戰</li><li data-goto="3">3 命令</li></ol>
+  <div class="stepper"><button data-prev>上一步</button><button data-next class="primary">下一步</button><button data-reset>重來</button><span class="cap"></span></div>
+  <div class="step-note" data-note="1"><p>第一步。</p></div><div class="step-note" data-note="2"><p>第二步。</p></div><div class="step-note" data-note="3"><p>第三步。</p></div>
+  <div class="wall-scroll"><div class="wall" data-step-target style="--cols: 6">
+    <div class="lane">角色</div><div class="sticky act" data-from="3">顧客</div>
+    <div class="lane">命令</div><div class="sticky cmd" data-from="3" style="grid-column:2"><span class="k">CMD</span>StartCharging</div>
+    <div class="lane">事實</div>
+    <div class="sticky evt" data-from="1"><span class="k">T0</span>車輛已辨識進場</div>
+    <div class="sticky rej" data-from="1" data-until="1"><span class="k">✗</span>系統送出 StatusNotification</div>
+    <div class="sticky evt pivot" data-from="2"><span class="k">T3</span>充電已授權開始</div>
+    <div class="lane">HOTSPOTS</div><div class="sticky hot" data-from="1" data-until="2">插槍＝開始？</div>
+  </div></div>
+</section>
+<figure class="wide"><p class="title">全幅圖</p><div class="diagram"><svg viewBox="0 0 960 200" role="img" aria-label="test"><rect class="box core" x="20" y="40" width="200" height="60" rx="6"/><text class="t b" x="120" y="75" text-anchor="middle">Charging</text><path class="ar ev" d="M220 70 L400 70"/><rect class="box" x="400" y="40" width="200" height="60" rx="6"/><text class="t" x="500" y="75" text-anchor="middle">Billing</text><text class="t a" x="940" y="180" text-anchor="end">edge</text></svg></div></figure>
+<div class="table-scroll"><table><tr><th>a</th><th>b</th></tr><tr><td>1</td><td>2</td></tr></table></div>
+<pre class="term">$ npm test
+<span class="red">✗ R1</span>  <span class="green">✓ EventBus</span></pre>
+<div class="chat"><div class="msg stu"><p class="who">學員 → /storm</p><p>這是我的事實清單。</p></div><div class="msg ta"><p class="who">助教</p><p>「系統送出 StatusNotification」是系統做的動作，還是業務上發生的事？</p><p><b>下一個最小步驟：</b>把它改寫成值班長聽得懂的一句話。</p></div></div>
+<div class="file"><p class="path">workshop/day2/rules.md <span class="chip">交付物</span></p><div class="body"><h4>R1</h4><pre class="gwt"><b>Given</b> 連接器 CP-A12-2 上有進行中的充電會話 S-991
+<b>When</b>  同一連接器收到 StartCharging
+<b>Then</b>  拒絕；發布 ChargingStartRejected(reason=ConnectorOccupied)</pre></div></div>

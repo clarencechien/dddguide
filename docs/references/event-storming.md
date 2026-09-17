@@ -121,18 +121,20 @@ Markdown 裡沒有顏色，所以用**前綴**：
 | T1 | 14:03 | [E] ChargingBayOccupied | Parking, Charging? |
 | T2 | 14:04 | [E] ConnectorPluggedIn | Charging |
 | T3 | 14:04 | [E] ChargingStarted | Charging, Billing |
-| T4 | 14:10, 14:20 | [E] EnergyMetered | Charging, Billing? |
+| T3' | 14:05 | [E] ChargingStartRejected（TAG-VISITOR-01，ConnectorOccupied） | Charging、小美的統計 |
+| T4 | 14:13, 14:22 | [E] EnergyMetered | Charging, Billing? |
 | T5 | 14:31 | [E] ChargingCompleted | Charging, Billing |
-| T6 | 14:33 | [E] VehicleExited | Parking, Billing |
+| T6 | 14:33 | [E] VehicleExited（人工放行，總部離線） | Parking, Billing |
 
 ## 支線：故障
 | F | 時間 | 事件 | 誰在乎 |
 |---|---|---|---|
-| F0 | 18:10 | [E] ChargerFaulted | AssetOps, Dispatch |
-| F1 | 18:11 | [E] 工單已開立 | Dispatch, 場站看板 |
-| F2 | 18:15 | [E] ChargerFaulted（重複） | AssetOps |
-| F3 | 18:18 | [E] 工單已派工 | Dispatch |
-| F4 | 隔天 | [E] 工單已關閉 | Charging 健康, SLA |
+| F0 | 18:10:00 | [E] ChargerFaulted | AssetOps, Dispatch |
+| F1 | 18:10:00 | [E] 工單已開立 | Dispatch, 場站看板 |
+| F2 | 18:10:00 | [E] 技術員已指派（stub） | Dispatch |
+| F3 | 18:10:08 | [E] ChargerFaulted（重複申告） | AssetOps |
+| F4 | 18:12 | [!] 同一則事件被重送——這**不是**新事實，貼熱點 | AssetOps |
+| F5 | 18:18 | [E] 工單已關閉 | Charging 健康, SLA |
 ```
 
 **第三輪：熱點**。
@@ -164,15 +166,15 @@ timeline
     14:02 : VehicleEntered
     14:03 : ChargingBayOccupied
     14:04 : ConnectorPluggedIn : ChargingStarted ⭐
-    14:10 : EnergyMetered
-    14:20 : EnergyMetered
+    14:05 : ChargingStartRejected（ConnectorOccupied）
+    14:13 : EnergyMetered
+    14:22 : EnergyMetered
     14:31 : ChargingCompleted ⭐
-    14:33 : VehicleExited
+    14:33 : VehicleExited（人工放行）
   section 故障
-    18:10 : ChargerFaulted ⭐
-    18:11 : 工單已開立 WO-2208
-    18:15 : ChargerFaulted（重複申告）
-    18:18 : 派工 TECH-HAO
+    18:10:00 : ChargerFaulted ⭐ : 工單已開立 WO-2208 : 技術員已指派 TECH-HAO
+    18:10:08 : ChargerFaulted（重複申告）
+    18:18 : 工單已關閉
 ```
 
 ### 4.4 Process Level 步驟
@@ -266,12 +268,12 @@ timeline
 
 ## 8. `storm-board.md` 最低要求
 
-1. 事件池 ≥ 15 個 🟧，全部過去式。
-2. 主線時間線（T0–T6）+ 故障支線（F）+ 至少一個拒絕分支。
-3. 熱點 ≥ 5 個，每個對到一位角色的訪談。
-4. 樞紐事件 ≥ 3 個。
-5. Process level：至少 4 個事件補完角色 / 命令 / 聚合候選 / 政策。
-6. 一張 Mermaid `timeline` 或 `sequenceDiagram`。
+1. 主線時間線 ≥ 7 個 🟧、故障支線 ≥ 5 個，全部過去式；至少一個拒絕分支。
+2. 熱點 ≥ 4 個，每個對到一位角色的訪談。
+3. 樞紐事件 ≥ 3 個。
+4. Process level：每個事實有命令 / 執行者；政策 ≥ 3（「每當 X 就 Y」）；聚合候選 ≥ 3，各有「守的規則」。
+5. 一張 Mermaid `timeline` 或 `sequenceDiagram`。
+6. 對照 `docs/rubric.md` Day 2；`/checkout day2` 會逐項勾。
 
 ---
 
