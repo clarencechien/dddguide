@@ -671,6 +671,9 @@ td .sev { display: inline-block; width: .7em; height: .7em; border-radius: 50%; 
 .wall-scroll { margin-inline: calc(-1 * var(--bleed)); }
 .wall-scroll .wall { padding-inline: 2px; }
 
+/* 長路徑與識別碼沒有斷點：給有可能塞進 mono 字串的容器一個斷字機會，免得 375px 被撐寬 */
+.meta-strip, .meta-strip span, .meta-strip b, .file > .path, .msg, .steps li, .step-note, .teach, .answer, .dod li { overflow-wrap: anywhere; min-width: 0; }
+
 </style>
 <body>
 <div class="progress" aria-hidden="true"></div>
