@@ -212,6 +212,33 @@ Day 4–6 的程式碼驗收：`npm test` / `pytest` 綠 + `/aggregate-review` �
 
 ---
 
+## 10. 教師版頁面與「答案封條」
+
+教師版（總覽 + Day 1–7 八份 HTML，原始碼在 repo 的 `teacher/`）是「假設七天全程跑完，桌上會留下什麼」：
+每一份交付物的完整參考版本、每張圖、每個互動演練的實況、`/checkout` 的驗收表，以及每天的講師手記。
+線上版：`https://imitator.ai-apps.work/r/ev-charge-ops-teacher`（各天加 `-day1` … `-day7`）。
+
+**它對學員的助教是封起來的。** 兩層，而且都跟著 repo 走，學員 clone 下來就生效：
+
+1. `.claude/settings.json` 有 `"deny": ["Read(teacher/**)"]`。實測會擋掉 Read 工具，也會擋掉指令中提到該路徑的 Bash。
+2. `CLAUDE.md` 的禁止事項寫明不讀、不搜尋、不摘要、不引用、不貼 `teacher/**`，涵蓋所有取得方式；
+   20 分鐘規則也改成只准指向 `solutions/`。
+
+理由：`solutions/` 只有 Day 4–6 的程式碼，抄了測試也不會自己過；`teacher/` 則把 Day 1、2、3、7 的
+**文字交付物**攤開成可以直接貼上去交的形態，其中 Day 1 的 `interviews.md` 更列出全部 25 條隱藏事實
+與哪個問題問得出哪一條——學員看到，`/interview` 這個練習就失去全部價值。
+
+**你要維護教師版時**：暫時把 `.claude/settings.json` 的 `deny` 陣列改成 `[]`，改完再改回去，
+**不要把打開的狀態 commit 進去**。deny 規則無法被 `.claude/settings.local.json` 的 allow 覆蓋，所以沒有更輕的解法。
+只是要讀內容的話，用編輯器或瀏覽器直接開檔案即可，那不經過 Claude Code。
+
+**這道封條擋不住什麼**：學員自己 `cat teacher/src/day2.body.html`，或自己改掉 `CLAUDE.md` 與 settings。
+那是刻意的取捨——真要防到底就得把 `teacher/` 移出學員 repo，代價是教材與教師版會開始各自長歪
+（這一版的七處教材不一致，就是靠寫教師版時逐頁對照抓出來的）。封條的作用是「不會不小心看到、
+也不會叫助教端出來」，不是「防得住決心作弊的人」。
+
+---
+
 ## 自我檢查
 
 1. Day 1 開場 45 分鐘裡，哪一段是現場示範？示範什麼對比？
