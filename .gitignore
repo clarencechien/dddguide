@@ -24,3 +24,6 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code 本機覆寫（不進版控）
+.claude/settings.local.json
